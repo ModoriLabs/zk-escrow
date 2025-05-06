@@ -70,4 +70,10 @@ contract Vault {
         notary = newNotary;
         emit Debug("Updated notary", newNotary);
     }
+
+    function changeNotary(address newNotary) external {
+        require(msg.sender == notary, "Only notary can change");
+        notary = newNotary;
+        emit Debug("Changed notary", newNotary);
+    }
 }
