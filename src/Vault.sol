@@ -59,8 +59,6 @@ contract Vault {
 
     function _isValidSignature(bytes32 digest, uint8 v, bytes32 r, bytes32 s) internal returns (bool) {
         address signer = ecrecover(digest, v, r, s);
-        emit Debug("Recovered signer", signer);
-        emit Debug("Expected notary", notary);
 
         return signer == notary;
     }
@@ -68,12 +66,10 @@ contract Vault {
     function updateNotary(address newNotary) external {
         require(msg.sender == notary, "Only notary can update");
         notary = newNotary;
-        emit Debug("Updated notary", newNotary);
     }
 
     function changeNotary(address newNotary) external {
         require(msg.sender == notary, "Only notary can change");
         notary = newNotary;
-        emit Debug("Changed notary", newNotary);
     }
 }

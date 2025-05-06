@@ -4,25 +4,21 @@ pragma solidity ^0.8.20;
 import "forge-std/Test.sol";
 import "forge-std/console2.sol";
 import "../src/Vault.sol";
-import "./mocks/MockERC20.sol";
+import "../src/MockUSDT.sol";
 
 contract VaultTest is Test {
     Vault vault;
     MockERC20 mockUsdt;
 
-    // 테스트용 개인키 정의
-    uint256 private constant NOTARY_PRIVATE_KEY = 123; // 임의의 개인키 값
-    address notary; // vm.addr로 생성할 주소
+    uint256 private constant NOTARY_PRIVATE_KEY = 123; // random private key
+    address notary;
 
     function setUp() public {
-        // 개인키로부터 주소 생성
         notary = vm.addr(NOTARY_PRIVATE_KEY);
         console2.log("Notary address: %s", notary);
 
-        // MockERC20 배포
         mockUsdt = new MockERC20();
 
-        // Vault 배포 - MockERC20을 USDT로 사용
         vault = new Vault(address(mockUsdt), notary);
         mockUsdt.mint(address(vault), 100 * 1e6);
     }
@@ -55,14 +51,13 @@ contract VaultTest is Test {
 
         vault.enroll(orderId, binanceId, amount);
 
-        // 서명할 메시지 구성 (Vault 컨트랙트의 claim 함수와 동일하게)
+        // make message hash (same as Vault.claim)
         bytes32 messageHash = keccak256(abi.encodePacked(orderId, recipient, amount));
         console2.logBytes32(messageHash);
 
-        // notary의 개인키로 메시지에 서명
+        // sign message with notary's private key
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(NOTARY_PRIVATE_KEY, messageHash);
 
-        // recipient의 claim 전 USDT 잔액 확인
         uint256 recipientBalanceBefore = mockUsdt.balanceOf(recipient);
         vault.claim(orderId, recipient, amount, v, r, s);
         uint256 recipientBalanceAfter = mockUsdt.balanceOf(recipient);

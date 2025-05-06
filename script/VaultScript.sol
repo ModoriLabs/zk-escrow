@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {Script, console2} from "forge-std/Script.sol";
+import {Script} from "forge-std/Script.sol";
 import {MockUSDT} from "../src/MockUSDT.sol";
 import {Vault} from "../src/Vault.sol";
 
@@ -9,9 +9,6 @@ contract ReadVaultState is Script {
     function run() external view {
         address vaultAddress = vm.envAddress("MINATO_VAULT_ADDRESS");
         Vault vault = Vault(vaultAddress);
-
-        console2.log("USDT Address:", vault.usdt());
-        console2.log("Notary Address:", vault.notary());
     }
 }
 
@@ -31,12 +28,10 @@ contract TransferUSDTToVault is Script {
         // 1. Mint 100 USDT to sender
         uint256 amount = 100 * 1e6;
         usdt.mint(sender, amount);
-        console2.log("Minted 100 USDT to:", sender);
 
         // 2. Transfer USDT to Vault (manually calling transfer)
         bool success = usdt.transfer(vaultAddress, amount);
         require(success, "Transfer failed");
-        console2.log("Transferred 100 USDT to Vault");
 
         vm.stopBroadcast();
     }
@@ -47,8 +42,6 @@ contract CheckUSDTBalance is Script {
         address usdtAddress = vm.envAddress("MINATO_USDT_ADDRESS");
         address vaultAddress = vm.envAddress("MINATO_VAULT_ADDRESS");
         uint256 balance = MockUSDT(usdtAddress).balanceOf(vaultAddress);
-
-        console2.log("USDT Balance of", vaultAddress, ":", balance);
     }
 }
 
@@ -79,9 +72,6 @@ contract Claim is Script {
         uint256 amount = 5 * 1e6;
         (uint8 v, bytes32 r, bytes32 s) =
             vm.sign(notaryPrivateKey, keccak256(abi.encodePacked(orderId, recipient, amount)));
-        console2.log("v:", v);
-        console2.logBytes32(r);
-        console2.logBytes32(s);
 
         vm.startBroadcast(notaryPrivateKey);
         vault.claim(orderId, recipient, amount, v, r, s);
