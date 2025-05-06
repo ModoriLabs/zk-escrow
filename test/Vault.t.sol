@@ -4,10 +4,11 @@ pragma solidity ^0.8.20;
 import "forge-std/Test.sol";
 import "forge-std/console2.sol";
 import "../src/Vault.sol";
+import "./mocks/MockERC20.sol";
 
 contract VaultTest is Test {
     Vault vault;
-    address usdt = address(0x1234); // mock address
+    MockERC20 mockUsdt;
 
     // 테스트용 개인키 정의
     uint256 private constant NOTARY_PRIVATE_KEY = 123; // 임의의 개인키 값
@@ -18,7 +19,12 @@ contract VaultTest is Test {
         notary = vm.addr(NOTARY_PRIVATE_KEY);
         console2.log("Notary address: %s", notary);
 
-        vault = new Vault(usdt, notary);
+        // MockERC20 배포
+        mockUsdt = new MockERC20();
+
+        // Vault 배포 - MockERC20을 USDT로 사용
+        vault = new Vault(address(mockUsdt), notary);
+        mockUsdt.mint(address(vault), 100 * 1e6);
     }
 
     function testEnroll() public {
@@ -43,14 +49,10 @@ contract VaultTest is Test {
     function testClaim() public {
         uint256 orderId = 361130000883032064;
         uint64 binanceId = 123456;
-        uint256 amount = 5 * 1e6; // 5 USDT with 6 decimals
-        address recipient = address(this);
+        uint256 amount = 8 * 1e6; // 8 USDT with 6 decimals
+        // new user
+        address recipient = address(0x7777);
 
-        console2.log("Recipient: %s", recipient);
-        console2.log("Notary: %s", notary);
-        console2.log("Current Vault notary: %s", vault.notary());
-
-        // 먼저 enrollment 생성
         vault.enroll(orderId, binanceId, amount);
 
         // 서명할 메시지 구성 (Vault 컨트랙트의 claim 함수와 동일하게)
@@ -60,30 +62,15 @@ contract VaultTest is Test {
         // notary의 개인키로 메시지에 서명
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(NOTARY_PRIVATE_KEY, messageHash);
 
-        console2.log("v: %d", v);
-        console2.log("r: ");
-        console2.logBytes32(r);
-        console2.log("s: ");
-        console2.logBytes32(s);
-
         // ecrecover로 서명자 복구 테스트
         address recoveredSigner = ecrecover(messageHash, v, r, s);
         console2.log("Recovered Signer: %s", recoveredSigner);
         console2.log("Expected Signer (notary): %s", notary);
 
-        // 복구된 서명자와 notary가 일치하는지 확인
-        bool signatureValid = recoveredSigner == notary;
-        console2.log("Signature Valid: %s", signatureValid);
-
-        // 서명으로 claim 실행
-        vm.prank(notary);
+        // recipient의 claim 전 USDT 잔액 확인
+        uint256 recipientBalanceBefore = mockUsdt.balanceOf(recipient);
         vault.claim(messageHash, orderId, recipient, v, r, s);
-        console2.log("Claim successful!");
-
-        // 결과 확인
-        (uint64 binanceId_, uint256 amount_, bool claimed_) = vault.enrollments(orderId);
-        assertEq(binanceId_, binanceId);
-        assertEq(amount_, amount);
-        assertEq(claimed_, true);
+        uint256 recipientBalanceAfter = mockUsdt.balanceOf(recipient);
+        assertEq(recipientBalanceAfter - recipientBalanceBefore, amount, "Token transfer did not happen correctly");
     }
 }
