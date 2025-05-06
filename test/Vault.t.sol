@@ -62,14 +62,9 @@ contract VaultTest is Test {
         // notary의 개인키로 메시지에 서명
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(NOTARY_PRIVATE_KEY, messageHash);
 
-        // ecrecover로 서명자 복구 테스트
-        address recoveredSigner = ecrecover(messageHash, v, r, s);
-        console2.log("Recovered Signer: %s", recoveredSigner);
-        console2.log("Expected Signer (notary): %s", notary);
-
         // recipient의 claim 전 USDT 잔액 확인
         uint256 recipientBalanceBefore = mockUsdt.balanceOf(recipient);
-        vault.claim(messageHash, orderId, recipient, v, r, s);
+        vault.claim(orderId, recipient, amount, v, r, s);
         uint256 recipientBalanceAfter = mockUsdt.balanceOf(recipient);
         assertEq(recipientBalanceAfter - recipientBalanceBefore, amount, "Token transfer did not happen correctly");
     }

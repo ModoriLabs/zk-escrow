@@ -40,12 +40,15 @@ contract Vault {
         emit Enrolled(orderId, binanceId, amount);
     }
 
-    function claim(bytes32 digest, uint256 orderId, address recipient, uint8 v, bytes32 r, bytes32 s) external {
+    // bytes32 messageHash = keccak256(abi.encodePacked(orderId, recipient, amount));
+    // (uint8 v, bytes32 r, bytes32 s) = vm.sign(NOTARY_PRIVATE_KEY, messageHash);
+    function claim(uint256 orderId, address recipient, uint256 amount, uint8 v, bytes32 r, bytes32 s) external {
         Enrollment storage e = enrollments[orderId];
         require(e.amount > 0, "Not enrolled");
         require(!e.claimed, "Already claimed");
-        require(e.amount <= MAX_ALLOWED_AMOUNT, "Amount exceeds 10 USDT limit");
+        require(e.amount == amount, "Amount mismatch");
 
+        bytes32 digest = keccak256(abi.encodePacked(orderId, recipient, amount));
         require(_isValidSignature(digest, v, r, s), "Invalid signature");
 
         e.claimed = true;
