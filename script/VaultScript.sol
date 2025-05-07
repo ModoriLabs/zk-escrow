@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import {console} from "forge-std/console.sol";
 import {Script} from "forge-std/Script.sol";
 import {MockUSDT} from "../src/MockUSDT.sol";
 import {Vault} from "../src/Vault.sol";
@@ -70,11 +71,29 @@ contract Claim is Script {
         uint256 notaryPrivateKey = vm.envUint("NOTARY_PRIVATE_KEY");
         address recipient = vm.addr(notaryPrivateKey);
         uint256 amount = 5 * 1e6;
-        (uint8 v, bytes32 r, bytes32 s) =
-            vm.sign(notaryPrivateKey, keccak256(abi.encodePacked(ORDER_ID, recipient, amount)));
+        console.logBytes32(keccak256(abi.encodePacked(ORDER_ID, recipient, amount)));
+        // bytes32 messageHash = keccak256(abi.encodePacked(ORDER_ID, recipient, amount));
 
-        vm.startBroadcast(notaryPrivateKey);
-        vault.claim(ORDER_ID, recipient, amount, v, r, s);
-        vm.stopBroadcast();
+        // messageHash should be 84 bytes
+        bytes memory messageHash = abi.encodePacked(ORDER_ID, recipient, amount);
+        bytes32 ethSignedMessageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n\x54", messageHash));
+        // const PREFIX: &str = "\x19Ethereum Signed Message:\n";
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(notaryPrivateKey, ethSignedMessageHash);
+
+        console.log("messageHash");
+        console.logBytes(messageHash);
+        console.log("ethSignedMessageHash");
+        console.logBytes32(ethSignedMessageHash);
+        console.log("abi.encodePacked(ORDER_ID, recipient, amount)");
+        console.logBytes(abi.encodePacked(ORDER_ID, recipient, amount));
+
+        console.log("v", v);
+        console.logBytes32(r);
+        console.logBytes32(s);
+
+        // vm.startBroadcast(notaryPrivateKey);
+        // vault.claim(ORDER_ID, recipient, amount, v, r, s);
+        // vm.stopBroadcast();
     }
 }
