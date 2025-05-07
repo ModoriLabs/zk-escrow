@@ -12,14 +12,14 @@ contract Vault {
     uint256 public constant MAX_ALLOWED_AMOUNT = 10 * 1e6; // 10 USDT (6 decimals)
 
     struct Enrollment {
-        uint64 binanceId;
+        string nickName;
         uint256 amount;
         bool claimed;
     }
 
     mapping(uint256 => Enrollment) public enrollments;
 
-    event Enrolled(uint256 indexed orderId, uint64 binanceId, uint256 amount);
+    event Enrolled(uint256 indexed orderId, string nickName, uint256 amount);
     event Claimed(uint256 indexed orderId, address indexed to, uint256 amount);
     event Debug(string message, address value);
     event DebugBytes32(string message, bytes32 value);
@@ -34,10 +34,10 @@ contract Vault {
         _;
     }
 
-    function enroll(uint256 orderId, uint64 binanceId, uint256 amount) external withinLimit(amount) {
+    function enroll(uint256 orderId, string memory nickName, uint256 amount) external withinLimit(amount) {
         require(enrollments[orderId].amount == 0, "Already enrolled");
-        enrollments[orderId] = Enrollment({binanceId: binanceId, amount: amount, claimed: false});
-        emit Enrolled(orderId, binanceId, amount);
+        enrollments[orderId] = Enrollment({nickName: nickName, amount: amount, claimed: false});
+        emit Enrolled(orderId, nickName, amount);
     }
 
     // bytes32 messageHash = keccak256(abi.encodePacked(orderId, recipient, amount));

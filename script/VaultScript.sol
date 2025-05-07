@@ -5,6 +5,9 @@ import {Script} from "forge-std/Script.sol";
 import {MockUSDT} from "../src/MockUSDT.sol";
 import {Vault} from "../src/Vault.sol";
 
+uint256 constant ORDER_ID = 361130000883032064;
+string constant NICK_NAME = "test";
+
 contract ReadVaultState is Script {
     function run() external view {
         address vaultAddress = vm.envAddress("MINATO_VAULT_ADDRESS");
@@ -51,12 +54,10 @@ contract Enroll is Script {
         Vault vault = Vault(vaultAddress);
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
 
-        uint256 orderId = 333330000000000001;
-        uint64 binanceId = 100000;
         uint256 amount = 5 * 1e6;
 
         vm.startBroadcast(privateKey);
-        vault.enroll(orderId, binanceId, amount);
+        vault.enroll(ORDER_ID, NICK_NAME, amount);
         vm.stopBroadcast();
     }
 }
@@ -66,15 +67,14 @@ contract Claim is Script {
         address vaultAddress = vm.envAddress("MINATO_VAULT_ADDRESS");
         Vault vault = Vault(vaultAddress);
 
-        uint256 orderId = 333330000000000001;
         uint256 notaryPrivateKey = vm.envUint("NOTARY_PRIVATE_KEY");
         address recipient = vm.addr(notaryPrivateKey);
         uint256 amount = 5 * 1e6;
         (uint8 v, bytes32 r, bytes32 s) =
-            vm.sign(notaryPrivateKey, keccak256(abi.encodePacked(orderId, recipient, amount)));
+            vm.sign(notaryPrivateKey, keccak256(abi.encodePacked(ORDER_ID, recipient, amount)));
 
         vm.startBroadcast(notaryPrivateKey);
-        vault.claim(orderId, recipient, amount, v, r, s);
+        vault.claim(ORDER_ID, recipient, amount, v, r, s);
         vm.stopBroadcast();
     }
 }
