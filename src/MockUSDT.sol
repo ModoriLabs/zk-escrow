@@ -1,28 +1,21 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-contract MockUSDT {
-    mapping(address => uint256) public balanceOf;
+import {ERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
-    constructor() {
-        balanceOf[address(this)] = 100000 * 1e6; // 100,000 USDT
+contract MockUSDT is ERC20 {
+    constructor() ERC20("Mock USDT", "USDT") {
+        // Initial supply of 100,000 USDT with 6 decimals
+        _mint(msg.sender, 100000 * 10 ** 6);
     }
 
+    // Override decimals to return 6 instead of the default 18
+    function decimals() public pure override returns (uint8) {
+        return 6;
+    }
+
+    // Custom mint function for testing
     function mint(address to, uint256 amount) external {
-        balanceOf[to] += amount;
-        balanceOf[address(this)] -= amount;
-    }
-
-    function transfer(address to, uint256 amount) external returns (bool) {
-        address from = msg.sender;
-        balanceOf[to] += amount;
-        balanceOf[from] -= amount;
-        return true;
-    }
-
-    function transferFrom(address from, address to, uint256 amount) external returns (bool) {
-        balanceOf[to] += amount;
-        balanceOf[from] -= amount;
-        return true;
+        _mint(to, amount);
     }
 }
