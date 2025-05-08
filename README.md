@@ -1,66 +1,27 @@
-## Foundry
+### Scripts
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+```sh
+# deploy contract
+forge script script/DeployVault.sol --rpc-url minato --broadcast --private-key $PRIVATE_KEY
 
-Foundry consists of:
+# verify contract
+forge verify-contract \
+  --rpc-url https://rpc.minato.soneium.org \
+  --verifier blockscout \
+  --verifier-url 'https://soneium-minato.blockscout.com/api/' \
+  0xF3743092B82e074265093faE373b0F4e0f5444e9 \
+  src/Vault.sol:Vault
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
 
-## Documentation
+# enroll
+RECIPIENT_ADDRESS=0x3ACeFef486Ca88Cc44b68F029E57700bCFd531a4 AMOUNT=1 FROM_BINANCE_ID=93260646 forge script script/VaultScript.sol:Enroll --rpc-url minato --broadcast
 
-https://book.getfoundry.sh/
+# claim
+RECIPIENT_ADDRESS=0x3ACeFef486Ca88Cc44b68F029E57700bCFd531a4 AMOUNT=1 forge script script/VaultScript.sol:Claim --rpc-url minato --broadcast
 
-## Usage
+# USDT Transfer
+forge script script/VaultScript.sol:TransferUSDTToVault --rpc-url minato --broadcast
 
-### Build
-
-```shell
-$ forge build
-```
-
-### Test
-
-```shell
-$ forge test
-```
-
-### Format
-
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
+# Check mock USDT balance
+RECIPIENT_ADDRESS=0x3ACeFef486Ca88Cc44b68F029E57700bCFd531a4 forge script script/VaultScript.sol:CheckUSDTBalance --rpc-url minato --broadcast
 ```
