@@ -1,4 +1,43 @@
-### Scripts
+# 🧞 Genie Vault Contract
+
+This repository contains the smart contract logic for **Genie**, a zk-TLS-powered Web2 → Web3 on-ramp service.
+
+The `Vault` contract verifies zk-TLS proof-backed Binance USDT payments and transfers equivalent USDT tokens on-chain to the specified recipient.
+
+---
+
+## 📦 Overview
+
+In the Genie system:
+Alice want to onRamp via (Binance -> Soneium L2 Blockchain)
+
+1. Alice enrolls her on-ramp intent on-chain via the Genie Vault contract, submitting her Binance UID and recipient address.
+2. Alice sends USDT to the designated Binance vault account.
+3. Any user (e.g., a market maker) monitors public enrollments and checks Binance history.
+4. That user generates a zk-TLS proof of Alice’s Binance payment, proving the USDT transfer without revealing sensitive data.
+5. After verifying the proof, the server (or any prover) signs the (enrollId, amount) using the notary’s private key and calls claim().
+6. The contract verifies the ECDSA signature and transfers USDT to Alice’s recipient address on Soneium L2.
+
+---
+
+## 🔐 Contract Features
+
+- `enroll(orderId, binanceId, amount)`  
+  Enrolls a USDT deposit claim based on Binance transfer metadata.
+
+- `claim(orderId, recipient, amount, v, r, s)`  
+  Verifies ECDSA signature by notary and transfers USDT.
+
+- `updateNotary(newAddress)`  
+  Allows notary rotation (can only be called by current notary).
+
+- **Security**:
+  - Prevents duplicate claims per enrollment.
+  - Maximum allowed transfer is capped (e.g. 10 USDT) for current hack version.
+
+---
+
+## Scripts
 
 ```sh
 # deploy contract
