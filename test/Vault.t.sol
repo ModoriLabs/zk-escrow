@@ -13,7 +13,7 @@ contract VaultTest is Test {
     MockUSDT mockUsdt;
     uint256 amount = 5 * 1e6;
 
-    uint256 privateKey = vm.envUint("PRIVATE_KEY");
+    uint256 privateKey = 123456789;
     address notary = vm.addr(privateKey);
     // generate a new address
     address recipientAddress = makeAddr("recipientAddress");
