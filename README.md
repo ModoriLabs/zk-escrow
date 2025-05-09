@@ -1,4 +1,12 @@
-# 🧞 Genie Vault Contract
+# Noir Hackathon Participation!
+
+🧞‍♂️ **Genie** is a zk-TLS based on-ramp system that bridges Web2 payments (e.g. Binance) to on-chain assets.
+
+- [`legacy-web-prover`](https://github.com/elysia-dev/pluto-legacy-web-prover): ZK-TLS proof generation via HTTPS traffic interception.
+- [`‍️noir-web-prover-circuits`](https://github.com/elysia-dev/noir-web-prover-circuits): Core ZK circuits implemented in Noir (ChaCha20, HTTP, JSON, etc).
+- [`‍️zk-vault`](https://github.com/elysia-dev/zk-vault): Smart contract logic of `enroll` and `claim` for on-chain USDT distribution.
+
+## Genie Vault Contract
 
 This repository contains the smart contract logic for **Genie**, a zk-TLS-powered Web2 → Web3 on-ramp service.
 
@@ -6,7 +14,7 @@ The `Vault` contract verifies zk-TLS proof-backed Binance USDT payments and tran
 
 ---
 
-## 📦 Overview
+### 📦 Overview
 
 In the Genie system:
 Alice want to onRamp via (Binance -> Soneium L2 Blockchain)
@@ -20,7 +28,7 @@ Alice want to onRamp via (Binance -> Soneium L2 Blockchain)
 
 ---
 
-## 🔐 Contract Features
+### 🔐 Contract Features
 
 - `enroll(orderId, binanceId, amount)`  
   Enrolls a USDT deposit claim based on Binance transfer metadata.
@@ -37,7 +45,7 @@ Alice want to onRamp via (Binance -> Soneium L2 Blockchain)
 
 ---
 
-## Scripts
+### Scripts
 
 ```sh
 # deploy contract
