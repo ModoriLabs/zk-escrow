@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "forge-std/Script.sol";
-import "../src/MockUSDT.sol";
+import "src/MockUSDT.sol";
+import {BaseScript} from "./Base.s.sol";
 
-contract DeployMockUSDT is Script {
+contract DeployMockUSDT is BaseScript {
     function run() external {
         vm.startBroadcast();
         MockUSDT mockUSDT = new MockUSDT();

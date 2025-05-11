@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {console} from "forge-std/console.sol";
-import {Script} from "forge-std/Script.sol";
-import {MockUSDT} from "../src/MockUSDT.sol";
-import {Vault} from "../src/Vault.sol";
+import {MockUSDT} from "src/MockUSDT.sol";
+import {Vault} from "src/Vault.sol";
+import "./Base.s.sol";
 
-contract TransferUSDTToVault is Script {
+contract TransferUSDTToVault is BaseScript {
     function run() external {
         // Load values from .env
         address vaultAddress = vm.envAddress("MINATO_VAULT_ADDRESS");
@@ -31,7 +30,7 @@ contract TransferUSDTToVault is Script {
     }
 }
 
-contract CheckUSDTBalance is Script {
+contract CheckUSDTBalance is BaseScript {
     function run() external view {
         address usdtAddress = vm.envAddress("MINATO_USDT_ADDRESS");
         address vaultAddress = vm.envAddress("MINATO_VAULT_ADDRESS");
@@ -45,7 +44,7 @@ contract CheckUSDTBalance is Script {
     }
 }
 
-contract Enroll is Script {
+contract Enroll is BaseScript {
     function run() external {
         address vaultAddress = vm.envAddress("MINATO_VAULT_ADDRESS");
         Vault vault = Vault(vaultAddress);
@@ -60,7 +59,7 @@ contract Enroll is Script {
     }
 }
 
-contract Claim is Script {
+contract Claim is BaseScript {
     function run() external {
         address vaultAddress = vm.envAddress("MINATO_VAULT_ADDRESS");
         Vault vault = Vault(vaultAddress);
@@ -81,7 +80,7 @@ contract Claim is Script {
     }
 }
 
-contract ClearEnrollments is Script {
+contract ClearEnrollments is BaseScript {
     function run() external {
         address vaultAddress = vm.envAddress("MINATO_VAULT_ADDRESS");
         Vault vault = Vault(vaultAddress);
