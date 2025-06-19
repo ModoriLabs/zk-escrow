@@ -1,6 +1,10 @@
 
 ## Getting Started
 
+```sh
+bun install
+```
+
 ### Deploy Contracts
 
 ```sh
