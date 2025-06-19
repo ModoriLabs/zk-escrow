@@ -1,6 +1,8 @@
 
 ## Getting Started
 
+### Install dependencies
+
 ```sh
 bun install
 ```

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import "forge-std/Test.sol";
-import "forge-std/console2.sol";
-import "../src/Vault.sol";
-import "../src/MockUSDT.sol";
+import "forge-std/src/Test.sol";
+import "forge-std/src/console2.sol";
+import "src/Vault.sol";
+import "src/MockUSDT.sol";
 
 string constant FROM_BINANCE_ID = "93260646";
 
