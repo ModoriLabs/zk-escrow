@@ -5,6 +5,12 @@ pragma solidity 0.8.29;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IZkMinter {
+    struct VerifierData {
+        string payeeDetails;                        // Payee details, could be both hash or raw details; verifier will decide how to parse it
+        bytes data;                                 // Verification Data: Additional data used for payment verification; Can hold attester address
+                                                    // in case of TLS proofs, domain key hash in case of zkEmail proofs, currency code etc.
+    }
+
     struct Intent {
         address owner;                              // Address of the intent owner
         address to;                                 // Address to forward funds to (can be same as owner)
@@ -21,4 +27,5 @@ interface IZkMinter {
     );
 
     error InvalidAmount();
+    error IntentNotFound();
 }

@@ -71,13 +71,13 @@ contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier
 
         _verifyPaymentDetails(paymentDetails, _verifyPaymentData, isAppclipProof);
 
-        // FIXME: recipientBankAccount is not unique
-        bytes32 nullifier = keccak256(abi.encodePacked(paymentDetails.recipientBankAccount));
+        bytes32 nullifier = keccak256(
+            abi.encodePacked(paymentDetails.senderBankAccount, paymentDetails.dateString, paymentDetails.senderNickname)
+        );
         console.logBytes32(nullifier);
+        _validateAndAddNullifier(nullifier);
 
-        // FIXME: return intentHash
-        // return (true, intentHash)
-        return (true, bytes32(0));
+        return (true, keccak256(abi.encode(paymentDetails.senderNickname)));
     }
 
     function _verifyProofAndExtractValues(bytes calldata _proof, bytes calldata _depositData)
@@ -100,7 +100,7 @@ contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier
         // Extract public values
         paymentDetails = _extractValues(proof);
 
-        // TODO: is this necessary?
+        // FIXME: uncomment
         // Check provider hash (Required for Reclaim proofs)
         // require(_validateProviderHash(paymentDetails.providerHash), "No valid providerHash");
 
@@ -117,6 +117,18 @@ contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier
         bool _isAppclipProof
     ) internal view {
         uint256 expectedAmount = _verifyPaymentData.intentAmount * _verifyPaymentData.conversionRate / PRECISE_UNIT;
+        // uint8 decimals = IERC20Metadata(_verifyPaymentData.depositToken).decimals();
+        uint8 decimals = 18;
+
+        uint256 paymentAmount = paymentDetails.amountString.stringToUint(decimals);
+        require(paymentAmount >= expectedAmount, "Incorrect payment amount");
+
+        // Validate recipient
+        // TODO: Is it necessary?
+
+        // Validate timestamp; add in buffer to build flexibility for L2 timestamps
+        uint256 paymentTimestamp = DateParsing._dateStringToTimestamp(paymentDetails.dateString) + timestampBuffer;
+        require(paymentTimestamp >= _verifyPaymentData.intentTimestamp, "Incorrect payment timestamp");
     }
 
     /**
@@ -130,14 +142,17 @@ contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier
             MAX_EXTRACT_VALUES,
             true
         );
+        for (uint256 i = 0; i < values.length; i++) {
+            console.log("values[%s]: %s", i, values[i]);
+        }
 
         return PaymentDetails({
-            // values[0] is ContextAddress
-            amountString: values[0],
-            dateString: values[1],
-            senderBankAccount: values[2],
-            recipientBankAccount: values[3],
-            senderNickname: values[4]
+            // values[0] is
+            amountString: values[10],
+            dateString: values[11],
+            senderBankAccount: values[9],
+            recipientBankAccount: values[5],
+            senderNickname: values[8]
         });
     }
 }
