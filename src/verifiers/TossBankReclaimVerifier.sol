@@ -1,0 +1,141 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity 0.8.29;
+
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
+import { DateParsing } from "../lib/DateParsing.sol";
+import { ClaimVerifier } from "../lib/ClaimVerifier.sol";
+import { StringConversionUtils } from "../lib/StringConversionUtils.sol";
+import { Bytes32ConversionUtils } from "../lib/Bytes32ConversionUtils.sol";
+
+import { BaseReclaimPaymentVerifier } from "./BaseReclaimPaymentVerifier.sol";
+import { INullifierRegistry } from "./nullifierRegistries/INullifierRegistry.sol";
+import { IPaymentVerifier } from "./interfaces/IPaymentVerifier.sol";
+import { console } from "forge-std/src/console.sol";
+
+contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier {
+
+    using StringConversionUtils for string;
+    using Bytes32ConversionUtils for bytes32;
+
+    /* ============ Structs ============ */
+
+    // Struct to hold the payment details extracted from the proof
+    struct PaymentDetails {
+        string amountString;
+        string dateString;
+        string senderBankAccount;
+        string recipientBankAccount;
+        string senderNickname;
+    }
+
+    /* ============ Constants ============ */
+
+    uint8 internal constant MAX_EXTRACT_VALUES = 8;
+    uint8 internal constant MIN_WITNESS_SIGNATURE_REQUIRED = 1;
+
+    /* ============ Constructor ============ */
+    constructor(
+        address _owner,
+        address _escrow,
+        INullifierRegistry _nullifierRegistry,
+        uint256 _timestampBuffer,
+        bytes32[] memory _currencies,
+        string[] memory _providerHashes
+    )
+        BaseReclaimPaymentVerifier(
+            _owner,
+            _escrow,
+            _nullifierRegistry,
+            _timestampBuffer,
+            _currencies,
+            _providerHashes
+        )
+    { }
+
+    function verifyPayment(
+        VerifyPaymentData calldata _verifyPaymentData
+    )
+        external
+        override
+        returns (bool, bytes32)
+    {
+        require(msg.sender == escrow, "Only escrow can call");
+
+        (
+            PaymentDetails memory paymentDetails,
+            bool isAppclipProof
+        ) = _verifyProofAndExtractValues(_verifyPaymentData.paymentProof, _verifyPaymentData.data);
+
+        _verifyPaymentDetails(paymentDetails, _verifyPaymentData, isAppclipProof);
+
+        // FIXME: recipientBankAccount is not unique
+        bytes32 nullifier = keccak256(abi.encodePacked(paymentDetails.recipientBankAccount));
+        console.logBytes32(nullifier);
+
+        // return (true, intentHash)
+        return (true, bytes32(0));
+    }
+
+    function _verifyProofAndExtractValues(bytes calldata _proof, bytes calldata _depositData)
+        internal
+        view
+        returns (PaymentDetails memory paymentDetails, bool isAppclipProof)
+    {
+        // Decode proof
+        ReclaimProof memory proof = abi.decode(_proof, (ReclaimProof));
+        console.log("---_verifyProofAndExtractValues---");
+        console.log(proof.claimInfo.context);
+
+        // Extract verification data
+        address[] memory witnesses = _decodeDepositData(_depositData);
+        console.logBytes(_depositData);
+        console.log("witnesses.length", witnesses.length);
+
+        verifyProofSignatures(proof, witnesses, MIN_WITNESS_SIGNATURE_REQUIRED);     // claim must have at least 1 signature from witnesses
+
+        // Extract public values
+        paymentDetails = _extractValues(proof);
+
+        // TODO: is this necessary?
+        // Check provider hash (Required for Reclaim proofs)
+        // require(_validateProviderHash(paymentDetails.providerHash), "No valid providerHash");
+
+        isAppclipProof = proof.isAppclipProof;
+    }
+
+    function _decodeDepositData(bytes calldata _data) internal pure returns (address[] memory witnesses) {
+        witnesses = abi.decode(_data, (address[]));
+    }
+
+    function _verifyPaymentDetails(
+        PaymentDetails memory paymentDetails,
+        VerifyPaymentData memory _verifyPaymentData,
+        bool _isAppclipProof
+    ) internal view {
+        uint256 expectedAmount = _verifyPaymentData.intentAmount * _verifyPaymentData.conversionRate / PRECISE_UNIT;
+    }
+
+    /**
+     * Extracts all values from the proof context.
+     *
+     * @param _proof The proof containing the context to extract values from.
+     */
+    function _extractValues(ReclaimProof memory _proof) internal pure returns (PaymentDetails memory paymentDetails) {
+        string[] memory values = ClaimVerifier.extractAllFromContext(
+            _proof.claimInfo.context,
+            MAX_EXTRACT_VALUES,
+            true
+        );
+
+        return PaymentDetails({
+            // values[0] is ContextAddress
+            amountString: values[0],
+            dateString: values[1],
+            senderBankAccount: values[2],
+            recipientBankAccount: values[3],
+            senderNickname: values[4]
+        });
+    }
+}

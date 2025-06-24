@@ -40,19 +40,19 @@ contract VaultTest is Test {
     }
 
     function testEnrollTooMuch() public {
-        uint256 amount = 11 * 1e6; // 11 USDT with 6 decimals, exceeds the 10 USDT limit
+        uint256 excessiveAmount = 11 * 1e6; // 11 USDT with 6 decimals, exceeds the 10 USDT limit
         vm.expectRevert("Amount exceeds 10 USDT limit");
-        vault.enroll(FROM_BINANCE_ID, recipientAddress, amount);
+        vault.enroll(FROM_BINANCE_ID, recipientAddress, excessiveAmount);
     }
 
     function testClaim() public {
-        uint256 amount = 5 * 1e6; // 8 USDT with 6 decimals
+        uint256 claimAmount = 5 * 1e6; // 5 USDT with 6 decimals
         // new user
-        vault.enroll(FROM_BINANCE_ID, recipientAddress, amount);
+        vault.enroll(FROM_BINANCE_ID, recipientAddress, claimAmount);
         bytes32 enrollId = vault.recipientToEnrollId(recipientAddress);
 
         // make message hash (same as Vault.claim)
-        bytes32 messageHash = keccak256(abi.encodePacked(enrollId, amount));
+        bytes32 messageHash = keccak256(abi.encodePacked(enrollId, claimAmount));
 
         // sign message with notary's private key
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, messageHash);
@@ -62,8 +62,8 @@ contract VaultTest is Test {
         console2.logBytes32(s);
 
         uint256 recipientBalanceBefore = mockUsdt.balanceOf(recipientAddress);
-        vault.claim(enrollId, amount, v, r, s);
+        vault.claim(enrollId, claimAmount, v, r, s);
         uint256 recipientBalanceAfter = mockUsdt.balanceOf(recipientAddress);
-        assertEq(recipientBalanceAfter - recipientBalanceBefore, amount, "Token transfer did not happen correctly");
+        assertEq(recipientBalanceAfter - recipientBalanceBefore, claimAmount, "Token transfer did not happen correctly");
     }
 }

@@ -1,13 +1,17 @@
 [profile.default]
-auto_detect_solc = false
-evm_version = "shanghai"
-optimizer = true
-optimizer_runs = 10_000
-out = "out"
-script = "script"
-solc = "0.8.29"
-src = "src"
-test = "tests"
+  auto_detect_solc = false
+  evm_version = "shanghai"
+  optimizer = true
+  optimizer_runs = 10_000
+  out = "out"
+  script = "script"
+  solc = "0.8.29"
+  src = "src"
+  test = "tests"
+  ffi = true
+  fs_permissions = [
+    { access = "read", path = "./tests/fixtures/" }
+  ]
 
 [fmt]
   bracket_spacing = true
@@ -20,6 +24,6 @@ test = "tests"
   wrap_comments = true
 
 [rpc_endpoints]
-minato = "${MINATO_RPC_URL}"
-soneium = "${SONEIUM_RPC_URL}"
-base_sepolia = "${BASE_SEPOLIA_RPC_URL}"
+  minato = "${MINATO_RPC_URL}"
+  soneium = "${SONEIUM_RPC_URL}"
+  base_sepolia = "${BASE_SEPOLIA_RPC_URL}"
