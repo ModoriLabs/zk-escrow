@@ -32,7 +32,8 @@ contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier
 
     /* ============ Constants ============ */
 
-    uint8 internal constant MAX_EXTRACT_VALUES = 8;
+    // 11 extracted parameters + 1 providerHash
+    uint8 internal constant MAX_EXTRACT_VALUES = 12;
     uint8 internal constant MIN_WITNESS_SIGNATURE_REQUIRED = 1;
 
     /* ============ Constructor ============ */
@@ -74,6 +75,7 @@ contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier
         bytes32 nullifier = keccak256(abi.encodePacked(paymentDetails.recipientBankAccount));
         console.logBytes32(nullifier);
 
+        // FIXME: return intentHash
         // return (true, intentHash)
         return (true, bytes32(0));
     }

@@ -5,9 +5,9 @@ library ClaimVerifier {
 
     /* ============ Constants ============ */
 
-    bytes constant CONTEXT_ADDRESS_BYTES      = bytes("{\"contextAddress\":\"");
-    bytes constant CONTEXT_MESSAGE_BYTES      = bytes("\"contextMessage\":\"");
-    bytes constant EXTRACTED_PARAMETERS_BYTES = bytes("\"extractedParameters\":{\"");
+    // bytes constant CONTEXT_ADDRESS_BYTES      = bytes("{\"contextAddress\":\"");
+    // bytes constant CONTEXT_MESSAGE_BYTES      = bytes("\"contextMessage\":\"");
+    bytes constant EXTRACTED_PARAMETERS_BYTES = bytes("{\"extractedParameters\":{\"");
     bytes constant PROVIDER_HASH_PARAM_BYTES  = bytes("\"providerHash\":\"");
 
     /* ============ Internal Functions ============ */
@@ -114,61 +114,6 @@ library ClaimVerifier {
         bool isValue;
 
         uint[] memory valueIndices = new uint[](2 * maxValues);
-
-        // Extract context address
-        for (uint i = 0; i < CONTEXT_ADDRESS_BYTES.length; i++) {
-            require(
-                dataBytes[index + i] == CONTEXT_ADDRESS_BYTES[i],
-                "Extraction failed. Malformed contextAddress"
-            );
-        }
-        index += CONTEXT_ADDRESS_BYTES.length;
-
-        // Extract context address value if it exists
-        startIndex = index;
-        while (
-            index < dataBytes.length &&
-            !(dataBytes[index] == '"' && dataBytes[index - 1] != "\\")
-        ) {
-            index++;
-        }
-        require(index < dataBytes.length, "Extraction failed. Malformed contextAddress");
-        endIndex = index;
-        if (endIndex == startIndex) {
-            revert("Extraction failed. Empty contextAddress value");
-        }
-        valueIndices[2 * valuesFound] = startIndex;
-        valueIndices[2 * valuesFound + 1] = endIndex;
-        valuesFound++;
-        index += 2; // move past the closing quote and comma
-
-        // Extract context message
-        for (uint i = 0; i < CONTEXT_MESSAGE_BYTES.length; i++) {
-            require(
-                dataBytes[index + i] == CONTEXT_MESSAGE_BYTES[i],
-                "Extraction failed. Malformed contextMessage"
-            );
-        }
-        index += CONTEXT_MESSAGE_BYTES.length;
-
-        // Extract context message value if it exists
-        startIndex = index;
-        while (
-            index < dataBytes.length &&
-            !(dataBytes[index] == '"' && dataBytes[index - 1] != "\\")
-        ) {
-            index++;
-        }
-        require(index < dataBytes.length, "Extraction failed. Malformed contextMessage");
-        endIndex = index;
-        if (endIndex == startIndex) {
-            revert("Extraction failed. Empty contextMessage value");
-        }
-        valueIndices[2 * valuesFound] = startIndex;
-        valueIndices[2 * valuesFound + 1] = endIndex;
-        valuesFound++;
-        index += 2; // move past the closing quote and comma
-
         for (uint i = 0; i < EXTRACTED_PARAMETERS_BYTES.length; i++) {
             require(
                 dataBytes[index + i] == EXTRACTED_PARAMETERS_BYTES[i],
