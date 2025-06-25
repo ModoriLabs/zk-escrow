@@ -27,6 +27,7 @@ contract BaseTest is Test {
     function setUp() public virtual {
         console.log("BaseTest setUp");
 
+        usdt = new MockUSDT(owner);
         nullifierRegistry = new NullifierRegistry(owner);
 
         zkMinter = new ZkMinter(owner, address(usdt));

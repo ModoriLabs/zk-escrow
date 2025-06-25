@@ -1,25 +1,25 @@
 //SPDX-License-Identifier: MIT
 
 import { DateTime } from "../external/DateTime.sol";
-
 import { StringConversionUtils } from "./StringConversionUtils.sol";
 
 pragma solidity ^0.8.18;
 
 library DateParsing {
-    
+
     using StringConversionUtils for string;
 
     /**
-     * @notice Iterates through every character in the date string and splits the string at each dash, "T", or colon. Function will revert
+     * @notice Iterates through every character in the date string and splits the string at each dash, "T", space, or colon. Function will revert
      * if there are not 6 substrings formed from the split. The substrings are then converted to uints and passed to the DateTime lib
-     * to get the unix timestamp. This function is SPECIFIC TO THE DATE FORMAT YYYY-MM-DDTHH:MM:SS or YYYY-MM-DDTHH:MM:SS.SSSZ, not suitable for 
-     * use with other date formats. It skips the milliseconds and timezone offset, as they are not present in all date strings. It returns UTC 
-     * timestamps.
+     * to get the unix timestamp. This function supports DATE FORMATS: YYYY-MM-DDTHH:MM:SS, YYYY-MM-DDTHH:MM:SS.SSSZ, or YYYY-MM-DD HH:MM:SS,
+     * not suitable for use with other date formats. It skips the milliseconds and timezone offset, as they are not present in all date strings.
+     * It returns UTC timestamps.
      *
-     * @param _dateString       Date string to be converted to a UTC timestamp
+     * @param _dateString       Date string to be converted to a UTC timestamp (e.g., "2025-06-17 22:08:30")
      */
     function _dateStringToTimestamp(string memory _dateString) internal pure returns (uint256 utcTimestamp) {
+        console.log("dateString", _dateString);
         string[6] memory extractedStrings;
         uint256 breakCounter;
         uint256 lastBreak;

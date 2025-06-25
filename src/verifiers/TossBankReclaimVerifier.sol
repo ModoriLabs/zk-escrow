@@ -72,7 +72,7 @@ contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier
         _verifyPaymentDetails(paymentDetails, _verifyPaymentData, isAppclipProof);
 
         bytes32 nullifier = keccak256(
-            abi.encodePacked(paymentDetails.senderBankAccount, paymentDetails.dateString, paymentDetails.senderNickname)
+            abi.encodePacked(paymentDetails.dateString, paymentDetails.senderNickname)
         );
         console.logBytes32(nullifier);
         _validateAndAddNullifier(nullifier);
@@ -147,12 +147,12 @@ contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier
         }
 
         return PaymentDetails({
-            // values[0] is
-            amountString: values[10],
-            dateString: values[11],
-            senderBankAccount: values[9],
-            recipientBankAccount: values[5],
-            senderNickname: values[8]
+            // values[0] is documentTitle
+            amountString: values[9],
+            dateString: values[10],
+            senderBankAccount: values[8],
+            recipientBankAccount: values[4],
+            senderNickname: values[7]
         });
     }
 }
