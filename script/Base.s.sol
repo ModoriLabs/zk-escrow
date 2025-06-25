@@ -62,6 +62,25 @@ abstract contract BaseScript is Script {
         return string.concat(string.concat("./deployments/", networkName, "/"), contractName, ".json");
     }
 
+    /**
+     * @dev Helper function to read contract address from deployments JSON file
+     * @param chainId The chain ID to read deployments for
+     * @param contractName The name of the contract to get address for
+     * @return The contract address
+     */
+    function _getDeployedAddress(uint256 chainId, string memory contractName) internal view returns (address) {
+        string memory root = vm.projectRoot();
+        string memory path = string.concat(root, "/deployments/", vm.toString(chainId), "-deploy.json");
+
+        // Check if file exists
+        try vm.readFile(path) returns (string memory json) {
+            string memory key = string.concat(".", contractName);
+            return vm.parseJsonAddress(json, key);
+        } catch {
+            revert(string.concat("Failed to read deployment file or contract not found: ", path, " -> ", contractName));
+        }
+    }
+
     modifier broadcast() {
         vm.startBroadcast(broadcaster);
         _;
