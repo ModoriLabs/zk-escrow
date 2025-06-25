@@ -19,7 +19,6 @@ library DateParsing {
      * @param _dateString       Date string to be converted to a UTC timestamp (e.g., "2025-06-17 22:08:30")
      */
     function _dateStringToTimestamp(string memory _dateString) internal pure returns (uint256 utcTimestamp) {
-        console.log("dateString", _dateString);
         string[6] memory extractedStrings;
         uint256 breakCounter;
         uint256 lastBreak;

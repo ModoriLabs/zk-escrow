@@ -25,9 +25,8 @@ contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier
     struct PaymentDetails {
         string amountString;
         string dateString;
-        string senderBankAccount;
-        string recipientBankAccount;
         string senderNickname;
+        string recipientBankAccount;
     }
 
     /* ============ Constants ============ */
@@ -146,13 +145,16 @@ contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier
             console.log("values[%s]: %s", i, values[i]);
         }
 
+        // TODO: toss dateString is Korean timezone, so we need to convert it to UTC
+
         return PaymentDetails({
             // values[0] is documentTitle
-            amountString: values[9],
-            dateString: values[10],
-            senderBankAccount: values[8],
-            recipientBankAccount: values[4],
-            senderNickname: values[7]
+            recipientBankAccount: values[1],
+            // values[2] is senderName
+            senderNickname: values[3],
+            amountString: values[4],
+            dateString: values[5]
+            // providerHash:values[6],
         });
     }
 }

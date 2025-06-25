@@ -13,9 +13,9 @@ import "./ReclaimStringUtils.sol";
 library Claims {
 	/** Data required to describe a claim */
 	struct CompleteClaimData {
-		bytes32 identifier;
+		bytes32 identifier; // hash of the claimInfo
 		address owner;
-		uint32 timestampS;
+		uint32 timestampS; // when the claim was created
 		uint32 epoch;
 	}
 
