@@ -54,6 +54,8 @@ contract BaseTest is Test {
         zkMinter.setVerifierData(address(tossBankReclaimVerifier), "", data);
 
         nullifierRegistry.addWritePermission(address(tossBankReclaimVerifier));
+
+        usdt.transferOwnership(address(zkMinter));
         vm.stopPrank();
     }
 

@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import "./BaseTest.sol";
 
 contract TossBankReclaimVerifierTest is BaseTest {
+    uint256 constant TEST_AMOUNT = 8750e6; // 8750 USDT with 6 decimals
     // Test data as JSON string
     // won does not work: Invalid character in string.
 
@@ -26,7 +27,8 @@ contract TossBankReclaimVerifierTest is BaseTest {
         tossBankReclaimVerifier.verifyPayment(
             IPaymentVerifier.VerifyPaymentData({
                 paymentProof: encodedProof,
-                intentAmount: 100,
+                mintToken: address(usdt),
+                intentAmount: TEST_AMOUNT,
                 intentTimestamp: 1732845455,
                 conversionRate: 1e18,
                 data: data

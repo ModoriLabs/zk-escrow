@@ -66,6 +66,8 @@ contract DeployTestSetup is Script {
         nullifierRegistry.addWritePermission(address(tossBankReclaimVerifier));
         console.log("Added write permission to nullifier registry");
 
+        usdt.transferOwnership(address(zkMinter));
+        console.log("Transferred ownership of MockUSDT to ZkMinter");
         vm.stopBroadcast();
 
         // Print summary

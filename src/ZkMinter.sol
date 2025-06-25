@@ -37,7 +37,7 @@ contract ZkMinter is Ownable, Pausable, IZkMinter {
         require(_verifier != address(0), "Invalid verifier address");
 
         // Check if an intent already exists for this address
-        uint256 intentId = accountIntent[_to];
+        uint256 intentId = accountIntent[msg.sender];
         require(intentId == 0, "Intent already exists for this address");
 
         // Create a new intent
@@ -50,7 +50,7 @@ contract ZkMinter is Ownable, Pausable, IZkMinter {
             paymentVerifier: _verifier
         });
 
-        accountIntent[_to] = intentId;
+        accountIntent[msg.sender] = intentId;
 
         emit IntentSignaled(_to, _verifier, _amount, intentId);
     }
@@ -72,6 +72,7 @@ contract ZkMinter is Ownable, Pausable, IZkMinter {
         (bool success, bytes32 intentHash) = IPaymentVerifier(verifier).verifyPayment(
             IPaymentVerifier.VerifyPaymentData({
                 paymentProof: _paymentProof,
+                mintToken: token,
                 intentAmount: intent.amount,
                 intentTimestamp: intent.timestamp,
                 conversionRate: 1e18, // PRECISE_UNIT is 1e18
@@ -79,9 +80,19 @@ contract ZkMinter is Ownable, Pausable, IZkMinter {
             })
         );
         require(success, "Payment verification failed");
-        require(keccak256(abi.encode(intent.amount)) == intentHash, "Intent hash mismatch");
+        require(keccak256(abi.encode(StringUtils.uint2str(_intentId))) == intentHash, "Intent hash mismatch");
+
+        _pruneIntent(_intentId);
 
         IMintableERC20(token).mint(intent.to, intent.amount);
+
+        emit IntentFulfilled(
+            intentHash,
+            verifier,
+            intent.owner,
+            intent.to,
+            intent.amount
+        );
     }
 
     // *** Governance functions ***
@@ -127,5 +138,11 @@ contract ZkMinter is Ownable, Pausable, IZkMinter {
 
     function unpause() external onlyOwner {
         _unpause();
+    }
+
+    function _pruneIntent(uint256 _intentId) internal {
+        Intent memory intent = intents[_intentId];
+        delete accountIntent[intent.owner];
+        delete intents[_intentId];
     }
 }

@@ -116,8 +116,7 @@ contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier
         bool _isAppclipProof
     ) internal view {
         uint256 expectedAmount = _verifyPaymentData.intentAmount * _verifyPaymentData.conversionRate / PRECISE_UNIT;
-        // uint8 decimals = IERC20Metadata(_verifyPaymentData.depositToken).decimals();
-        uint8 decimals = 18;
+        uint8 decimals = IERC20Metadata(_verifyPaymentData.mintToken).decimals();
 
         uint256 paymentAmount = paymentDetails.amountString.stringToUint(decimals);
         require(paymentAmount >= expectedAmount, "Incorrect payment amount");

@@ -4,6 +4,8 @@ pragma solidity 0.8.29;
 import "./BaseTest.sol";
 
 contract ZkMinterTest is BaseTest {
+    uint256 constant TEST_AMOUNT = 8750e6; // 8750 USDT with 6 decimals
+
     function setUp() public override {
         super.setUp();
     }
@@ -14,8 +16,9 @@ contract ZkMinterTest is BaseTest {
     }
 
     function test_signalIntent_UpdateAccountIntent() public {
+        address sender = address(this);
         _signalIntent();
-        assertEq(zkMinter.accountIntent(alice), 1);
+        assertEq(zkMinter.accountIntent(sender), 1);
     }
 
     function test_CancelIntent() public {
@@ -28,16 +31,17 @@ contract ZkMinterTest is BaseTest {
     }
 
     function test_fulfillIntent_ClearAccountIntent() public {
+        address sender = address(this);
         _signalIntent();
         _loadProof();
 
         // Verify intent exists before fulfillment
-        assertEq(zkMinter.accountIntent(alice), 1);
+        assertEq(zkMinter.accountIntent(sender), 1);
 
         _fulfillIntent();
 
         // Verify intent is cleared after fulfillment
-        assertEq(zkMinter.accountIntent(alice), 0);
+        assertEq(zkMinter.accountIntent(sender), 0);
     }
 
     function test_fulfillIntent_MintTokens() public {
@@ -50,13 +54,13 @@ contract ZkMinterTest is BaseTest {
         _fulfillIntent();
 
         // Verify tokens were minted correctly
-        assertEq(usdt.balanceOf(alice), initialBalance + 100);
+        assertEq(usdt.balanceOf(alice), initialBalance + TEST_AMOUNT);
     }
 
     function test_signalIntent_EmitsEvent() public {
         // Expect IntentSignaled event to be emitted
         vm.expectEmit(true, true, true, true);
-        emit IZkMinter.IntentSignaled(alice, address(tossBankReclaimVerifier), 100, 1);
+        emit IZkMinter.IntentSignaled(alice, address(tossBankReclaimVerifier), TEST_AMOUNT, 1);
 
         _signalIntent();
     }
@@ -101,6 +105,7 @@ contract ZkMinterTest is BaseTest {
 
     function test_fulfillIntent_CompleteFlow() public {
         // Test the complete flow: signal -> verify -> fulfill
+        address sender = address(this);
         uint256 initialBalance = usdt.balanceOf(alice);
         uint256 initialIntentCount = zkMinter.intentCount();
 
@@ -109,13 +114,13 @@ contract ZkMinterTest is BaseTest {
 
         // Verify intent was created correctly
         assertEq(zkMinter.intentCount(), initialIntentCount + 1);
-        assertEq(zkMinter.accountIntent(alice), 1);
+        assertEq(zkMinter.accountIntent(sender), 1);
 
         // Get intent details
         (address owner, address to, uint256 amount, uint256 timestamp, address verifier) = zkMinter.intents(1);
         assertEq(owner, address(this));
         assertEq(to, alice);
-        assertEq(amount, 100);
+        assertEq(amount, TEST_AMOUNT);
         assertEq(verifier, address(tossBankReclaimVerifier));
         assertTrue(timestamp > 0);
 
@@ -124,14 +129,14 @@ contract ZkMinterTest is BaseTest {
         _fulfillIntent();
 
         // Verify final state
-        assertEq(usdt.balanceOf(alice), initialBalance + 100);
-        assertEq(zkMinter.accountIntent(alice), 0);
+        assertEq(usdt.balanceOf(alice), initialBalance + TEST_AMOUNT);
+        assertEq(zkMinter.accountIntent(sender), 0);
     }
 
     function _signalIntent() internal {
         zkMinter.signalIntent({
             _to: alice,
-            _amount: 100,
+            _amount: 8750e6,
             _verifier: address(tossBankReclaimVerifier)
         });
     }

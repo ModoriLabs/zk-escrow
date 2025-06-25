@@ -26,6 +26,14 @@ interface IZkMinter {
         uint256 intentId
     );
 
+    event IntentFulfilled(
+        bytes32 intentHash,
+        address verifier,
+        address owner,
+        address to,
+        uint256 amount
+    );
+
     error InvalidAmount();
     error IntentNotFound();
 }

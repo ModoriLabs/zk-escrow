@@ -10,6 +10,7 @@ interface IPaymentVerifier is IBasePaymentVerifier {
 
     struct VerifyPaymentData {
         bytes paymentProof;                     // Payment proof
+        address mintToken;                      // Address of mintable token
         uint256 intentAmount;                   // Amount of deposit token that offchain payer wants to take
         uint256 intentTimestamp;                // Timestamp at which intent was created. Offchain payment must be made after this timestamp.
         /*
