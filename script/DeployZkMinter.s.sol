@@ -59,7 +59,8 @@ contract DeployZkMinterScript is BaseScript {
         addresses[0] = 0x189027e3C77b3a92fd01bF7CC4E6a86E77F5034E;
         bytes memory data = abi.encode(addresses);
 
-        zkMinter.setVerifierData(address(tossBankReclaimVerifier), "", data);
+        string memory bankAccount = vm.envString("BANK_ACCOUNT"); // unicode"1000-0000-0000(토스뱅크)"
+        zkMinter.setVerifierData(address(tossBankReclaimVerifier), bankAccount, data);
         console.log("Set verifier data for TossBankReclaimVerifier");
 
         // Give write permission to verifier

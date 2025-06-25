@@ -12,7 +12,6 @@ import { Bytes32ConversionUtils } from "../lib/Bytes32ConversionUtils.sol";
 import { BaseReclaimPaymentVerifier } from "./BaseReclaimPaymentVerifier.sol";
 import { INullifierRegistry } from "./nullifierRegistries/INullifierRegistry.sol";
 import { IPaymentVerifier } from "./interfaces/IPaymentVerifier.sol";
-import { console } from "forge-std/src/console.sol";
 
 contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier {
 
@@ -27,6 +26,7 @@ contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier
         string dateString;
         string senderNickname;
         string recipientBankAccount;
+        string providerHash;
     }
 
     /* ============ Constants ============ */
@@ -73,7 +73,6 @@ contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier
         bytes32 nullifier = keccak256(
             abi.encodePacked(paymentDetails.dateString, paymentDetails.senderNickname)
         );
-        console.logBytes32(nullifier);
         _validateAndAddNullifier(nullifier);
 
         return (true, keccak256(abi.encode(paymentDetails.senderNickname)));
@@ -95,9 +94,8 @@ contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier
         // Extract public values
         paymentDetails = _extractValues(proof);
 
-        // FIXME: uncomment
         // Check provider hash (Required for Reclaim proofs)
-        // require(_validateProviderHash(paymentDetails.providerHash), "No valid providerHash");
+        require(_validateProviderHash(paymentDetails.providerHash), "No valid providerHash");
 
         isAppclipProof = proof.isAppclipProof;
     }
@@ -118,11 +116,33 @@ contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier
         require(paymentAmount >= expectedAmount, "Incorrect payment amount");
 
         // Validate recipient
-        // TODO: Is it necessary?
+        if (_isAppclipProof) {
+            bytes32 hashedRecipientId = keccak256(abi.encodePacked(paymentDetails.recipientBankAccount));
+            require(
+                hashedRecipientId.toHexString().stringComparison(_verifyPaymentData.payeeDetails),
+                "Incorrect payment recipient"
+            );
+        } else {
+            require(
+                paymentDetails.recipientBankAccount.stringComparison(_verifyPaymentData.payeeDetails),
+                "Incorrect payment recipient"
+            );
+        }
 
-        // Validate timestamp; add in buffer to build flexibility for L2 timestamps
-        uint256 paymentTimestamp = DateParsing._dateStringToTimestamp(paymentDetails.dateString) + timestampBuffer;
+        // Validate timestamp
+        uint256 paymentTimestamp = _adjustTimestamp(paymentDetails.dateString);
         require(paymentTimestamp >= _verifyPaymentData.intentTimestamp, "Incorrect payment timestamp");
+    }
+
+    /**
+     * Adjusts the timestamp to UTC+9 and adds the timestamp buffer to build flexibility for L2 timestamps.
+     * @param _dateString The date string to adjust.
+     * @return The adjusted timestamp.
+    */
+    function _adjustTimestamp(string memory _dateString) internal view returns (uint256) {
+        uint256 paymentTimestamp = DateParsing._dateStringToTimestamp(_dateString) + timestampBuffer;
+        paymentTimestamp = paymentTimestamp - 9 * 60 * 60; // UTC+9
+        return paymentTimestamp;
     }
 
     /**
@@ -141,11 +161,11 @@ contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier
         return PaymentDetails({
             // values[0] is documentTitle
             recipientBankAccount: values[1],
-            // values[2] is senderName
+            // values[2] is recipientName
             senderNickname: values[3],
             amountString: values[4],
-            dateString: values[5]
-            // providerHash:values[6],
+            dateString: values[5],
+            providerHash: values[6]
         });
     }
 }

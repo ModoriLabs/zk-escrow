@@ -18,7 +18,7 @@ contract ZkMinter is Ownable, Pausable, IZkMinter {
     mapping(address => uint256) public accountIntent;
     mapping(uint256 => Intent) public intents;
     address[] public verifiers;
-    mapping(address => VerifierData) public verifierData;
+    mapping(address => DepositVerifierData) public depositVerifierData;
 
     constructor(
         address _owner,
@@ -69,14 +69,16 @@ contract ZkMinter is Ownable, Pausable, IZkMinter {
         address verifier = intent.paymentVerifier;
         require(verifier != address(0), IntentNotFound());
 
+        DepositVerifierData memory verifierData = depositVerifierData[verifier];
         (bool success, bytes32 intentHash) = IPaymentVerifier(verifier).verifyPayment(
             IPaymentVerifier.VerifyPaymentData({
                 paymentProof: _paymentProof,
                 mintToken: token,
                 intentAmount: intent.amount,
                 intentTimestamp: intent.timestamp,
+                payeeDetails: verifierData.payeeDetails,
                 conversionRate: 1e18, // PRECISE_UNIT is 1e18
-                data: verifierData[verifier].data
+                data: verifierData.data
             })
         );
         require(success, "Payment verification failed");
@@ -125,7 +127,7 @@ contract ZkMinter is Ownable, Pausable, IZkMinter {
         bytes calldata _data
     ) external onlyOwner {
         require(_verifier != address(0), "Invalid verifier address");
-        verifierData[_verifier] = VerifierData({
+        depositVerifierData[_verifier] = DepositVerifierData({
             payeeDetails: _payeeDetails,
             data: _data
         });

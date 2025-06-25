@@ -31,10 +31,10 @@ RECIPIENT_ADDRESS=0x189027e3C77b3a92fd01bF7CC4E6a86E77F5034E AMOUNT=1000000 forg
 
 | Contracts                    | Address                                                                                                                  |
 |------------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| KORTProxy | [0x0350BFB59c0b6dA993E6eBfd0405A7C59B97F253](https://holesky.etherscan.io/address/0x0350BFB59c0b6dA993E6eBfd0405A7C59B97F253) |
-| NullifierRegistry | [0x788d432297CA4288EC8E9DDa84da40c5dF70D74e](https://holesky.etherscan.io/address/0x788d432297CA4288EC8E9DDa84da40c5dF70D74e) |
-| ZkMinter | [0x42d699d20666DdC54ecdf13ec1c82b612C0BFd50](https://holesky.etherscan.io/address/0x42d699d20666DdC54ecdf13ec1c82b612C0BFd50) |
-| TossBankReclaimVerifier | [0x312268a6E0F10391647160E3fF296fAa67EeD453](https://holesky.etherscan.io/address/0x312268a6E0F10391647160E3fF296fAa67EeD453) |
+| USDT | [0x0350BFB59c0b6dA993E6eBfd0405A7C59B97F253](https://holesky.etherscan.io/address/0x0350BFB59c0b6dA993E6eBfd0405A7C59B97F253) |
+| NullifierRegistry | [0xac9CE0086Aade5F090F5FD09E0c6146719A6DfF5](https://holesky.etherscan.io/address/0xac9CE0086Aade5F090F5FD09E0c6146719A6DfF5) |
+| ZkMinter | [0x8C5fBa120D336020894ae468B7816F729d365db0](https://holesky.etherscan.io/address/0x8C5fBa120D336020894ae468B7816F729d365db0) |
+| TossBankReclaimVerifier | [0xb223Fa34F97f44A50Afd21edba1eB3F54fae1484](https://holesky.etherscan.io/address/0xb223Fa34F97f44A50Afd21edba1eB3F54fae1484) |
 
 ### minato
 

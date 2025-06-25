@@ -13,10 +13,8 @@ interface IPaymentVerifier is IBasePaymentVerifier {
         address mintToken;                      // Address of mintable token
         uint256 intentAmount;                   // Amount of deposit token that offchain payer wants to take
         uint256 intentTimestamp;                // Timestamp at which intent was created. Offchain payment must be made after this timestamp.
-        /*
         string payeeDetails;                    // Payee details (hash of payee's payment platform ID OR just raw ID)
-        bytes32 fiatCurrency;                   // Fiat currency the offchain payer paid in
-        */
+        // bytes32 fiatCurrency;                   // Fiat currency the offchain payer paid in
         uint256 conversionRate;                 // Conversion rate of deposit token to fiat currency
         bytes data;                             // Additional data required for verification (e.g. attester address)
     }

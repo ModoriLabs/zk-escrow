@@ -19,8 +19,10 @@ contract BaseTest is Test {
 
     IReclaimVerifier.ReclaimProof public proof;
 
+    string public constant PROVIDER_HASH = "0xffb501528259e6d684e1c2153fbbacab453fe9c97c336dc4f8f48d70a0e2a13d";
     uint256 public timestampBuffer = 60;
 
+    address public constant VERIFIER_WALLET_ADDRESS = 0x189027e3C77b3a92fd01bF7CC4E6a86E77F5034E;
     address public owner = makeAddr("owner");
     address public alice = makeAddr("alice");
 
@@ -31,27 +33,29 @@ contract BaseTest is Test {
         nullifierRegistry = new NullifierRegistry(owner);
 
         zkMinter = new ZkMinter(owner, address(usdt));
+        string[] memory providerHashes = new string[](1);
+        providerHashes[0] = PROVIDER_HASH;
         tossBankReclaimVerifier = new TossBankReclaimVerifier(
             owner,
             address(zkMinter),
             INullifierRegistry(address(nullifierRegistry)),
             timestampBuffer,
             new bytes32[](0),
-            new string[](0)
+            providerHashes
         );
 
         vm.startPrank(owner);
         zkMinter.addVerifier(address(tossBankReclaimVerifier));
-        bytes memory data = new bytes(96); // 3 * 32 bytes
-        assembly {
-            mstore(add(data, 0x20), 0x20)                                    // offset
-            mstore(add(data, 0x40), 0x01)                                    // length
-            mstore(add(data, 0x60), 0x189027e3c77b3a92fd01bf7cc4e6a86e77f5034e) // address
-        }
-        // address[] memory addresses = new address[](1);
-        // addresses[0] = 0x189027e3c77b3a92fd01bf7cc4e6a86e77f5034e;
-        // bytes memory data = abi.encode(addresses);
-        zkMinter.setVerifierData(address(tossBankReclaimVerifier), "", data);
+        // bytes memory data = new bytes(96); // 3 * 32 bytes
+        // assembly {
+        //     mstore(add(data, 0x20), 0x20)                                    // offset
+        //     mstore(add(data, 0x40), 0x01)                                    // length
+        //     mstore(add(data, 0x60), 0x189027e3c77b3a92fd01bf7cc4e6a86e77f5034e) // address
+        // }
+        address[] memory addresses = new address[](1);
+        addresses[0] = VERIFIER_WALLET_ADDRESS;
+        bytes memory data = abi.encode(addresses);
+        zkMinter.setVerifierData(address(tossBankReclaimVerifier), unicode"59733704003503(KB국민은행)", data);
 
         nullifierRegistry.addWritePermission(address(tossBankReclaimVerifier));
 
