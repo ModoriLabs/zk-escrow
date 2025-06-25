@@ -8,7 +8,8 @@ import {console} from "forge-std/src/console.sol";
 contract DeployMockUSDT is BaseScript {
     function run() external {
         vm.startBroadcast();
-        MockUSDT mockUSDT = new MockUSDT();
+        address owner = broadcaster;
+        MockUSDT mockUSDT = new MockUSDT(owner);
         console.log("MockUSDT deployed to:", address(mockUSDT));
         vm.stopBroadcast();
     }

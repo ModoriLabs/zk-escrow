@@ -7,6 +7,7 @@ import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 import { IPaymentVerifier } from "./verifiers/interfaces/IPaymentVerifier.sol";
 import { IZkMinter } from "./interfaces/IZkMinter.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IMintableERC20 } from "./interfaces/IMintableERC20.sol";
 import { StringUtils } from "./external/ReclaimStringUtils.sol";
 
 contract ZkMinter is Ownable, Pausable, IZkMinter {
@@ -80,8 +81,7 @@ contract ZkMinter is Ownable, Pausable, IZkMinter {
         require(success, "Payment verification failed");
         require(keccak256(abi.encode(intent.amount)) == intentHash, "Intent hash mismatch");
 
-        // TODO:
-        // _mint(to, amount);
+        IMintableERC20(token).mint(intent.to, intent.amount);
     }
 
     // *** Governance functions ***

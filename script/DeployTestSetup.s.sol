@@ -26,7 +26,7 @@ contract DeployTestSetup is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         // Deploy MockUSDT first
-        usdt = new MockUSDT();
+        usdt = new MockUSDT(deployer);
         console.log("MockUSDT deployed at:", address(usdt));
 
         // Deploy NullifierRegistry

@@ -1,16 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import "forge-std/src/Test.sol";
-import "forge-std/src/console2.sol";
+import "./BaseTest.sol";
 import "src/Vault.sol";
-import "src/MockUSDT.sol";
 
 string constant FROM_BINANCE_ID = "93260646";
 
-contract VaultTest is Test {
+contract VaultTest is BaseTest {
     Vault vault;
-    MockUSDT mockUsdt;
     uint256 amount = 5 * 1e6;
 
     uint256 privateKey = 123456789;
@@ -18,13 +15,14 @@ contract VaultTest is Test {
     // generate a new address
     address recipientAddress = makeAddr("recipientAddress");
 
-    function setUp() public {
+    function setUp() public override {
+        super.setUp();
+
         console2.log("Notary address: %s", notary);
 
-        mockUsdt = new MockUSDT();
-
-        vault = new Vault(address(mockUsdt), notary);
-        mockUsdt.mint(address(vault), 100 * 1e6);
+        vault = new Vault(address(usdt), notary);
+        vm.prank(owner);
+        usdt.mint(address(vault), 100 * 1e6);
     }
 
     function testEnroll() public {
@@ -61,9 +59,9 @@ contract VaultTest is Test {
         console2.logBytes32(r);
         console2.logBytes32(s);
 
-        uint256 recipientBalanceBefore = mockUsdt.balanceOf(recipientAddress);
+        uint256 recipientBalanceBefore = usdt.balanceOf(recipientAddress);
         vault.claim(enrollId, claimAmount, v, r, s);
-        uint256 recipientBalanceAfter = mockUsdt.balanceOf(recipientAddress);
+        uint256 recipientBalanceAfter = usdt.balanceOf(recipientAddress);
         assertEq(recipientBalanceAfter - recipientBalanceBefore, claimAmount, "Token transfer did not happen correctly");
     }
 }
