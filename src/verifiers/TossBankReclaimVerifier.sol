@@ -86,13 +86,9 @@ contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier
     {
         // Decode proof
         ReclaimProof memory proof = abi.decode(_proof, (ReclaimProof));
-        console.log("---_verifyProofAndExtractValues---");
-        console.log(proof.claimInfo.context);
 
         // Extract verification data
         address[] memory witnesses = _decodeDepositData(_depositData);
-        console.logBytes(_depositData);
-        console.log("witnesses.length", witnesses.length);
 
         verifyProofSignatures(proof, witnesses, MIN_WITNESS_SIGNATURE_REQUIRED);     // claim must have at least 1 signature from witnesses
 
@@ -140,10 +136,6 @@ contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier
             MAX_EXTRACT_VALUES,
             true
         );
-        for (uint256 i = 0; i < values.length; i++) {
-            console.log("values[%s]: %s", i, values[i]);
-        }
-
         // TODO: toss dateString is Korean timezone, so we need to convert it to UTC
 
         return PaymentDetails({

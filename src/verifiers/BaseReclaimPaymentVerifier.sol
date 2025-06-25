@@ -109,7 +109,6 @@ contract BaseReclaimPaymentVerifier is IReclaimVerifier, BasePaymentVerifier {
 
         for (uint256 i = 0; i < claimSigners.length; i++) {
             address currSigner = claimSigners[i];
-            console.log("currSigner", currSigner);
             if (seenSigners.contains(currSigner)) {
                 continue;
             }
@@ -120,8 +119,6 @@ contract BaseReclaimPaymentVerifier is IReclaimVerifier, BasePaymentVerifier {
             }
         }
 
-        console.log("validWitnessSignatures", validWitnessSignatures);
-        console.log("requiredThreshold", _requiredThreshold);
         require(
             validWitnessSignatures >= _requiredThreshold,
             "Fewer witness signatures than required threshold"
