@@ -10,7 +10,7 @@ bun install
 ### Deploy Contracts
 
 ```sh
-forge script script/deploy/DeployKRW.s.sol --rpc-url holesky --broadcast --private-key $TESTNET_PRIVATE_KEY
+forge script script/deploy/DeployKRW.s.sol --rpc-url holesky --private-key $TESTNET_PRIVATE_KEY --broadcast
 
 forge script script/deploy/DeployZkMinter.s.sol --rpc-url holesky --private-key $TESTNET_PRIVATE_KEY --broadcast
 ```

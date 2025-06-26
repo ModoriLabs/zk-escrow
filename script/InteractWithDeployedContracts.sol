@@ -5,12 +5,12 @@ import "forge-std/src/Script.sol";
 import { TossBankReclaimVerifier } from "src/verifiers/TossBankReclaimVerifier.sol";
 import { NullifierRegistry } from "src/verifiers/nullifierRegistries/NullifierRegistry.sol";
 import { ZkMinter, IZkMinter } from "../src/ZkMinter.sol";
-import { MockUSDT } from "../src/MockUSDT.sol";
+import { KRW } from "../src/KRW.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract InteractWithDeployedContracts is Script {
     // Deployed contract addresses from the deployment
-    address constant MOCK_USDT = 0x5FbDB2315678afecb367f032d93F642f64180aa3;
+    address constant KRW_TOKEN = 0x5FbDB2315678afecb367f032d93F642f64180aa3;
     address constant NULLIFIER_REGISTRY = 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512;
     address constant ZK_MINTER = 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0;
     address constant TOSS_BANK_VERIFIER = 0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9;
@@ -30,29 +30,33 @@ contract InteractWithDeployedContracts is Script {
         vm.startBroadcast(privateKey);
 
         // Get contract instances
-        MockUSDT usdt = MockUSDT(MOCK_USDT);
+        KRW krw = KRW(KRW_TOKEN);
         NullifierRegistry nullifierRegistry = NullifierRegistry(NULLIFIER_REGISTRY);
         ZkMinter zkMinter = ZkMinter(ZK_MINTER);
         TossBankReclaimVerifier verifier = TossBankReclaimVerifier(TOSS_BANK_VERIFIER);
 
         // Example interactions:
 
-        // 1. Check USDT balance
-        uint256 balance = usdt.balanceOf(caller);
-        console.log("USDT balance:", balance);
+        // 1. Check KRW balance
+        uint256 balance = krw.balanceOf(caller);
+        console.log("KRW balance:", balance);
 
         // 2. Check if caller is a writer in nullifier registry
         bool isWriter = nullifierRegistry.isWriter(caller);
         console.log("Is writer in nullifier registry:", isWriter);
 
-        // 3. Get verifiers count in zkMinter
+        // 3. Check if ZkMinter has MINTER_ROLE on KRW
+        bool hasMinterRole = krw.hasRole(krw.MINTER_ROLE(), ZK_MINTER);
+        console.log("ZkMinter has MINTER_ROLE on KRW:", hasMinterRole);
+
+        // 4. Get verifiers count in zkMinter
         address[] memory verifiers = getVerifiers(zkMinter);
         console.log("Number of verifiers:", verifiers.length);
         if (verifiers.length > 0) {
             console.log("First verifier:", verifiers[0]);
         }
 
-        // 4. Signal an intent (example)
+        // 5. Signal an intent (example)
         if (caller == OWNER) {
             console.log("\n=== Signaling Intent ===");
             try zkMinter.signalIntent(ALICE, 1000 * 1e18, TOSS_BANK_VERIFIER) {
@@ -75,10 +79,14 @@ contract InteractWithDeployedContracts is Script {
             }
         }
 
+        // 6. Check KRW total supply
+        uint256 totalSupply = krw.totalSupply();
+        console.log("KRW total supply:", totalSupply);
+
         vm.stopBroadcast();
 
         console.log("\n=== CONTRACT ADDRESSES ===");
-        console.log("MockUSDT:", MOCK_USDT);
+        console.log("KRW:", KRW_TOKEN);
         console.log("NullifierRegistry:", NULLIFIER_REGISTRY);
         console.log("ZkMinter:", ZK_MINTER);
         console.log("TossBankReclaimVerifier:", TOSS_BANK_VERIFIER);
