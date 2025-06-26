@@ -37,6 +37,7 @@ RECIPIENT_ADDRESS=0x189027e3C77b3a92fd01bF7CC4E6a86E77F5034E AMOUNT=1000000 forg
 
 | Contracts                    | Address                                                                                                                  |
 |------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| KRW | [0x563adF558a06E0196C73621fAa491cFb5Eb55912](https://holesky.etherscan.io/address/0x563adF558a06E0196C73621fAa491cFb5Eb55912) |
 | USDT | [0x0350BFB59c0b6dA993E6eBfd0405A7C59B97F253](https://holesky.etherscan.io/address/0x0350BFB59c0b6dA993E6eBfd0405A7C59B97F253) |
 | NullifierRegistry | [0xac9CE0086Aade5F090F5FD09E0c6146719A6DfF5](https://holesky.etherscan.io/address/0xac9CE0086Aade5F090F5FD09E0c6146719A6DfF5) |
 | ZkMinter | [0x8C5fBa120D336020894ae468B7816F729d365db0](https://holesky.etherscan.io/address/0x8C5fBa120D336020894ae468B7816F729d365db0) |
