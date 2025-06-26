@@ -41,6 +41,14 @@ forge script script/TossBankReclaimVerifier.s.sol --rpc-url holesky --broadcast 
 
 ### holesky (test)
 
+| Contracts                    | Address                                                                                                                  |
+|------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| KRW | [0xc3E6F8eA0742B3546798Ae3d81914B86fBd91bC1](https://holesky.etherscan.io/address/0xc3E6F8eA0742B3546798Ae3d81914B86fBd91bC1) |
+| NullifierRegistry | [0x53326A8e6efCec1502E13bBB61EF125EB6207e73](https://holesky.etherscan.io/address/0x53326A8e6efCec1502E13bBB61EF125EB6207e73) |
+| TossBankReclaimVerifier | [0xf6f8eE07842f65B9a59721E0f8c3C7B489b810A5](https://holesky.etherscan.io/address/0xf6f8eE07842f65B9a59721E0f8c3C7B489b810A5) |
+| USDT | [0x0350BFB59c0b6dA993E6eBfd0405A7C59B97F253](https://holesky.etherscan.io/address/0x0350BFB59c0b6dA993E6eBfd0405A7C59B97F253) |
+| ZkMinter | [0x3185294eb121a4962ce0D77FAF1D503Ae2127179](https://holesky.etherscan.io/address/0x3185294eb121a4962ce0D77FAF1D503Ae2127179) |
+
 ### holesky (prod)
 
 - owner: 0x189027e3c77b3a92fd01bf7cc4e6a86e77f5034e
