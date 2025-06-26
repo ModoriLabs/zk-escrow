@@ -14,6 +14,12 @@ forge script script/DeployMockUSDT.s.sol --rpc-url minato --broadcast --private-
 forge script script/DeployVault.s.sol --rpc-url minato --broadcast --private-key $PRIVATE_KEY
 ```
 
+### TossBankReclaimerVerifier
+
+```sh
+forge script script/TossBankReclaimVerifier.s.sol --rpc-url holesky --broadcast --private-key $TESTNET_PRIVATE_KEY --sig addProviderHash
+```
+
 ### Enroll & Claim
 
 ```sh
