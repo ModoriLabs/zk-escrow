@@ -64,6 +64,31 @@ abstract contract BaseScript is Script {
 
     /**
      * @dev Helper function to read contract address from deployments JSON file
+     * @param contractName The name of the contract to get address for
+     * @return The contract address for the current chain
+     */
+    function _getDeployedAddress(string memory contractName) internal view returns (address) {
+        uint256 chainId = block.chainid;
+        string memory root = vm.projectRoot();
+        string memory path = string.concat(root, "/deployments/", vm.toString(chainId), "-deploy.json");
+
+        console.log("Reading deployment file:", path);
+
+        try vm.readFile(path) returns (string memory json) {
+            string memory key = string.concat(".", contractName);
+            address contractAddress = vm.parseJsonAddress(json, key);
+
+            require(contractAddress != address(0), string.concat(contractName, " address not found in deployment file"));
+            console.log(string.concat(contractName, " address:"), contractAddress);
+
+            return contractAddress;
+        } catch {
+            revert(string.concat("Failed to read deployment file: ", path));
+        }
+    }
+
+    /**
+     * @dev Legacy function for backward compatibility
      * @param chainId The chain ID to read deployments for
      * @param contractName The name of the contract to get address for
      * @return The contract address
@@ -72,13 +97,70 @@ abstract contract BaseScript is Script {
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/deployments/", vm.toString(chainId), "-deploy.json");
 
-        // Check if file exists
         try vm.readFile(path) returns (string memory json) {
             string memory key = string.concat(".", contractName);
             return vm.parseJsonAddress(json, key);
         } catch {
             revert(string.concat("Failed to read deployment file or contract not found: ", path, " -> ", contractName));
         }
+    }
+
+    /**
+     * @dev Helper function to read owner address from config.json
+     * @param chainId The chain ID to get owner for
+     * @return owner The owner address for the specified chain
+     */
+    function _getOwnerFromConfig(uint256 chainId) internal view returns (address owner) {
+        string memory root = vm.projectRoot();
+        string memory path = string.concat(root, "/script/config.json");
+
+        console.log("Reading config file:", path);
+
+        try vm.readFile(path) returns (string memory json) {
+            string memory key = string.concat(".", vm.toString(chainId), ".owner");
+            address ownerAddress = vm.parseJsonAddress(json, key);
+
+            require(ownerAddress != address(0), string.concat("Owner address not found for chain ID: ", vm.toString(chainId)));
+            console.log("Owner address from config:", ownerAddress);
+
+            return ownerAddress;
+        } catch {
+            console.log("Failed to read config file or owner not found, using broadcaster as default");
+            return broadcaster;
+        }
+    }
+
+        /**
+     * @dev Helper function to update deployment file with new contract address
+     * @param contractName The name of the contract to update
+     * @param contractAddress The address of the deployed contract
+     */
+    function _updateDeploymentFile(string memory contractName, address contractAddress) internal {
+        uint256 chainId = block.chainid;
+        string memory root = vm.projectRoot();
+        string memory path = string.concat(root, "/deployments/", vm.toString(chainId), "-deploy.json");
+
+        // Read existing deployment file
+        string memory existingJson = "{}";
+        try vm.readFile(path) returns (string memory json) {
+            existingJson = json;
+        } catch {
+            // File doesn't exist, use empty object
+        }
+
+        // Parse existing JSON and add/update the new contract
+        string memory objectKey = "deployment";
+
+        // Start with existing data
+        vm.serializeJson(objectKey, existingJson);
+
+        // Add/update the specific contract address
+        string memory updatedJson = vm.serializeAddress(objectKey, contractName, contractAddress);
+
+        // Write the updated deployment file
+        vm.writeFile(path, updatedJson);
+        console.log("Updated deployment file:", path);
+        console.log(string.concat("Added/Updated ", contractName, ":"), contractAddress);
     }
 
     modifier broadcast() {

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "./Base.s.sol";
-import { TossBankReclaimVerifier } from "../src/verifiers/TossBankReclaimVerifier.sol";
-import { NullifierRegistry } from "../src/verifiers/nullifierRegistries/NullifierRegistry.sol";
-import { INullifierRegistry } from "../src/verifiers/nullifierRegistries/INullifierRegistry.sol";
-import { ZkMinter } from "../src/ZkMinter.sol";
-import { IMintableERC20 } from "../src/interfaces/IMintableERC20.sol";
+import "script/Base.s.sol";
+import { TossBankReclaimVerifier } from "src/verifiers/TossBankReclaimVerifier.sol";
+import { NullifierRegistry } from "src/verifiers/nullifierRegistries/NullifierRegistry.sol";
+import { INullifierRegistry } from "src/verifiers/nullifierRegistries/INullifierRegistry.sol";
+import { ZkMinter } from "src/ZkMinter.sol";
+import { IMintableERC20 } from "src/interfaces/IMintableERC20.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 
 contract DeployZkMinterScript is BaseScript {
@@ -22,12 +22,12 @@ contract DeployZkMinterScript is BaseScript {
     function run() public {
         address deployer = broadcaster;
         // Get USDT address from deployments file
-        uint256 chainId = 17000; // You can also get this from vm.envUint("CHAIN_ID") if needed
-        address usdtAddress = _getDeployedAddress(chainId, "KORTProxy");
+        uint256 chainId = block.chainid;
+        address krwAddress = _getDeployedAddress(chainId, "KRW");
 
         console.log("Deployer address:", deployer);
         console.log("Deployer balance:", deployer.balance);
-        console.log("Using USDT address:", usdtAddress);
+        console.log("Using KRW address:", krwAddress);
 
         vm.startBroadcast(broadcaster);
 
@@ -36,7 +36,7 @@ contract DeployZkMinterScript is BaseScript {
         console.log("NullifierRegistry deployed at:", address(nullifierRegistry));
 
         // Deploy ZkMinter
-        zkMinter = new ZkMinter(deployer, usdtAddress);
+        zkMinter = new ZkMinter(deployer, krwAddress);
         console.log("ZkMinter deployed at:", address(zkMinter));
 
         // Deploy TossBankReclaimVerifier
@@ -47,8 +47,8 @@ contract DeployZkMinterScript is BaseScript {
             address(zkMinter),
             INullifierRegistry(address(nullifierRegistry)),
             timestampBuffer,
-            new bytes32[](0), // Empty provider hashes array
-            new string[](0)   // Empty provider names array
+            new bytes32[](0), // empty currencies
+            providerHashes
         );
         console.log("TossBankReclaimVerifier deployed at:", address(tossBankReclaimVerifier));
 
@@ -59,7 +59,7 @@ contract DeployZkMinterScript is BaseScript {
         // Setup verifier data (same as in BaseTest.sol)
         address[] memory addresses = new address[](1);
         // TODO: create chain specific config
-        addresses[0] = 0x189027e3C77b3a92fd01bF7CC4E6a86E77F5034E;
+        addresses[0] = _getOwnerFromConfig(chainId);
         bytes memory data = abi.encode(addresses);
 
         string memory bankAccount = vm.envString("BANK_ACCOUNT"); // unicode"1000-0000-0000(토스뱅크)"
@@ -71,12 +71,12 @@ contract DeployZkMinterScript is BaseScript {
         console.log("Added write permission to TossBankReclaimVerifier");
 
         // Grant MINTER_ROLE to ZkMinter (if the USDT contract supports role-based access)
-        IAccessControl(usdtAddress).grantRole(keccak256("MINTER_ROLE"), address(zkMinter));
+        IAccessControl(krwAddress).grantRole(keccak256("MINTER_ROLE"), address(zkMinter));
         vm.stopBroadcast();
 
         // Log final addresses
         console.log("\n=== DEPLOYMENT SUMMARY ===");
-        console.log("USDT Address:", usdtAddress);
+        console.log("KRW Address:", krwAddress);
         console.log("NullifierRegistry:", address(nullifierRegistry));
         console.log("ZkMinter:", address(zkMinter));
         console.log("TossBankReclaimVerifier:", address(tossBankReclaimVerifier));

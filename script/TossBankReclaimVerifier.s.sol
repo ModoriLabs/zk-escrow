@@ -4,6 +4,17 @@ pragma solidity ^0.8.13;
 import "./Base.s.sol";
 import { TossBankReclaimVerifier } from "../src/verifiers/TossBankReclaimVerifier.sol";
 
+/*
+Usage Examples:
+
+# Add provider hash to existing verifier
+forge script script/TossBankReclaimVerifier.s.sol \
+  --rpc-url holesky --broadcast --private-key $TESTNET_PRIVATE_KEY \
+  --sig "addProviderHash()"
+
+Note: Contract addresses are automatically loaded from deployments/{chainId}-deploy.json
+*/
+
 contract TossBankReclaimVerifierScript is BaseScript {
 
     // Provider hash from BaseTest.sol
@@ -14,15 +25,8 @@ contract TossBankReclaimVerifierScript is BaseScript {
         console.log("Chain ID:", chainId);
         console.log("Broadcaster:", broadcaster);
 
-        // Get TossBankReclaimVerifier address from deployments
-        address tossBankVerifierAddress;
-
-        if (chainId == 17000) { // holesky
-            tossBankVerifierAddress = _getDeployedAddress(chainId, "TossBankReclaimVerifier");
-        } else {
-            revert("Unsupported chain ID. Please add the deployed address for this chain.");
-        }
-
+        // Get TossBankReclaimVerifier address using the generic function
+        address tossBankVerifierAddress = _getDeployedAddress("TossBankReclaimVerifier");
         console.log("TossBankReclaimVerifier address:", tossBankVerifierAddress);
 
         // Get contract instance
@@ -49,4 +53,6 @@ contract TossBankReclaimVerifierScript is BaseScript {
             console.log("Provider hash", i, ":", allProviderHashes[i]);
         }
     }
+
+
 }

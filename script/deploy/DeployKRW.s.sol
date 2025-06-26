@@ -2,10 +2,16 @@
 pragma solidity ^0.8.0;
 
 import "src/KRW.sol";
-import "./Base.s.sol";
+import "script/Base.s.sol";
 
 contract DeployKRW is BaseScript {
     function run() external {
+        address prevKRW = _getDeployedAddress(block.chainid, "KRW");
+        if (prevKRW != address(0)) {
+            console.log("KRW already deployed at:", prevKRW);
+            return; // Exit if already deployed
+        }
+
         vm.startBroadcast();
         address owner = broadcaster;
         KRW krw = new KRW(owner);
@@ -14,6 +20,8 @@ contract DeployKRW is BaseScript {
         console.log("Owner:", owner);
         console.log("Owner balance:", krw.balanceOf(owner));
         vm.stopBroadcast();
+
+        _updateDeploymentFile("KRW", address(krw));
 
         // Save deployment info for verification
         console.log("\n=== DEPLOYMENT SUMMARY ===");
