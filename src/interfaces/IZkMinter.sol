@@ -34,6 +34,10 @@ interface IZkMinter {
         uint256 amount
     );
 
+    event IntentCancelled(
+        uint256 intentId
+    );
+
     error InvalidAmount();
     error IntentNotFound();
 }

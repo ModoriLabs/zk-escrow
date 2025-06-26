@@ -55,10 +55,17 @@ contract ZkMinter is Ownable, Pausable, IZkMinter {
         emit IntentSignaled(_to, _verifier, _amount, intentId);
     }
 
-    // allowed even when paused
-//    function cancelIntent() external {
-//        // TODO:
-//    }
+    /**
+     * @notice Only callable by the originator of the intent. Allowed even when paused.
+     *
+     * @param _intentId    ID of intent being cancelled
+     */
+    function cancelIntent(uint256 _intentId) external {
+        Intent memory intent = intents[_intentId];
+        require(intent.owner == msg.sender, "Sender must be the intent owner");
+        _pruneIntent(_intentId);
+        emit IntentCancelled(_intentId);
+    }
 
     function fulfillIntent(
         bytes calldata _paymentProof,

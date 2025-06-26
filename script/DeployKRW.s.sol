@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "src/KRW.sol";
-import {BaseScript} from "./Base.s.sol";
-import {console} from "forge-std/src/console.sol";
+import "./Base.s.sol";
 
 contract DeployKRW is BaseScript {
     function run() external {
@@ -23,8 +22,5 @@ contract DeployKRW is BaseScript {
         console.log("Owner:", owner);
         console.log("Constructor args:", owner);
         console.log("========================\n");
-
-        console.log("To verify this contract, run:");
-        console.log("forge verify-contract", address(krw), "src/KRW.sol:KRW --chain-id", block.chainid, "--constructor-args", abi.encode(owner), "--etherscan-api-key $ETHERSCAN_API_KEY");
     }
 }

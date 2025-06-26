@@ -21,10 +21,6 @@ contract ZkMinterTest is BaseTest {
         assertEq(zkMinter.accountIntent(sender), 1);
     }
 
-    function test_CancelIntent() public {
-        // TODO:
-    }
-
     function test_RevertWhen_fulfillIntent_WithWrongIntentId() public {
         vm.expectRevert(IZkMinter.IntentNotFound.selector);
         _fulfillIntent();
