@@ -6,13 +6,13 @@ import { TossBankReclaimVerifier } from "src/verifiers/TossBankReclaimVerifier.s
 import { NullifierRegistry } from "src/verifiers/nullifierRegistries/NullifierRegistry.sol";
 import { INullifierRegistry } from "src/verifiers/nullifierRegistries/INullifierRegistry.sol";
 import { ZkMinter } from "../src/ZkMinter.sol";
-import { MockUSDT } from "../src/MockUSDT.sol";
+import { KRW } from "../src/KRW.sol";
 
 contract DeployTestSetup is Script {
     TossBankReclaimVerifier public tossBankReclaimVerifier;
     NullifierRegistry public nullifierRegistry;
     ZkMinter public zkMinter;
-    MockUSDT public usdt;
+    KRW public krw;
 
     string public constant PROVIDER_HASH = "0xffb501528259e6d684e1c2153fbbacab453fe9c97c336dc4f8f48d70a0e2a13d";
     uint256 public timestampBuffer = 60;
@@ -26,16 +26,16 @@ contract DeployTestSetup is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        // Deploy MockUSDT first
-        usdt = new MockUSDT(deployer);
-        console.log("MockUSDT deployed at:", address(usdt));
+        // Deploy KRW first
+        krw = new KRW(deployer);
+        console.log("KRW deployed at:", address(krw));
 
         // Deploy NullifierRegistry
         nullifierRegistry = new NullifierRegistry(deployer);
         console.log("NullifierRegistry deployed at:", address(nullifierRegistry));
 
         // Deploy ZkMinter
-        zkMinter = new ZkMinter(deployer, address(usdt));
+        zkMinter = new ZkMinter(deployer, address(krw));
         console.log("ZkMinter deployed at:", address(zkMinter));
 
         // Deploy TossBankReclaimVerifier
@@ -69,13 +69,13 @@ contract DeployTestSetup is Script {
         nullifierRegistry.addWritePermission(address(tossBankReclaimVerifier));
         console.log("Added write permission to nullifier registry");
 
-        usdt.transferOwnership(address(zkMinter));
-        console.log("Transferred ownership of MockUSDT to ZkMinter");
+        krw.transferOwnership(address(zkMinter));
+        console.log("Transferred ownership of KRW to ZkMinter");
         vm.stopBroadcast();
 
         // Print summary
         console.log("\n=== DEPLOYMENT SUMMARY ===");
-        console.log("MockUSDT:", address(usdt));
+        console.log("KRW:", address(krw));
         console.log("NullifierRegistry:", address(nullifierRegistry));
         console.log("ZkMinter:", address(zkMinter));
         console.log("TossBankReclaimVerifier:", address(tossBankReclaimVerifier));
