@@ -14,6 +14,7 @@ contract DeployZkMinterScript is BaseScript {
     NullifierRegistry public nullifierRegistry;
     ZkMinter public zkMinter;
 
+    string public constant PROVIDER_HASH = "0xffb501528259e6d684e1c2153fbbacab453fe9c97c336dc4f8f48d70a0e2a13d";
     uint256 public timestampBuffer = 60;
 
     function setUp() public {}
@@ -39,6 +40,8 @@ contract DeployZkMinterScript is BaseScript {
         console.log("ZkMinter deployed at:", address(zkMinter));
 
         // Deploy TossBankReclaimVerifier
+        string[] memory providerHashes = new string[](1);
+        providerHashes[0] = PROVIDER_HASH;
         tossBankReclaimVerifier = new TossBankReclaimVerifier(
             deployer,
             address(zkMinter),
