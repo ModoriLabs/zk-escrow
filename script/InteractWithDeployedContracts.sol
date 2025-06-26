@@ -45,9 +45,9 @@ contract InteractWithDeployedContracts is Script {
         bool isWriter = nullifierRegistry.isWriter(caller);
         console.log("Is writer in nullifier registry:", isWriter);
 
-        // 3. Check if ZkMinter has MINTER_ROLE on KRW
-        bool hasMinterRole = krw.hasRole(krw.MINTER_ROLE(), ZK_MINTER);
-        console.log("ZkMinter has MINTER_ROLE on KRW:", hasMinterRole);
+        // 3. Check if TossBankVerifier is a writer in nullifier registry
+        bool verifierIsWriter = nullifierRegistry.isWriter(TOSS_BANK_VERIFIER);
+        console.log("Is TossBankVerifier a writer:", verifierIsWriter);
 
         // 4. Get verifiers count in zkMinter
         address[] memory verifiers = getVerifiers(zkMinter);
@@ -56,7 +56,11 @@ contract InteractWithDeployedContracts is Script {
             console.log("First verifier:", verifiers[0]);
         }
 
-        // 5. Signal an intent (example)
+        // 5. Check if ZkMinter has MINTER_ROLE on KRW
+        bool hasMinterRole = krw.hasRole(krw.MINTER_ROLE(), ZK_MINTER);
+        console.log("ZkMinter has MINTER_ROLE:", hasMinterRole);
+
+        // 6. Signal an intent (example)
         if (caller == OWNER) {
             console.log("\n=== Signaling Intent ===");
             try zkMinter.signalIntent(ALICE, 1000 * 1e18, TOSS_BANK_VERIFIER) {
@@ -79,9 +83,23 @@ contract InteractWithDeployedContracts is Script {
             }
         }
 
-        // 6. Check KRW total supply
-        uint256 totalSupply = krw.totalSupply();
-        console.log("KRW total supply:", totalSupply);
+        // 7. Check verifier data
+        console.log("\n=== Verifier Data ===");
+        try zkMinter.verifierData(TOSS_BANK_VERIFIER) returns (string memory bankAccount, bytes memory witnessData) {
+            console.log("Bank Account:", bankAccount);
+            console.log("Witness Data Length:", witnessData.length);
+
+            // Decode witness addresses
+            if (witnessData.length > 0) {
+                address[] memory witnesses = abi.decode(witnessData, (address[]));
+                console.log("Number of witnesses:", witnesses.length);
+                if (witnesses.length > 0) {
+                    console.log("First witness:", witnesses[0]);
+                }
+            }
+        } catch Error(string memory reason) {
+            console.log("Failed to get verifier data:", reason);
+        }
 
         vm.stopBroadcast();
 

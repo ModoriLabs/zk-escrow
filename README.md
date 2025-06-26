@@ -39,7 +39,9 @@ forge script script/TossBankReclaimVerifier.s.sol --rpc-url holesky --broadcast 
 
 ## Contract Addresses
 
-### holesky
+### holesky (test)
+
+### holesky (prod)
 
 - owner: 0x189027e3c77b3a92fd01bf7cc4e6a86e77f5034e
 
