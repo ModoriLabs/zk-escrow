@@ -53,13 +53,13 @@ contract DeployTestSetup is Script {
         console.log("Added verifier to zkMinter");
 
         // Setup - Set verifier data (same as in BaseTest.sol)
-        bytes memory data = new bytes(96); // 3 * 32 bytes
-        assembly {
-            mstore(add(data, 0x20), 0x20)                                    // offset
-            mstore(add(data, 0x40), 0x01)                                    // length
-            mstore(add(data, 0x60), 0x189027e3c77b3a92fd01bf7cc4e6a86e77f5034e) // address
-        }
-        zkMinter.setVerifierData(address(tossBankReclaimVerifier), "", data);
+        address[] memory addresses = new address[](1);
+        // TODO: create chain specific config
+        addresses[0] = 0x189027e3C77b3a92fd01bF7CC4E6a86E77F5034E;
+        bytes memory data = abi.encode(addresses);
+
+        string memory bankAccount = vm.envString("BANK_ACCOUNT"); // unicode"1000-0000-0000(토스뱅크)"
+        zkMinter.setVerifierData(address(tossBankReclaimVerifier), bankAccount, data);
         console.log("Set verifier data");
 
         // Setup - Add write permission to nullifier registry
