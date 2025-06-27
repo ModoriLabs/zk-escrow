@@ -1,16 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import "forge-std/src/Test.sol";
-import "forge-std/src/console2.sol";
+import "./BaseTest.sol";
 import "src/Vault.sol";
-import "src/MockUSDT.sol";
 
 string constant FROM_BINANCE_ID = "93260646";
 
-contract VaultTest is Test {
+contract VaultTest is BaseTest {
     Vault vault;
-    MockUSDT mockUsdt;
     uint256 amount = 5 * 1e6;
 
     uint256 privateKey = 123456789;
@@ -18,13 +15,14 @@ contract VaultTest is Test {
     // generate a new address
     address recipientAddress = makeAddr("recipientAddress");
 
-    function setUp() public {
+    function setUp() public override {
+        super.setUp();
+
         console2.log("Notary address: %s", notary);
 
-        mockUsdt = new MockUSDT();
-
-        vault = new Vault(address(mockUsdt), notary);
-        mockUsdt.mint(address(vault), 100 * 1e6);
+        vault = new Vault(address(usdt), notary);
+        vm.prank(owner);
+        usdt.mint(address(vault), 100 * 1e6);
     }
 
     function testEnroll() public {
@@ -40,19 +38,19 @@ contract VaultTest is Test {
     }
 
     function testEnrollTooMuch() public {
-        uint256 amount = 11 * 1e6; // 11 USDT with 6 decimals, exceeds the 10 USDT limit
+        uint256 excessiveAmount = 11 * 1e6; // 11 USDT with 6 decimals, exceeds the 10 USDT limit
         vm.expectRevert("Amount exceeds 10 USDT limit");
-        vault.enroll(FROM_BINANCE_ID, recipientAddress, amount);
+        vault.enroll(FROM_BINANCE_ID, recipientAddress, excessiveAmount);
     }
 
     function testClaim() public {
-        uint256 amount = 5 * 1e6; // 8 USDT with 6 decimals
+        uint256 claimAmount = 5 * 1e6; // 5 USDT with 6 decimals
         // new user
-        vault.enroll(FROM_BINANCE_ID, recipientAddress, amount);
+        vault.enroll(FROM_BINANCE_ID, recipientAddress, claimAmount);
         bytes32 enrollId = vault.recipientToEnrollId(recipientAddress);
 
         // make message hash (same as Vault.claim)
-        bytes32 messageHash = keccak256(abi.encodePacked(enrollId, amount));
+        bytes32 messageHash = keccak256(abi.encodePacked(enrollId, claimAmount));
 
         // sign message with notary's private key
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, messageHash);
@@ -61,9 +59,9 @@ contract VaultTest is Test {
         console2.logBytes32(r);
         console2.logBytes32(s);
 
-        uint256 recipientBalanceBefore = mockUsdt.balanceOf(recipientAddress);
-        vault.claim(enrollId, amount, v, r, s);
-        uint256 recipientBalanceAfter = mockUsdt.balanceOf(recipientAddress);
-        assertEq(recipientBalanceAfter - recipientBalanceBefore, amount, "Token transfer did not happen correctly");
+        uint256 recipientBalanceBefore = usdt.balanceOf(recipientAddress);
+        vault.claim(enrollId, claimAmount, v, r, s);
+        uint256 recipientBalanceAfter = usdt.balanceOf(recipientAddress);
+        assertEq(recipientBalanceAfter - recipientBalanceBefore, claimAmount, "Token transfer did not happen correctly");
     }
 }

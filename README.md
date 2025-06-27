@@ -10,20 +10,55 @@ bun install
 ### Deploy Contracts
 
 ```sh
-forge script script/DeployMockUSDT.s.sol --rpc-url minato --broadcast --private-key $PRIVATE_KEY
-forge script script/DeployVault.s.sol --rpc-url minato --broadcast --private-key $PRIVATE_KEY
+forge script script/deploy/DeployKRW.s.sol --rpc-url holesky --private-key $TESTNET_PRIVATE_KEY --broadcast
+
+forge script script/deploy/DeployZkMinter.s.sol --rpc-url holesky --private-key $TESTNET_PRIVATE_KEY --broadcast
 ```
 
-### Enroll & Claim
+### Verify contracts
 
 ```sh
-RECIPIENT_ADDRESS=0x189027e3C77b3a92fd01bF7CC4E6a86E77F5034E AMOUNT=1000000 FROM_BINANCE_ID=71035696 forge script script/VaultScript.sol:Enroll --rpc-url minato --broadcast --private-key $PRIVATE_KEY
+forge script script/VerifyContracts.s.sol \
+  --rpc-url holesky --private-key $TESTNET_PRIVATE_KEY \
+  --sig "verifyAll()" --ffi
+```
 
-RECIPIENT_ADDRESS=0x189027e3C77b3a92fd01bF7CC4E6a86E77F5034E AMOUNT=1000000 forge script script/VaultScript.
- sol:Claim --rpc-url minato --broadcast --private-key $PRIVATE_KEY
+### ZkMinter
+
+```sh
+BANK_ACCOUNT="100000000000(토스뱅크)" forge script script/ZkMinter.s.sol \
+  --rpc-url holesky --broadcast --private-key $TESTNET_PRIVATE_KEY \
+  --sig "setVerifierData()"
+```
+
+### TossBankReclaimerVerifier
+
+```sh
+forge script script/TossBankReclaimVerifier.s.sol --rpc-url holesky --broadcast --private-key $TESTNET_PRIVATE_KEY --sig addProviderHash
 ```
 
 ## Contract Addresses
+
+### holesky (test)
+| Contracts               | Address                                                                                                                       |
+|-------------------------|-------------------------------------------------------------------------------------------------------------------------------|
+| KRW                     | [0xc3E6F8eA0742B3546798Ae3d81914B86fBd91bC1](https://holesky.etherscan.io/address/0xc3E6F8eA0742B3546798Ae3d81914B86fBd91bC1) |
+| NullifierRegistry       | [0xe889eab05a95ADE68CE95CD1672C019B84438347](https://holesky.etherscan.io/address/0xe889eab05a95ADE68CE95CD1672C019B84438347) |
+| TossBankReclaimVerifier | [0xCd75e19BC082cd73732d0c3F080F663B4FCE9661](https://holesky.etherscan.io/address/0xCd75e19BC082cd73732d0c3F080F663B4FCE9661) |
+| USDT                    | [0x0350BFB59c0b6dA993E6eBfd0405A7C59B97F253](https://holesky.etherscan.io/address/0x0350BFB59c0b6dA993E6eBfd0405A7C59B97F253) |
+| ZkMinter                | [0x335Ad63735104ad98B62cE5521AAb22EFA1da6eA](https://holesky.etherscan.io/address/0x335Ad63735104ad98B62cE5521AAb22EFA1da6eA) |
+
+### holesky (prod)
+
+- owner: 0x189027e3c77b3a92fd01bf7cc4e6a86e77f5034e
+
+| Contracts               | Address                                                                                                                       |
+|-------------------------|-------------------------------------------------------------------------------------------------------------------------------|
+| KRW                     | [0x30F9Cb0c288B06A053fa57448f98bBaC8f1604ED](https://holesky.etherscan.io/address/0x30F9Cb0c288B06A053fa57448f98bBaC8f1604ED) |
+| USDT                    | [0x0350BFB59c0b6dA993E6eBfd0405A7C59B97F253](https://holesky.etherscan.io/address/0x0350BFB59c0b6dA993E6eBfd0405A7C59B97F253) |
+| NullifierRegistry       | [0x53326A8e6efCec1502E13bBB61EF125EB6207e73](https://holesky.etherscan.io/address/0x53326A8e6efCec1502E13bBB61EF125EB6207e73) |
+| ZkMinter                | [0x3185294eb121a4962ce0D77FAF1D503Ae2127179](https://holesky.etherscan.io/address/0x3185294eb121a4962ce0D77FAF1D503Ae2127179) |
+| TossBankReclaimVerifier | [0xf6f8eE07842f65B9a59721E0f8c3C7B489b810A5](https://holesky.etherscan.io/address/0xf6f8eE07842f65B9a59721E0f8c3C7B489b810A5) |
 
 ### minato
 
