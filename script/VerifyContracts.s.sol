@@ -43,8 +43,6 @@ contract VerifyContracts is BaseScript {
         _verifyKRW(contracts.krw);
     }
 
-
-
     function verifyNullifierRegistry() public {
         DeployedContracts memory contracts = _loadDeployedContracts();
         _verifyNullifierRegistry(contracts.nullifierRegistry);
