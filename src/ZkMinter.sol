@@ -127,7 +127,7 @@ contract ZkMinter is Ownable, Pausable, IZkMinter {
         });
 
         accountRedeemRequest[msg.sender] = redeemId;
-        emit RedeemRequestSignaled(msg.sender, _amount, redeemId);
+        emit RedeemRequestSignaled(redeemId, msg.sender, _amount, _accountNumber);
     }
 
     /**

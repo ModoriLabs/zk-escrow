@@ -45,9 +45,10 @@ interface IZkMinter {
     );
 
     event RedeemRequestSignaled(
-        address owner,
+        uint256 indexed redeemId,
+        address indexed owner,
         uint256 amount,
-        uint256 redeemId
+        string accountNumber
     );
 
     event RedeemRequestFulfilled(
