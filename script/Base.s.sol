@@ -19,6 +19,8 @@ abstract contract BaseScript is Script {
     /// @dev Used to derive the broadcaster's address if $ETH_FROM is not defined.
     string internal mnemonic;
 
+    string internal deploymentFileSuffix = "-deploy.json";
+
     /// @dev Initializes the transaction broadcaster like this:
     ///
     /// - If $ETH_FROM is defined, use it.
@@ -67,10 +69,11 @@ abstract contract BaseScript is Script {
      * @param contractName The name of the contract to get address for
      * @return The contract address for the current chain
      */
-    function _getDeployedAddress(string memory contractName) internal view returns (address) {
+    function getDeployedAddress(string memory contractName) public view returns (address) {
+        console.log("chainId", block.chainid);
         uint256 chainId = block.chainid;
         string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/deployments/", vm.toString(chainId), "-deploy.json");
+        string memory path = string.concat(root, "/deployments/", vm.toString(chainId), deploymentFileSuffix);
 
         console.log("Reading deployment file:", path);
 
@@ -83,25 +86,7 @@ abstract contract BaseScript is Script {
 
             return contractAddress;
         } catch {
-            revert(string.concat("Failed to read deployment file: ", path));
-        }
-    }
-
-    /**
-     * @dev Legacy function for backward compatibility
-     * @param chainId The chain ID to read deployments for
-     * @param contractName The name of the contract to get address for
-     * @return The contract address
-     */
-    function _getDeployedAddress(uint256 chainId, string memory contractName) internal view returns (address) {
-        string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/deployments/", vm.toString(chainId), "-deploy.json");
-
-        try vm.readFile(path) returns (string memory json) {
-            string memory key = string.concat(".", contractName);
-            return vm.parseJsonAddress(json, key);
-        } catch {
-            revert(string.concat("Failed to read deployment file or contract not found: ", path, " -> ", contractName));
+            return address(0);
         }
     }
 
@@ -138,7 +123,7 @@ abstract contract BaseScript is Script {
     function _updateDeploymentFile(string memory contractName, address contractAddress) internal {
         uint256 chainId = block.chainid;
         string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/deployments/", vm.toString(chainId), "-deploy.json");
+        string memory path = string.concat(root, "/deployments/", vm.toString(chainId), deploymentFileSuffix);
 
         // Read existing deployment file
         string memory existingJson = "{}";

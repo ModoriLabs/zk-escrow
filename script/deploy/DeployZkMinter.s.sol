@@ -23,7 +23,7 @@ contract DeployZkMinterScript is BaseScript {
         address deployer = broadcaster;
         // Get USDT address from deployments file
         uint256 chainId = block.chainid;
-        address krwAddress = _getDeployedAddress(chainId, "KRW");
+        address krwAddress = getDeployedAddress("KRW");
 
         console.log("Deployer address:", deployer);
         console.log("Deployer balance:", deployer.balance);
@@ -31,13 +31,27 @@ contract DeployZkMinterScript is BaseScript {
 
         vm.startBroadcast(broadcaster);
 
-        // Deploy NullifierRegistry
-        nullifierRegistry = new NullifierRegistry(deployer);
-        console.log("NullifierRegistry deployed at:", address(nullifierRegistry));
+        // Check if NullifierRegistry already exists, otherwise deploy new one
+        address existingNullifierRegistry = getDeployedAddress("NullifierRegistry");
+
+        if (existingNullifierRegistry != address(0)) {
+            nullifierRegistry = NullifierRegistry(existingNullifierRegistry);
+            console.log("Using existing NullifierRegistry at:", address(nullifierRegistry));
+        } else {
+            // Deploy new NullifierRegistry if not found
+            nullifierRegistry = new NullifierRegistry(deployer);
+            console.log("NullifierRegistry deployed at:", address(nullifierRegistry));
+
+            // Update deployment file
+            _updateDeploymentFile("NullifierRegistry", address(nullifierRegistry));
+        }
 
         // Deploy ZkMinter
         zkMinter = new ZkMinter(deployer, krwAddress);
         console.log("ZkMinter deployed at:", address(zkMinter));
+
+        // Update deployment file for ZkMinter
+        _updateDeploymentFile("ZkMinter", address(zkMinter));
 
         // Deploy TossBankReclaimVerifier
         string[] memory providerHashes = new string[](1);
@@ -51,6 +65,9 @@ contract DeployZkMinterScript is BaseScript {
             providerHashes
         );
         console.log("TossBankReclaimVerifier deployed at:", address(tossBankReclaimVerifier));
+
+        // Update deployment file for TossBankReclaimVerifier
+        _updateDeploymentFile("TossBankReclaimVerifier", address(tossBankReclaimVerifier));
 
         // Setup - Add verifier to zkMinter
         zkMinter.addVerifier(address(tossBankReclaimVerifier));

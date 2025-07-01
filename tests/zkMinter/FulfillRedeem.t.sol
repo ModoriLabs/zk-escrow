@@ -21,11 +21,25 @@ contract FulfillRedeemTest is BaseTest {
         vm.stopPrank();
     }
 
-            // Helper function to mint tokens to alice for redeem tests
+    // Helper function to mint tokens to alice for redeem tests
     function _mintTokensToAlice() internal {
         // Since ZkMinter is the owner of USDT, we need to prank as the zkMinter contract
         vm.prank(address(zkMinter));
         usdt.mint(alice, REDEEM_AMOUNT);
+    }
+
+    function test_signalRedeem_EmitsEvent() public {
+        _mintTokensToAlice();
+
+        vm.startPrank(alice);
+        usdt.approve(address(zkMinter), REDEEM_AMOUNT);
+
+        // Expect RedeemRequestSignaled event to be emitted with correct parameters
+        vm.expectEmit(true, true, false, true);
+        emit IZkMinter.RedeemRequestSignaled(1, alice, REDEEM_AMOUNT, ACCOUNT_NUMBER);
+
+        zkMinter.signalRedeem(ACCOUNT_NUMBER, REDEEM_AMOUNT);
+        vm.stopPrank();
     }
 
     function test_fulfillRedeem_Success() public {

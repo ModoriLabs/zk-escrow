@@ -25,12 +25,14 @@ contract ZkMinterScript is BaseScript {
     }
 
     function _getDeployedAddresses() internal view returns (address zkMinterAddress, address tossBankVerifierAddress) {
-        console.log("Chain ID:", block.chainid);
-        console.log("Broadcaster:", broadcaster);
-
-        // Use the generic function from BaseScript
-        zkMinterAddress = _getDeployedAddress("ZkMinter");
-        tossBankVerifierAddress = _getDeployedAddress("TossBankReclaimVerifier");
+        zkMinterAddress = getDeployedAddress("ZkMinter");
+        if (zkMinterAddress == address(0)) {
+            revert("ZkMinter not deployed");
+        }
+        tossBankVerifierAddress = getDeployedAddress("TossBankReclaimVerifier");
+        if (tossBankVerifierAddress == address(0)) {
+            revert("TossBankReclaimVerifier not deployed");
+        }
     }
 
     function _setVerifierData(ZkMinter zkMinter, address tossBankVerifierAddress) internal {
@@ -70,15 +72,13 @@ contract ZkMinterScript is BaseScript {
         require(success, "Failed to grant MINTER_ROLE");
         console.log("Successfully granted MINTER_ROLE to ZkMinter");
     }
-
-
 }
 
 /*
 Usage Examples:
 
 # Set verifier data
-BANK_ACCOUNT="59733704003503(KB국민은행)" forge script script/ZkMinter.s.sol --rpc-url holesky --broadcast --private-key $TESTNET_PRIVATE_KEY --sig "setVerifierData()"
+BANK_ACCOUNT="59733700000000(KB국민은행)" forge script script/ZkMinter.s.sol --rpc-url holesky --broadcast --private-key $TESTNET_PRIVATE_KEY --sig "setVerifierData()"
 
 # Add verifier
 forge script script/ZkMinter.s.sol --rpc-url holesky --broadcast --private-key $TESTNET_PRIVATE_KEY --sig "addVerifier()"

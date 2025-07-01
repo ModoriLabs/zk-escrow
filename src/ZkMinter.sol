@@ -142,6 +142,7 @@ contract ZkMinter is Ownable, Pausable, IZkMinter {
 
         _pruneRedeemRequest(_redeemId);
 
+        // memory redeeRequest is not deleted
         IERC20(token).transfer(redeemRequest.owner, redeemRequest.amount);
         emit RedeemRequestCancelled(_redeemId);
     }

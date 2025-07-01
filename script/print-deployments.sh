@@ -7,7 +7,7 @@ if [ -z "$CHAIN_ID" ]; then
   exit 1
 fi
 
-DEPLOYMENT_FILE="deployments/${CHAIN_ID}-deploy.json"
+DEPLOYMENT_FILE="deployments/${CHAIN_ID}-test-deploy.json"
 
 if [ ! -f "$DEPLOYMENT_FILE" ]; then
   echo "Deployment file not found: $DEPLOYMENT_FILE"

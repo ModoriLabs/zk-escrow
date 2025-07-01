@@ -41,13 +41,13 @@ forge script script/TossBankReclaimVerifier.s.sol --rpc-url holesky --broadcast 
 
 ### holesky (test)
 
-| Contracts               | Address                                                                                                                       |
-|-------------------------|-------------------------------------------------------------------------------------------------------------------------------|
-| KRW                     | [0xc3E6F8eA0742B3546798Ae3d81914B86fBd91bC1](https://holesky.etherscan.io/address/0xc3E6F8eA0742B3546798Ae3d81914B86fBd91bC1) |
-| NullifierRegistry       | [0xe889eab05a95ADE68CE95CD1672C019B84438347](https://holesky.etherscan.io/address/0xe889eab05a95ADE68CE95CD1672C019B84438347) |
-| TossBankReclaimVerifier | [0xCd75e19BC082cd73732d0c3F080F663B4FCE9661](https://holesky.etherscan.io/address/0xCd75e19BC082cd73732d0c3F080F663B4FCE9661) |
-| USDT                    | [0x0350BFB59c0b6dA993E6eBfd0405A7C59B97F253](https://holesky.etherscan.io/address/0x0350BFB59c0b6dA993E6eBfd0405A7C59B97F253) |
-| ZkMinter                | [0x335Ad63735104ad98B62cE5521AAb22EFA1da6eA](https://holesky.etherscan.io/address/0x335Ad63735104ad98B62cE5521AAb22EFA1da6eA) |
+| Contracts                    | Address                                                                                                                  |
+|------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| KRW | [0xc3E6F8eA0742B3546798Ae3d81914B86fBd91bC1](https://holesky.etherscan.io/address/0xc3E6F8eA0742B3546798Ae3d81914B86fBd91bC1) |
+| NullifierRegistry | [0xe889eab05a95ADE68CE95CD1672C019B84438347](https://holesky.etherscan.io/address/0xe889eab05a95ADE68CE95CD1672C019B84438347) |
+| TossBankReclaimVerifier | [0xFE8516d717eA7e7D031061d371145c346f0464eD](https://holesky.etherscan.io/address/0xFE8516d717eA7e7D031061d371145c346f0464eD) |
+| USDT | [0x0350BFB59c0b6dA993E6eBfd0405A7C59B97F253](https://holesky.etherscan.io/address/0x0350BFB59c0b6dA993E6eBfd0405A7C59B97F253) |
+| ZkMinter | [0x075cA3A2D60D50654699552bD9d97205c51644aa](https://holesky.etherscan.io/address/0x075cA3A2D60D50654699552bD9d97205c51644aa) |
 
 ### holesky (prod)
 
