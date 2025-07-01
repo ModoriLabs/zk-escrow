@@ -4,8 +4,6 @@ pragma solidity 0.8.29;
 import "../BaseTest.sol";
 
 contract CancelIntentTest is BaseTest {
-    uint256 constant TEST_AMOUNT = 8750e6; // 8750 USDT with 6 decimals
-
     function setUp() public override {
         super.setUp();
     }
@@ -103,14 +101,5 @@ contract CancelIntentTest is BaseTest {
 
         // Verify intent was cancelled
         assertEq(zkMinter.accountIntent(address(this)), 0);
-    }
-
-    // Helper function
-    function _signalIntent() internal {
-        zkMinter.signalIntent({
-            _to: alice,
-            _amount: TEST_AMOUNT,
-            _verifier: address(tossBankReclaimVerifier)
-        });
     }
 }

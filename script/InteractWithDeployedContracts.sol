@@ -85,7 +85,7 @@ contract InteractWithDeployedContracts is Script {
 
         // 7. Check verifier data
         console.log("\n=== Verifier Data ===");
-        try zkMinter.verifierData(TOSS_BANK_VERIFIER) returns (string memory bankAccount, bytes memory witnessData) {
+        try zkMinter.depositVerifierData(TOSS_BANK_VERIFIER) returns (string memory bankAccount, bytes memory witnessData) {
             console.log("Bank Account:", bankAccount);
             console.log("Witness Data Length:", witnessData.length);
 

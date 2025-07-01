@@ -4,10 +4,6 @@ pragma solidity ^0.8.20;
 import "./BaseTest.sol";
 
 contract TossBankReclaimVerifierTest is BaseTest {
-    uint256 constant TEST_AMOUNT = 8750e6; // 8750 USDT with 6 decimals
-    // Test data as JSON string
-    // won does not work: Invalid character in string.
-
     function setUp() public override {
         super.setUp();
         _loadProof();
@@ -56,11 +52,13 @@ contract TossBankReclaimVerifierTest is BaseTest {
         _verifyPayment();
     }
 
+    // FIXME:
     function test_RevertWhen_VerifyPayment_PaymentTimestampIsOlderThanIntentTimestamp() public {
         vm.expectRevert("Invalid proof");
         _verifyPayment();
     }
 
+    // TODO:
     function test_VerifyPayment_TimezoneOffset() public {
         revert("Not implemented");
         // _verifyPayment();

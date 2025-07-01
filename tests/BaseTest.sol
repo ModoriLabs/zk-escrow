@@ -26,6 +26,8 @@ contract BaseTest is Test {
     address public owner = makeAddr("owner");
     address public alice = makeAddr("alice");
 
+    uint256 constant TEST_AMOUNT = 8750e6; // 8750 USDT with 6 decimals
+
     function setUp() public virtual {
         console.log("BaseTest setUp");
 
@@ -73,6 +75,23 @@ contract BaseTest is Test {
         ));
 
         return keccak256(bytes(concatenated));
+    }
+
+    function _signalIntent() internal {
+        zkMinter.signalIntent({
+            _to: alice,
+            _amount: 8750e6,
+            _verifier: address(tossBankReclaimVerifier)
+        });
+    }
+
+    function _fulfillIntent() internal {
+        _loadProof();
+        bytes memory paymentProof = abi.encode(proof);
+        zkMinter.fulfillIntent({
+            _paymentProof: paymentProof,
+            _intentId: 1
+        });
     }
 
     function _loadProof() internal {

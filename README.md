@@ -40,6 +40,7 @@ forge script script/TossBankReclaimVerifier.s.sol --rpc-url holesky --broadcast 
 ## Contract Addresses
 
 ### holesky (test)
+
 | Contracts               | Address                                                                                                                       |
 |-------------------------|-------------------------------------------------------------------------------------------------------------------------------|
 | KRW                     | [0xc3E6F8eA0742B3546798Ae3d81914B86fBd91bC1](https://holesky.etherscan.io/address/0xc3E6F8eA0742B3546798Ae3d81914B86fBd91bC1) |
@@ -62,7 +63,7 @@ forge script script/TossBankReclaimVerifier.s.sol --rpc-url holesky --broadcast 
 
 ### minato
 
-| Contracts              | Address                                                                                                                         |
-|------------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| Vault                   | [0x6292f3546cB1A31b501794E32A1F07cbd3641c90](https://soneium-minato.blockscout.com/address/0x6292f3546cB1A31b501794E32A1F07cbd3641c90) |
-| MockUSDT                   | [0xBb1CDa2F1F874A4a837302184F3c0159B27C0B41](https://soneium-minato.blockscout.com/address/0xBb1CDa2F1F874A4a837302184F3c0159B27C0B41) |
+| Contracts | Address                                                                                                                                |
+|-----------|----------------------------------------------------------------------------------------------------------------------------------------|
+| Vault     | [0x6292f3546cB1A31b501794E32A1F07cbd3641c90](https://soneium-minato.blockscout.com/address/0x6292f3546cB1A31b501794E32A1F07cbd3641c90) |
+| MockUSDT  | [0xBb1CDa2F1F874A4a837302184F3c0159B27C0B41](https://soneium-minato.blockscout.com/address/0xBb1CDa2F1F874A4a837302184F3c0159B27C0B41) |
