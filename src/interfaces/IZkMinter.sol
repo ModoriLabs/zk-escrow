@@ -19,6 +19,12 @@ interface IZkMinter {
         address paymentVerifier;                    // Address of the payment verifier corresponding to payment service the owner is
     }
 
+    struct RedeemRequest {
+        address owner;
+        uint256 amount;
+        uint256 timestamp;
+    }
+
     event IntentSignaled(
         address to,
         address verifier,
@@ -38,6 +44,23 @@ interface IZkMinter {
         uint256 intentId
     );
 
+    event RedeemRequestSignaled(
+        address owner,
+        uint256 amount,
+        uint256 redeemId
+    );
+
+    event RedeemRequestFulfilled(
+        uint256 redeemId
+    );
+
+    event RedeemRequestCancelled(
+        uint256 redeemId
+    );
+
     error InvalidAmount();
     error IntentNotFound();
+    error InvalidAccountNumber();
+    error RedeemRequestNotFound();
+    error RedeemAlreadyExists();
 }

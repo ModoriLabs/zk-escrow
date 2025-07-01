@@ -12,13 +12,17 @@ import { StringUtils } from "./external/ReclaimStringUtils.sol";
 
 contract ZkMinter is Ownable, Pausable, IZkMinter {
     address public token;
-    uint256 public intentCount = 0;
+    uint256 public intentCount;
+    uint256 public redeemCount;
 
     // Mapping of address to intentHash (Only one intent per address at a given time)
     mapping(address => uint256) public accountIntent;
     mapping(uint256 => Intent) public intents;
     address[] public verifiers;
     mapping(address => DepositVerifierData) public depositVerifierData;
+
+    mapping(address => uint256) public accountRedeemRequest;
+    mapping(uint256 => RedeemRequest) public redeemRequests;
 
     constructor(
         address _owner,
@@ -104,6 +108,60 @@ contract ZkMinter is Ownable, Pausable, IZkMinter {
         );
     }
 
+    function signalRedeem(
+        string calldata _accountNumber,
+        uint256 _amount
+    ) external whenNotPaused {
+        require(_amount > 0, InvalidAmount());
+        require(bytes(_accountNumber).length > 0, InvalidAccountNumber());
+        require(accountRedeemRequest[msg.sender] == 0, RedeemAlreadyExists());
+
+        // Transfer tokens from user to this contract for escrow
+        IERC20(token).transferFrom(msg.sender, address(this), _amount);
+
+        uint256 redeemId = ++redeemCount;
+        redeemRequests[redeemId] = RedeemRequest({
+            owner: msg.sender,
+            amount: _amount,
+            timestamp: block.timestamp
+        });
+
+        accountRedeemRequest[msg.sender] = redeemId;
+        emit RedeemRequestSignaled(msg.sender, _amount, redeemId);
+    }
+
+    /**
+     * @notice Only callable by the originator of the intent. Allowed even when paused.
+     * @dev Returns escrowed tokens back to user
+     *
+     * @param _redeemId    ID of redeem request being cancelled
+     */
+    function cancelRedeem(uint256 _redeemId) external {
+        RedeemRequest memory redeemRequest = redeemRequests[_redeemId];
+        require(redeemRequest.owner == msg.sender, "Sender must be the redeem request owner");
+
+        _pruneRedeemRequest(_redeemId);
+
+        IERC20(token).transfer(redeemRequest.owner, redeemRequest.amount);
+        emit RedeemRequestCancelled(_redeemId);
+    }
+
+    /**
+     * @notice Only callable by the owner. Allowed even when paused.
+     * @dev Burns escrowed tokens from this contract
+     *
+     * @param _redeemId    ID of redeem request being fulfilled
+     */
+    function fulfillRedeem(uint256 _redeemId) external onlyOwner {
+        RedeemRequest memory redeemRequest = redeemRequests[_redeemId];
+        require(redeemRequest.amount > 0, RedeemRequestNotFound());
+
+        IMintableERC20(token).burn(redeemRequest.amount);
+
+        _pruneRedeemRequest(_redeemId);
+        emit RedeemRequestFulfilled(_redeemId);
+    }
+
     // *** Governance functions ***
 
     function addVerifier(
@@ -140,7 +198,6 @@ contract ZkMinter is Ownable, Pausable, IZkMinter {
         });
     }
 
-
     function pause() external onlyOwner {
         _pause();
     }
@@ -150,8 +207,12 @@ contract ZkMinter is Ownable, Pausable, IZkMinter {
     }
 
     function _pruneIntent(uint256 _intentId) internal {
-        Intent memory intent = intents[_intentId];
-        delete accountIntent[intent.owner];
+        delete accountIntent[intents[_intentId].owner];
         delete intents[_intentId];
+    }
+
+    function _pruneRedeemRequest(uint256 _redeemId) internal {
+        delete accountRedeemRequest[redeemRequests[_redeemId].owner];
+        delete redeemRequests[_redeemId];
     }
 }
