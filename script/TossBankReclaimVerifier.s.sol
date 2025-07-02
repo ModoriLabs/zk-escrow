@@ -53,6 +53,4 @@ contract TossBankReclaimVerifierScript is BaseScript {
             console.log("Provider hash", i, ":", allProviderHashes[i]);
         }
     }
-
-
 }

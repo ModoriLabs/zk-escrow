@@ -63,7 +63,7 @@ contract VerifyContracts is BaseScript {
         console.log("Loading contracts for chain ID:", chainId);
 
         string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/deployments/", vm.toString(chainId), "-deploy.json");
+        string memory path = string.concat(root, "/deployments/", vm.toString(chainId), deploymentFileSuffix);
 
         console.log("Reading deployment file:", path);
 

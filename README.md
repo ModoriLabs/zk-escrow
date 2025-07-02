@@ -41,6 +41,8 @@ forge script script/TossBankReclaimVerifier.s.sol --rpc-url holesky --broadcast 
 
 ### holesky (test)
 
+- owner: 0x189027e3c77b3a92fd01bf7cc4e6a86e77f5034e
+
 | Contracts                    | Address                                                                                                                  |
 |------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | KRW | [0xc3E6F8eA0742B3546798Ae3d81914B86fBd91bC1](https://holesky.etherscan.io/address/0xc3E6F8eA0742B3546798Ae3d81914B86fBd91bC1) |
@@ -51,15 +53,14 @@ forge script script/TossBankReclaimVerifier.s.sol --rpc-url holesky --broadcast 
 
 ### holesky (prod)
 
-- owner: 0x189027e3c77b3a92fd01bf7cc4e6a86e77f5034e
+- owner: [0x2042c7E7A36CAB186189946ad751EAAe6769E661](https://holesky.etherscan.io/address/0x2042c7E7A36CAB186189946ad751EAAe6769E661)
 
-| Contracts               | Address                                                                                                                       |
-|-------------------------|-------------------------------------------------------------------------------------------------------------------------------|
-| KRW                     | [0x30F9Cb0c288B06A053fa57448f98bBaC8f1604ED](https://holesky.etherscan.io/address/0x30F9Cb0c288B06A053fa57448f98bBaC8f1604ED) |
-| USDT                    | [0x0350BFB59c0b6dA993E6eBfd0405A7C59B97F253](https://holesky.etherscan.io/address/0x0350BFB59c0b6dA993E6eBfd0405A7C59B97F253) |
-| NullifierRegistry       | [0x53326A8e6efCec1502E13bBB61EF125EB6207e73](https://holesky.etherscan.io/address/0x53326A8e6efCec1502E13bBB61EF125EB6207e73) |
-| ZkMinter                | [0x3185294eb121a4962ce0D77FAF1D503Ae2127179](https://holesky.etherscan.io/address/0x3185294eb121a4962ce0D77FAF1D503Ae2127179) |
-| TossBankReclaimVerifier | [0xf6f8eE07842f65B9a59721E0f8c3C7B489b810A5](https://holesky.etherscan.io/address/0xf6f8eE07842f65B9a59721E0f8c3C7B489b810A5) |
+| Contracts                    | Address                                                                                                                  |
+|------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| KRW | [0x72f91969485c7eFa53990FB0763fFA57Ba73F3Be](https://holesky.etherscan.io/address/0x72f91969485c7eFa53990FB0763fFA57Ba73F3Be) |
+| NullifierRegistry | [0xfE9a7603641e5Ac1cc155C62bAA7242dABf93B5a](https://holesky.etherscan.io/address/0xfE9a7603641e5Ac1cc155C62bAA7242dABf93B5a) |
+| TossBankReclaimVerifier | [0x945926B0945F6028D2A4190760341FCD51250f42](https://holesky.etherscan.io/address/0x945926B0945F6028D2A4190760341FCD51250f42) |
+| ZkMinter | [0xB2bACB93a5046Fa2A9b5709CB06d41dAb0De6D37](https://holesky.etherscan.io/address/0xB2bACB93a5046Fa2A9b5709CB06d41dAb0De6D37) |
 
 ### minato
 

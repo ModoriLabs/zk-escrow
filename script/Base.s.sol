@@ -79,12 +79,14 @@ abstract contract BaseScript is Script {
 
         try vm.readFile(path) returns (string memory json) {
             string memory key = string.concat(".", contractName);
-            address contractAddress = vm.parseJsonAddress(json, key);
-
-            require(contractAddress != address(0), string.concat(contractName, " address not found in deployment file"));
-            console.log(string.concat(contractName, " address:"), contractAddress);
-
-            return contractAddress;
+            try vm.parseJsonAddress(json, key) returns (address contractAddress) {
+                require(contractAddress != address(0), string.concat(contractName, " address not found in deployment file"));
+                console.log(string.concat(contractName, " address:"), contractAddress);
+                return contractAddress;
+            } catch {
+                console.log(string.concat("Failed to parse address for ", contractName, " from deployment file"));
+                return address(0);
+            }
         } catch {
             return address(0);
         }
