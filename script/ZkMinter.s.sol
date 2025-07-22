@@ -57,7 +57,7 @@ contract ZkMinterScript is BaseScript {
 
     function _grantMinterRole(address zkMinterAddress) internal {
         // Get KRW address using the generic function
-        address krwAddress = _getDeployedAddress("KRW");
+        address krwAddress = getDeployedAddress("KRW");
 
         console.log("Granting MINTER_ROLE to ZkMinter:", zkMinterAddress);
 
