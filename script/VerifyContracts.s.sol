@@ -19,7 +19,6 @@ contract VerifyContracts is BaseScript {
 
     struct DeployedContracts {
         address krw;
-        address usdt;
         address nullifierRegistry;
         address zkMinter;
         address tossBankReclaimVerifier;
@@ -69,21 +68,18 @@ contract VerifyContracts is BaseScript {
 
         try vm.readFile(path) returns (string memory json) {
             contracts.krw = vm.parseJsonAddress(json, ".KRW");
-            contracts.usdt = vm.parseJsonAddress(json, ".USDT");
             contracts.nullifierRegistry = vm.parseJsonAddress(json, ".NullifierRegistry");
             contracts.zkMinter = vm.parseJsonAddress(json, ".ZkMinter");
             contracts.tossBankReclaimVerifier = vm.parseJsonAddress(json, ".TossBankReclaimVerifier");
 
             console.log("Loaded addresses:");
             console.log("  KRW:", contracts.krw);
-            console.log("  USDT:", contracts.usdt);
             console.log("  NullifierRegistry:", contracts.nullifierRegistry);
             console.log("  ZkMinter:", contracts.zkMinter);
             console.log("  TossBankReclaimVerifier:", contracts.tossBankReclaimVerifier);
 
             // Validate addresses
             require(contracts.krw != address(0), "KRW address not found");
-            require(contracts.usdt != address(0), "USDT address not found");
             require(contracts.nullifierRegistry != address(0), "NullifierRegistry address not found");
             require(contracts.zkMinter != address(0), "ZkMinter address not found");
             require(contracts.tossBankReclaimVerifier != address(0), "TossBankReclaimVerifier address not found");
