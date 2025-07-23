@@ -16,13 +16,27 @@ contract Escrow is Ownable, Pausable, IEscrow {
     uint256 public redeemCount;
 
     // Mapping of address to intentHash (Only one intent per address at a given time)
+    mapping(address => uint256[]) public accountDeposits;
     mapping(address => uint256) public accountIntent;
+
+    mapping(uint256 => Deposit) public deposits;
     mapping(uint256 => Intent) public intents;
     address[] public verifiers;
     mapping(address => DepositVerifierData) public depositVerifierData;
 
+    // Mapping of depositId to verifier address to mapping of fiat currency to conversion rate. Each payment service can support
+    // multiple currencies. Depositor can specify list of currencies and conversion rates for each payment service.
+    // Example: Deposit 1 => Venmo => USD: 1e18
+    //                    => Revolut => USD: 1e18, EUR: 1.2e18, SGD: 1.5e18
+    mapping(uint256 => mapping(address => mapping(bytes32 => uint256))) public depositCurrencyConversionRate;
+    mapping(uint256 => mapping(address => bytes32[])) public depositCurrencies; // Handy mapping to get all currencies for a deposit and verifier
+
     mapping(address => uint256) public accountRedeemRequest;
     mapping(uint256 => RedeemRequest) public redeemRequests;
+
+    uint256 public intentExpirationPeriod;
+
+    uint256 public depositCounter;
 
     constructor(
         address _owner,
@@ -97,7 +111,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
 
         _pruneIntent(_intentId);
 
-        IMintableERC20(token).mint(intent.to, intent.amount);
+        _transferFunds(IERC20(token), intentHash, intent, verifier);
 
         emit IntentFulfilled(
             intentHash,
@@ -108,59 +122,66 @@ contract Escrow is Ownable, Pausable, IEscrow {
         );
     }
 
-    function signalRedeem(
-        string calldata _accountNumber,
-        uint256 _amount
+    function createDeposit(
+        IERC20 _token,
+        uint256 _amount,
+        Range calldata _intentAmountRange,
+        address[] calldata _verifiers,
+        DepositVerifierData[] calldata _verifierData,
+        Currency[][] calldata _currencies
     ) external whenNotPaused {
-        require(_amount > 0, InvalidAmount());
-        require(bytes(_accountNumber).length > 0, InvalidAccountNumber());
-        require(accountRedeemRequest[msg.sender] == 0, RedeemAlreadyExists());
+        _validateCreateDeposit(_amount, _intentAmountRange, _verifier);
 
-        // Transfer tokens from user to this contract for escrow
-        IERC20(token).transferFrom(msg.sender, address(this), _amount);
+        uint256 depositId = depositCounter++;
+        accountDeposits[msg.sender].push(depositId);
 
-        uint256 redeemId = ++redeemCount;
-        redeemRequests[redeemId] = RedeemRequest({
-            owner: msg.sender,
+        deposits[depositId] = Deposit({
+            depositor: msg.sender,
+            token: _token,
             amount: _amount,
-            timestamp: block.timestamp
+            intentAmountRange: _intentAmountRange,
+            acceptingIntents: true,
+            intentHashes: new bytes32[](0),
+            remainingDeposits: _amount,
+            outstandingIntentAmount: 0
         });
 
-        accountRedeemRequest[msg.sender] = redeemId;
-        emit RedeemRequestSignaled(redeemId, msg.sender, _amount, _accountNumber);
+        emit DepositReceived(depositId, msg.sender, _token, _amount, _intentAmountRange);
+
+        for (uint256 i = 0; i < _verifiers.length; i++) {
+            address verifier = _verifiers[i];
+            require(
+                bytes(depositVerifierData[depositId][verifier].payeeDetails).length == 0,
+                "Verifier data already exists"
+            );
+            depositVerifierData[depositId][verifier] = _verifierData[i];
+            depositVerifiers[depositId].push(verifier);
+
+            bytes32 payeeDetailsHash = keccak256(abi.encodePacked(_verifierData[i].payeeDetails));
+            emit DepositVerifierAdded(depositId, verifier, payeeDetailsHash, _verifierData[i].intentGatingService);
+
+            for (uint256 j = 0; j < _currencies[i].length; j++) {
+                Currency memory currency = _currencies[i][j];
+                require(
+                    depositCurrencyConversionRate[depositId][verifier][currency.code] == 0,
+                    "Currency conversion rate already exists"
+                );
+                depositCurrencyConversionRate[depositId][verifier][currency.code] = currency.conversionRate;
+                depositCurrencies[depositId][verifier].push(currency.code);
+
+                emit DepositCurrencyAdded(depositId, verifier, currency.code, currency.conversionRate);
+            }
+        }
+
+        _token.transferFrom(msg.sender, address(this), _amount);
     }
 
     /**
-     * @notice Only callable by the originator of the intent. Allowed even when paused.
-     * @dev Returns escrowed tokens back to user
-     *
-     * @param _redeemId    ID of redeem request being cancelled
+     * @notice Only callable by the depositor for a deposit. Allows depositor to update the conversion rate for a currency for a
+     * payment verifier. Since intent's store the conversion rate at the time of intent, changing the conversion rate will not affect
+     * any intents that have already been signaled.
      */
-    function cancelRedeem(uint256 _redeemId) external {
-        RedeemRequest memory redeemRequest = redeemRequests[_redeemId];
-        require(redeemRequest.owner == msg.sender, "Sender must be the redeem request owner");
-
-        _pruneRedeemRequest(_redeemId);
-
-        // memory redeeRequest is not deleted
-        IERC20(token).transfer(redeemRequest.owner, redeemRequest.amount);
-        emit RedeemRequestCancelled(_redeemId);
-    }
-
-    /**
-     * @notice Only callable by the owner. Allowed even when paused.
-     * @dev Burns escrowed tokens from this contract
-     *
-     * @param _redeemId    ID of redeem request being fulfilled
-     */
-    function fulfillRedeem(uint256 _redeemId) external onlyOwner {
-        RedeemRequest memory redeemRequest = redeemRequests[_redeemId];
-        require(redeemRequest.amount > 0, RedeemRequestNotFound());
-
-        IMintableERC20(token).burn(redeemRequest.amount);
-
-        _pruneRedeemRequest(_redeemId);
-        emit RedeemRequestFulfilled(_redeemId);
+    function updateDepositConversionRate() {
     }
 
     // *** Governance functions ***
@@ -207,6 +228,21 @@ contract Escrow is Ownable, Pausable, IEscrow {
         _unpause();
     }
 
+    /* ============ Internal Functions ============ */
+    function _validateCreateDeposit(
+        uint256 _amount,
+        Range memory _intentAmountRange,
+        address[] calldata _verifiers,
+        DepositVerifierData[] calldata _verifierData,
+        Currency[][] calldata _currencies
+    ) internal view {
+        require(_intentAmountRange.min != 0, "Invalid intent amount range");
+        require(_intentAmountRange.min <= _intentAmountRange.max, "Invalid intent amount range");
+        require(_intentAmountRange.min <= _amount, "Amount must be greater than min intent amount");
+        require(_verifiers.length > 0, "Invalid verifiers");
+        require(_verifiers.length == _verifierData.length, "Invalid verifier data");
+    }
+
     function _pruneIntent(uint256 _intentId) internal {
         delete accountIntent[intents[_intentId].owner];
         delete intents[_intentId];
@@ -215,5 +251,13 @@ contract Escrow is Ownable, Pausable, IEscrow {
     function _pruneRedeemRequest(uint256 _redeemId) internal {
         delete accountRedeemRequest[redeemRequests[_redeemId].owner];
         delete redeemRequests[_redeemId];
+        Intent memory intent = intents[_intentHash];
+        Deposit storage deposit = deposits[intent.depositId];
+    }
+
+    function _transferFunds(IERC20 _token, Intent memory _intent) internal {
+        uint256 fee;
+        uint256 transferAmount = _intent.amount - fee;
+        _token.transfer(_intent.to, transferAmount);
     }
 }

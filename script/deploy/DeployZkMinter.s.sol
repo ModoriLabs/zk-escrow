@@ -23,7 +23,7 @@ contract DeployZkMinterScript is BaseScript {
         address deployer = broadcaster;
         // Get USDT address from deployments file
         uint256 chainId = block.chainid;
-        address krwAddress = getDeployedAddress("KRW");
+        address krwAddress = _getDeployedAddress("KRW");
 
         console.log("Deployer address:", deployer);
         console.log("Deployer balance:", deployer.balance);
@@ -32,7 +32,7 @@ contract DeployZkMinterScript is BaseScript {
         vm.startBroadcast(broadcaster);
 
         // Check if NullifierRegistry already exists, otherwise deploy new one
-        address existingNullifierRegistry = getDeployedAddress("NullifierRegistry");
+        address existingNullifierRegistry = _getDeployedAddress("NullifierRegistry");
 
         if (existingNullifierRegistry != address(0)) {
             nullifierRegistry = NullifierRegistry(existingNullifierRegistry);

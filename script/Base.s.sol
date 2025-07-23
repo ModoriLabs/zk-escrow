@@ -69,7 +69,7 @@ abstract contract BaseScript is Script {
      * @param contractName The name of the contract to get address for
      * @return The contract address for the current chain
      */
-    function getDeployedAddress(string memory contractName) public view returns (address) {
+    function _getDeployedAddress(string memory contractName) internal view returns (address) {
         console.log("chainId", block.chainid);
         uint256 chainId = block.chainid;
         string memory root = vm.projectRoot();
