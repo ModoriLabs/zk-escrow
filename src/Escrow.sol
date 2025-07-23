@@ -1,19 +1,21 @@
 //SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.29;
+pragma solidity 0.8.30;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
-import { IPaymentVerifier } from "./verifiers/interfaces/IPaymentVerifier.sol";
+import { IPaymentVerifierV2 } from "./verifiers/interfaces/IPaymentVerifierV2.sol";
 import { IEscrow } from "./interfaces/IEscrow.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IMintableERC20 } from "./interfaces/IMintableERC20.sol";
 import { StringUtils } from "./external/ReclaimStringUtils.sol";
+import { Uint256ArrayUtils } from "./external/Uint256ArrayUtils.sol";
 
 contract Escrow is Ownable, Pausable, IEscrow {
-    address public token;
+    using Uint256ArrayUtils for uint256[];
+
+    string public chainIdStr;
     uint256 public intentCount;
-    uint256 public redeemCount;
 
     // Mapping of address to intentHash (Only one intent per address at a given time)
     mapping(address => uint256[]) public accountDeposits;
@@ -21,54 +23,60 @@ contract Escrow is Ownable, Pausable, IEscrow {
 
     mapping(uint256 => Deposit) public deposits;
     mapping(uint256 => Intent) public intents;
-    address[] public verifiers;
-    mapping(address => DepositVerifierData) public depositVerifierData;
+    mapping(uint256 => address[]) public depositVerifiers;
+    mapping(uint256 depositId => mapping(address => DepositVerifierData)) public depositVerifierData;
 
     // Mapping of depositId to verifier address to mapping of fiat currency to conversion rate. Each payment service can support
     // multiple currencies. Depositor can specify list of currencies and conversion rates for each payment service.
     // Example: Deposit 1 => Venmo => USD: 1e18
     //                    => Revolut => USD: 1e18, EUR: 1.2e18, SGD: 1.5e18
-    mapping(uint256 => mapping(address => mapping(bytes32 => uint256))) public depositCurrencyConversionRate;
-    mapping(uint256 => mapping(address => bytes32[])) public depositCurrencies; // Handy mapping to get all currencies for a deposit and verifier
+    mapping(uint256 depositId => mapping(address verifier => mapping(bytes32 fiatCurrency => uint256 conversionRate))) public depositCurrencyConversionRate;
+    mapping(uint256 depositId => mapping(address verifier => bytes32[] fiatCurrencies)) public depositCurrencies; // Handy mapping to get all currencies for a deposit and verifier
 
-    mapping(address => uint256) public accountRedeemRequest;
-    mapping(uint256 => RedeemRequest) public redeemRequests;
+    // Governance controlled
+    mapping(address => bool) public whitelistedPaymentVerifiers;      // Mapping of payment verifier addresses to boolean indicating if they are whitelisted
 
     uint256 public intentExpirationPeriod;
-
     uint256 public depositCounter;
 
     constructor(
         address _owner,
-        address _token
+        uint256 _intentExpirationPeriod
     ) Ownable(_owner) {
-        token = _token;
+        intentExpirationPeriod = _intentExpirationPeriod;
+        chainIdStr = StringUtils.uint2str(block.chainid);
     }
 
     function signalIntent(
-        address _to,
+        uint256 _depositId,
         uint256 _amount,
-        address _verifier
+        address _to,
+        address _verifier,
+        bytes32 _fiatCurrency
     ) external whenNotPaused {
-        require(_to != address(0), "Invalid recipient address");
-        require(_amount > 0, InvalidAmount());
-        require(_verifier != address(0), "Invalid verifier address");
+        Deposit storage deposit = deposits[_depositId];
 
-        // Check if an intent already exists for this address
-        uint256 intentId = accountIntent[msg.sender];
-        require(intentId == 0, "Intent already exists for this address");
+        _validateIntent(_depositId, deposit, _amount, _to, _verifier, _fiatCurrency);
 
         // Create a new intent
-        intentId = ++intentCount;
+        uint256 intentId = ++intentCount;
+        uint256 conversionRate = depositCurrencyConversionRate[_depositId][_verifier][_fiatCurrency];
         intents[intentId] = Intent({
             owner: msg.sender,
             to: _to,
+            depositId: _depositId,
             amount: _amount,
-            timestamp: block.timestamp,
-            paymentVerifier: _verifier
+            paymentVerifier: _verifier,
+            fiatCurrency: _fiatCurrency,
+            conversionRate: conversionRate,
+            timestamp: block.timestamp
         });
 
         accountIntent[msg.sender] = intentId;
+
+        deposit.remainingDeposits -= _amount;
+        deposit.outstandingIntentAmount += _amount;
+        deposit.intentIds.push(intentId);
 
         emit IntentSignaled(_to, _verifier, _amount, intentId);
     }
@@ -80,8 +88,14 @@ contract Escrow is Ownable, Pausable, IEscrow {
      */
     function cancelIntent(uint256 _intentId) external {
         Intent memory intent = intents[_intentId];
+        Deposit storage deposit = deposits[intent.depositId];
         require(intent.owner == msg.sender, "Sender must be the intent owner");
-        _pruneIntent(_intentId);
+
+        _pruneIntent(deposit, _intentId);
+
+        deposit.remainingDeposits += intent.amount;
+        deposit.outstandingIntentAmount -= intent.amount;
+
         emit IntentCancelled(_intentId);
     }
 
@@ -90,28 +104,36 @@ contract Escrow is Ownable, Pausable, IEscrow {
         uint256 _intentId
     ) external whenNotPaused {
         Intent memory intent = intents[_intentId];
+        Deposit storage deposit = deposits[intent.depositId];
 
         address verifier = intent.paymentVerifier;
         require(verifier != address(0), IntentNotFound());
 
-        DepositVerifierData memory verifierData = depositVerifierData[verifier];
-        (bool success, bytes32 intentHash) = IPaymentVerifier(verifier).verifyPayment(
-            IPaymentVerifier.VerifyPaymentData({
+        DepositVerifierData memory verifierData = depositVerifierData[intent.depositId][verifier];
+        (bool success, bytes32 intentHash) = IPaymentVerifierV2(verifier).verifyPayment(
+            IPaymentVerifierV2.VerifyPaymentData({
                 paymentProof: _paymentProof,
-                mintToken: token,
+                depositToken: address(deposit.token),
                 intentAmount: intent.amount,
                 intentTimestamp: intent.timestamp,
                 payeeDetails: verifierData.payeeDetails,
-                conversionRate: 1e18, // PRECISE_UNIT is 1e18
+                fiatCurrency: intent.fiatCurrency,
+                conversionRate: intent.conversionRate,
                 data: verifierData.data
             })
         );
         require(success, "Payment verification failed");
-        require(keccak256(abi.encode(StringUtils.uint2str(_intentId))) == intentHash, "Intent hash mismatch");
 
-        _pruneIntent(_intentId);
+        bytes32 expectedIntentHash = keccak256(abi.encode(string.concat(chainIdStr, "-", StringUtils.uint2str(_intentId))));
+        require(expectedIntentHash == intentHash, "Intent hash mismatch");
 
-        _transferFunds(IERC20(token), intentHash, intent, verifier);
+        _pruneIntent(deposit, _intentId);
+        deposit.outstandingIntentAmount -= intent.amount;
+        IERC20 token = deposit.token;
+        // TODO:
+        // _closeDepositIfNecessary(intent.depositId, deposit);
+
+        _transferFunds(IERC20(token), intent);
 
         emit IntentFulfilled(
             intentHash,
@@ -130,7 +152,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
         DepositVerifierData[] calldata _verifierData,
         Currency[][] calldata _currencies
     ) external whenNotPaused {
-        _validateCreateDeposit(_amount, _intentAmountRange, _verifier);
+        _validateCreateDeposit(_amount, _intentAmountRange, _verifiers, _verifierData, _currencies);
 
         uint256 depositId = depositCounter++;
         accountDeposits[msg.sender].push(depositId);
@@ -141,12 +163,12 @@ contract Escrow is Ownable, Pausable, IEscrow {
             amount: _amount,
             intentAmountRange: _intentAmountRange,
             acceptingIntents: true,
-            intentHashes: new bytes32[](0),
+            intentIds: new uint256[](0),
             remainingDeposits: _amount,
             outstandingIntentAmount: 0
         });
 
-        emit DepositReceived(depositId, msg.sender, _token, _amount, _intentAmountRange);
+        emit DepositCreated(depositId, msg.sender, _token, _amount, _intentAmountRange);
 
         for (uint256 i = 0; i < _verifiers.length; i++) {
             address verifier = _verifiers[i];
@@ -158,7 +180,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
             depositVerifiers[depositId].push(verifier);
 
             bytes32 payeeDetailsHash = keccak256(abi.encodePacked(_verifierData[i].payeeDetails));
-            emit DepositVerifierAdded(depositId, verifier, payeeDetailsHash, _verifierData[i].intentGatingService);
+            emit DepositVerifierAdded(depositId, verifier, payeeDetailsHash);
 
             for (uint256 j = 0; j < _currencies[i].length; j++) {
                 Currency memory currency = _currencies[i][j];
@@ -176,48 +198,85 @@ contract Escrow is Ownable, Pausable, IEscrow {
         _token.transferFrom(msg.sender, address(this), _amount);
     }
 
+    function releaseFundsToPayer(uint256 _intentId) external {
+        Intent memory intent = intents[_intentId];
+        Deposit storage deposit = deposits[intent.depositId];
+
+        require(intent.owner != address(0), "Intent does not exist");
+        require(deposit.depositor == msg.sender, "Caller must be the depositor");
+
+        _pruneIntent(deposit, _intentId);
+
+        deposit.outstandingIntentAmount -= intent.amount;
+        IERC20 token = deposit.token;
+        // TODO: close deposit if necessary
+        // _closeDepositIfNecessary(intent.depositId, deposit);
+
+        _transferFunds(token, intent);
+    }
+
     /**
      * @notice Only callable by the depositor for a deposit. Allows depositor to update the conversion rate for a currency for a
      * payment verifier. Since intent's store the conversion rate at the time of intent, changing the conversion rate will not affect
      * any intents that have already been signaled.
      */
-    function updateDepositConversionRate() {
+    function updateDepositConversionRate(
+        uint256 _depositId,
+        address _verifier,
+        bytes32 _fiatCurrency,
+        uint256 _newConversionRate
+    ) external whenNotPaused {
+        Deposit storage deposit = deposits[_depositId];
+        uint256 oldConversionRate = depositCurrencyConversionRate[_depositId][_verifier][_fiatCurrency];
+
+        require(deposit.depositor == msg.sender, OnlyDepositor());
+        require(oldConversionRate != 0, "Currency or verifier not supported");
+        require(_newConversionRate > 0, "Conversion rate must be greater than 0");
+
+        depositCurrencyConversionRate[_depositId][_verifier][_fiatCurrency] = _newConversionRate;
+
+        emit DepositConversionRateUpdated(_depositId, _verifier, _fiatCurrency, _newConversionRate);
     }
 
     // *** Governance functions ***
 
-    function addVerifier(
-        address _verifier
-    ) external onlyOwner {
-        require(_verifier != address(0), "Invalid verifier address");
-        verifiers.push(_verifier);
+        /**
+     * @notice GOVERNANCE ONLY: Adds a payment verifier to the whitelist.
+     *
+     * @param _verifier   The payment verifier address to add
+     */
+    function addWhitelistedPaymentVerifier(address _verifier) external onlyOwner {
+        require(_verifier != address(0), "Payment verifier cannot be zero address");
+        require(!whitelistedPaymentVerifiers[_verifier], "Payment verifier already whitelisted");
+
+        whitelistedPaymentVerifiers[_verifier] = true;
+
+        emit PaymentVerifierAdded(_verifier);
     }
 
-    function removeVerifier(
-        address _verifier
-    ) external onlyOwner {
-        require(_verifier != address(0), "Invalid verifier address");
-        require(verifiers.length > 0, "No verifiers to remove");
+    /**
+     * @notice GOVERNANCE ONLY: Removes a payment verifier from the whitelist.
+     *
+     * @param _verifier   The payment verifier address to remove
+     */
+    function removeWhitelistedPaymentVerifier(address _verifier) external onlyOwner {
+        require(whitelistedPaymentVerifiers[_verifier], "Payment verifier not whitelisted");
 
-        for (uint256 i = 0; i < verifiers.length; i++) {
-            if (verifiers[i] == _verifier) {
-                verifiers[i] = verifiers[verifiers.length - 1];
-                verifiers.pop();
-                break;
-            }
-        }
+        whitelistedPaymentVerifiers[_verifier] = false;
+        emit PaymentVerifierRemoved(_verifier);
     }
 
-    function setVerifierData(
-        address _verifier,
-        string calldata _payeeDetails,
-        bytes calldata _data
-    ) external onlyOwner {
-        require(_verifier != address(0), "Invalid verifier address");
-        depositVerifierData[_verifier] = DepositVerifierData({
-            payeeDetails: _payeeDetails,
-            data: _data
-        });
+    /**
+     * @notice GOVERNANCE ONLY: Updates the intent expiration period, after this period elapses an intent can be pruned to prevent
+     * locking up a depositor's funds.
+     *
+     * @param _intentExpirationPeriod   New intent expiration period
+     */
+    function setIntentExpirationPeriod(uint256 _intentExpirationPeriod) external onlyOwner {
+        require(_intentExpirationPeriod != 0, "Max intent expiration period cannot be zero");
+
+        intentExpirationPeriod = _intentExpirationPeriod;
+        emit IntentExpirationPeriodSet(_intentExpirationPeriod);
     }
 
     function pause() external onlyOwner {
@@ -227,6 +286,12 @@ contract Escrow is Ownable, Pausable, IEscrow {
     function unpause() external onlyOwner {
         _unpause();
     }
+    /* ============ External View Functions ============ */
+
+    // Getter functions for easier testing
+    function getDepositIntentIds(uint256 _depositId) external view returns (uint256[] memory) {
+        return deposits[_depositId].intentIds;
+    }
 
     /* ============ Internal Functions ============ */
     function _validateCreateDeposit(
@@ -235,24 +300,47 @@ contract Escrow is Ownable, Pausable, IEscrow {
         address[] calldata _verifiers,
         DepositVerifierData[] calldata _verifierData,
         Currency[][] calldata _currencies
-    ) internal view {
+    ) internal pure {
         require(_intentAmountRange.min != 0, "Invalid intent amount range");
         require(_intentAmountRange.min <= _intentAmountRange.max, "Invalid intent amount range");
         require(_intentAmountRange.min <= _amount, "Amount must be greater than min intent amount");
         require(_verifiers.length > 0, "Invalid verifiers");
         require(_verifiers.length == _verifierData.length, "Invalid verifier data");
+        require(_verifiers.length == _currencies.length, "Invalid currencies length");
     }
 
-    function _pruneIntent(uint256 _intentId) internal {
-        delete accountIntent[intents[_intentId].owner];
+    function _validateIntent(
+        uint256 _depositId,
+        Deposit storage _deposit,
+        uint256 _amount,
+        address _to,
+        address _verifier,
+        bytes32 _fiatCurrency
+    ) internal view {
+        require(accountIntent[msg.sender] == 0, IntentAlreadyExists());
+        require(_deposit.depositor != address(0), "Deposit does not exist");
+        require(_deposit.acceptingIntents, "Deposit is not accepting intents");
+        require(_amount >= _deposit.intentAmountRange.min, InvalidAmount());
+        require(_amount <= _deposit.intentAmountRange.max, InvalidAmount());
+        require(_to != address(0), InvalidRecipient());
+
+        DepositVerifierData memory verifierData = depositVerifierData[_depositId][_verifier];
+        require(bytes(verifierData.payeeDetails).length != 0, "Payment verifier not supported");
+        require(depositCurrencyConversionRate[_depositId][_verifier][_fiatCurrency] != 0, "Currency not supported");
+    }
+
+    /**
+     * @notice Pruning an intent involves
+     * 1. deleting its state from the intents mapping
+     * 2. deleting the intent from it's owners intents array
+     * 3. deleting the intentHash from the deposit's intentHashes array.
+     */
+    function _pruneIntent(Deposit storage _deposit, uint256 _intentId) internal {
+        Intent memory intent = intents[_intentId];
+
+        delete accountIntent[intent.owner];
         delete intents[_intentId];
-    }
-
-    function _pruneRedeemRequest(uint256 _redeemId) internal {
-        delete accountRedeemRequest[redeemRequests[_redeemId].owner];
-        delete redeemRequests[_redeemId];
-        Intent memory intent = intents[_intentHash];
-        Deposit storage deposit = deposits[intent.depositId];
+        _deposit.intentIds.removeStorage(_intentId);
     }
 
     function _transferFunds(IERC20 _token, Intent memory _intent) internal {
