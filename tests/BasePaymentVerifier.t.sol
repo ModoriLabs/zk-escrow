@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.29;
+pragma solidity 0.8.30;
 
 import "forge-std/src/Test.sol";
 import "forge-std/src/console2.sol";
@@ -13,7 +13,6 @@ contract BasePaymentVerifierTest is BaseTest {
 
     address public writer;
     address public attacker;
-    address public escrow;
 
     // Currency constants (mimicking the TypeScript test)
     bytes32 public constant USD = bytes32("USD");
@@ -28,7 +27,6 @@ contract BasePaymentVerifierTest is BaseTest {
 
         writer = makeAddr("writer");
         attacker = makeAddr("attacker");
-        escrow = makeAddr("escrow");
 
         // Create initial currencies array
         bytes32[] memory initialCurrencies = new bytes32[](3);
@@ -39,7 +37,7 @@ contract BasePaymentVerifierTest is BaseTest {
         // Deploy the BasePaymentVerifier
         basePaymentVerifier = new BasePaymentVerifier(
             owner,
-            escrow,
+            address(escrow),
             nullifierRegistry,
             TIMESTAMP_BUFFER,
             initialCurrencies
@@ -70,7 +68,7 @@ contract BasePaymentVerifierTest is BaseTest {
     }
 
     function test_Constructor_SetsEscrowCorrectly() public {
-        assertEq(basePaymentVerifier.escrow(), escrow);
+        assertEq(basePaymentVerifier.escrow(), address(escrow));
     }
 
     function test_Constructor_SetsNullifierRegistryCorrectly() public {

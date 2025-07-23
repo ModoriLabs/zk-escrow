@@ -11,9 +11,9 @@ import { Bytes32ConversionUtils } from "../lib/Bytes32ConversionUtils.sol";
 
 import { BaseReclaimPaymentVerifier } from "./BaseReclaimPaymentVerifier.sol";
 import { INullifierRegistry } from "./nullifierRegistries/INullifierRegistry.sol";
-import { IPaymentVerifier } from "./interfaces/IPaymentVerifier.sol";
+import { IPaymentVerifierV2 } from "./interfaces/IPaymentVerifierV2.sol";
 
-contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier {
+contract TossBankReclaimVerifierV2 is IPaymentVerifierV2, BaseReclaimPaymentVerifier {
 
     using StringConversionUtils for string;
     using Bytes32ConversionUtils for bytes32;
@@ -110,7 +110,7 @@ contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier
         bool _isAppclipProof
     ) internal view {
         uint256 expectedAmount = _verifyPaymentData.intentAmount * _verifyPaymentData.conversionRate / PRECISE_UNIT;
-        uint8 decimals = IERC20Metadata(_verifyPaymentData.mintToken).decimals();
+        uint8 decimals = IERC20Metadata(_verifyPaymentData.depositToken).decimals();
 
         uint256 paymentAmount = paymentDetails.amountString.stringToUint(decimals);
         require(paymentAmount >= expectedAmount, "Incorrect payment amount");

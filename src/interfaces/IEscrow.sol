@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.29;
+pragma solidity 0.8.30;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -19,7 +19,7 @@ interface IEscrow {
         bool acceptingIntents;                      // State: True if the deposit is accepting intents, False otherwise
         uint256 remainingDeposits;                  // State: Amount of remaining deposited liquidity
         uint256 outstandingIntentAmount;            // State: Amount of outstanding intents (may include expired intents)
-        bytes32[] intentHashes;                     // State: Array of hashes of all open intents (may include some expired if not pruned)
+        uint256[] intentIds;                        // State: Array of ids of all open intents (may include some expired if not pruned)
     }
 
     struct Currency {
@@ -36,9 +36,13 @@ interface IEscrow {
     struct Intent {
         address owner;                              // Address of the intent owner
         address to;                                 // Address to forward funds to (can be same as owner)
+        uint256 depositId;                          // ID of the deposit the intent is associated with
         uint256 amount;                             // Amount of the deposit.token the owner wants to take
         uint256 timestamp;                          // Timestamp of the intent
         address paymentVerifier;                    // Address of the payment verifier corresponding to payment service the owner is
+                                                    // going to pay with offchain
+        bytes32 fiatCurrency;                       // Currency code that the owner is paying in offchain (keccak256 hash of the currency code)
+        uint256 conversionRate;                     // Conversion rate of deposit token to fiat currency at the time of intent
     }
 
     struct RedeemRequest {
@@ -89,9 +93,36 @@ interface IEscrow {
         Range intentAmountRange
     );
 
+    event DepositVerifierAdded(
+        uint256 indexed depositId,
+        address indexed verifier,
+        bytes32 payeeDetailsHash
+    );
+
+    event DepositCurrencyAdded(
+        uint256 indexed depositId,
+        address indexed verifier,
+        bytes32 indexed currency,
+        uint256 conversionRate
+    );
+
+    event DepositConversionRateUpdated(
+        uint256 indexed depositId,
+        address indexed verifier,
+        bytes32 fiatCurrency,
+        uint256 newConversionRate
+    );
+
+    event PaymentVerifierAdded(address verifier);
+    event PaymentVerifierRemoved(address verifier);
+    event IntentExpirationPeriodSet(uint256 intentExpirationPeriod);
+
     error InvalidAmount();
+    error InvalidRecipient();
+    error IntentAlreadyExists();
     error IntentNotFound();
     error InvalidAccountNumber();
     error RedeemRequestNotFound();
     error RedeemAlreadyExists();
+    error OnlyDepositor();
 }
