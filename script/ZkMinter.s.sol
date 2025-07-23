@@ -25,11 +25,11 @@ contract ZkMinterScript is BaseScript {
     }
 
     function _getDeployedAddresses() internal view returns (address zkMinterAddress, address tossBankVerifierAddress) {
-        zkMinterAddress = getDeployedAddress("ZkMinter");
+        zkMinterAddress = _getDeployedAddress("ZkMinter");
         if (zkMinterAddress == address(0)) {
             revert("ZkMinter not deployed");
         }
-        tossBankVerifierAddress = getDeployedAddress("TossBankReclaimVerifier");
+        tossBankVerifierAddress = _getDeployedAddress("TossBankReclaimVerifier");
         if (tossBankVerifierAddress == address(0)) {
             revert("TossBankReclaimVerifier not deployed");
         }
@@ -57,7 +57,7 @@ contract ZkMinterScript is BaseScript {
 
     function _grantMinterRole(address zkMinterAddress) internal {
         // Get KRW address using the generic function
-        address krwAddress = getDeployedAddress("KRW");
+        address krwAddress = _getDeployedAddress("KRW");
 
         console.log("Granting MINTER_ROLE to ZkMinter:", zkMinterAddress);
 

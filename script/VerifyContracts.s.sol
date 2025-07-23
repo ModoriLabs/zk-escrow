@@ -22,6 +22,7 @@ contract VerifyContracts is BaseScript {
         address nullifierRegistry;
         address zkMinter;
         address tossBankReclaimVerifier;
+        address escrow;
     }
 
     function verifyAll() public {
