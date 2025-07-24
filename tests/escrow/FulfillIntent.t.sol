@@ -65,7 +65,7 @@ contract FulfillIntentTest is BaseTest {
         IEscrow.DepositVerifierData[] memory verifierData = new IEscrow.DepositVerifierData[](1);
         // This payee details should match what's in the proof
         address[] memory witnesses = new address[](1);
-        witnesses[0] = address(0x2042c7E7A36CAB186189946ad751EAAe6769E661); // From the V2 test
+        witnesses[0] = address(VERIFIER_ADDRESS_V2); // From the V2 test
         verifierData[0] = IEscrow.DepositVerifierData({
             payeeDetails: unicode"100202642943(토스뱅크)",
             data: abi.encode(witnesses)
@@ -90,9 +90,8 @@ contract FulfillIntentTest is BaseTest {
         // Signal an intent - the senderNickname in proof is "31337-1"
         // so we need intentId to be 1 and chain to be 31337
         vm.prank(bob);
-        escrow.signalIntent(0, intentAmount, bob, address(tossBankReclaimVerifierV2), keccak256("USD"));
-
-        depositId = 0;
+        depositId = 1;
+        escrow.signalIntent(depositId, intentAmount, bob, address(tossBankReclaimVerifierV2), keccak256("USD"));
         intentId = escrow.accountIntent(bob);
     }
 
@@ -124,43 +123,7 @@ contract FulfillIntentTest is BaseTest {
         assertEq(remainingAfter, depositAmount - intentAmount); // Remaining should stay the same
     }
 
-        function test_fulfillIntent_WithCorrectProofFormat_Success() public {
-        // This test demonstrates what would happen with a correctly formatted proof
-        _loadProofV2();
-
-           // Check state before fulfillment
-        (,,, , , uint256 remainingBefore, uint256 outstandingBefore) = escrow.deposits(depositId);
-        assertEq(remainingBefore, depositAmount - intentAmount);
-        assertEq(outstandingBefore, intentAmount);
-
-        uint256 bobBalanceBefore = usdt.balanceOf(bob);
-
-        bytes memory paymentProof = abi.encode(proof);
-
-        // This should succeed because proof format now matches expectations
-        escrow.fulfillIntent(paymentProof, intentId);
-
-    }
-
-    function test_fulfillIntent_UpdatesDepositState() public {
-        // This test would require mocking the payment verifier response
-        // For now, we'll test that the deposit state tracking is correct
-
-        // Check state before fulfillment
-        (,,, , , uint256 remainingBefore, uint256 outstandingBefore) = escrow.deposits(depositId);
-        assertEq(remainingBefore, depositAmount - intentAmount);
-        assertEq(outstandingBefore, intentAmount);
-
-        // Note: Actual fulfillIntent would require valid payment proof
-        // which we can't easily generate in tests without mocking the verifier
-
-        // We can test the expected behavior if fulfillIntent succeeds:
-        // 1. Intent should be pruned (removed from intents mapping)
-        // 2. outstandingIntentAmount should decrease by intent.amount
-        // 3. Tokens should be transferred to the intent.to address
-    }
-
-    function test_fulfillIntent_RequiresValidPaymentProof() public {
+   function test_fulfillIntent_RequiresValidPaymentProof() public {
         // Try to fulfill with invalid payment proof
         bytes memory invalidProof = abi.encode("invalid");
 

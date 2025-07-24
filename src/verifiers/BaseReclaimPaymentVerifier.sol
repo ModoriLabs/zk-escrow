@@ -8,7 +8,6 @@ import { StringArrayUtils } from "../external/StringArrayUtils.sol";
 import { BasePaymentVerifier } from "./BasePaymentVerifier.sol";
 import { INullifierRegistry } from "./nullifierRegistries/INullifierRegistry.sol";
 import { IReclaimVerifier } from "./interfaces/IReclaimVerifier.sol";
-import { console } from "forge-std/src/console.sol";
 
 contract BaseReclaimPaymentVerifier is IReclaimVerifier, BasePaymentVerifier {
     using AddressArrayUtils for address[];

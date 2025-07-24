@@ -21,7 +21,6 @@ contract EscrowTest is BaseTest {
         vm.stopPrank();
     }
 
-
     // ============ Only Owner Function Tests ============
 
     function test_addWhitelistedPaymentVerifier_Success() public {

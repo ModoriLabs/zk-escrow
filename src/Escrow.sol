@@ -151,10 +151,10 @@ contract Escrow is Ownable, Pausable, IEscrow {
         address[] calldata _verifiers,
         DepositVerifierData[] calldata _verifierData,
         Currency[][] calldata _currencies
-    ) external whenNotPaused {
+    ) external whenNotPaused returns(uint256 depositId) {
         _validateCreateDeposit(_amount, _intentAmountRange, _verifiers, _verifierData, _currencies);
 
-        uint256 depositId = depositCounter++;
+        depositId = ++depositCounter;
         accountDeposits[msg.sender].push(depositId);
 
         deposits[depositId] = Deposit({

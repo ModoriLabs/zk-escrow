@@ -24,7 +24,8 @@ contract BaseTest is Test {
     string public constant PROVIDER_HASH = "0xffb501528259e6d684e1c2153fbbacab453fe9c97c336dc4f8f48d70a0e2a13d";
     uint256 public timestampBuffer = 60;
 
-    address public constant VERIFIER_WALLET_ADDRESS = 0x189027e3C77b3a92fd01bF7CC4E6a86E77F5034E;
+    address public constant VERIFIER_ADDRESS_V1 = 0x189027e3C77b3a92fd01bF7CC4E6a86E77F5034E;
+    address public constant VERIFIER_ADDRESS_V2 = 0x2042c7E7A36CAB186189946ad751EAAe6769E661;
     address public owner = makeAddr("owner");
     address public alice = makeAddr("alice");
     address public bob = makeAddr("bob");
@@ -60,7 +61,7 @@ contract BaseTest is Test {
         //     mstore(add(data, 0x60), 0x189027e3c77b3a92fd01bf7cc4e6a86e77f5034e) // address
         // }
         address[] memory addresses = new address[](1);
-        addresses[0] = VERIFIER_WALLET_ADDRESS;
+        addresses[0] = VERIFIER_ADDRESS_V1;
         bytes memory data = abi.encode(addresses);
         zkMinter.setVerifierData(address(tossBankReclaimVerifier), unicode"59733704003503(KB국민은행)", data);
 
