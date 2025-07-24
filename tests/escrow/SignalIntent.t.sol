@@ -52,7 +52,7 @@ contract SignalIntentTest is BaseTest {
 
         vm.startPrank(alice);
         usdt.approve(address(escrow), depositAmount);
-        escrow.createDeposit(
+        depositId = escrow.createDeposit(
             IERC20(address(usdt)),
             depositAmount,
             intentRange,
@@ -61,8 +61,6 @@ contract SignalIntentTest is BaseTest {
             currencies
         );
         vm.stopPrank();
-
-        depositId = 0;
     }
 
     function test_signalIntent_DepositStateChanges() public {

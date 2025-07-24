@@ -18,7 +18,8 @@ contract FulfillIntentTest is BaseTest {
     uint256 public depositId;
     uint256 public intentId;
     uint256 public depositAmount = 5000e6;
-    uint256 public intentAmount = 2; // Amount that matches the proof
+    // 1000/1000000 USDT * 1380 WON/USDT = 1.38 WON
+    uint256 public intentAmount = 1000; // 1000 / 1e6 USDT
 
     function setUp() public override {
         super.setUp();
@@ -36,15 +37,15 @@ contract FulfillIntentTest is BaseTest {
         string[] memory providerHashes = new string[](1);
         providerHashes[0] = PROVIDER_HASH;
 
-        bytes32[] memory currencies = new bytes32[](1);
-        currencies[0] = keccak256("USD");
+        bytes32[] memory verifierCurrencies = new bytes32[](1);
+        verifierCurrencies[0] = keccak256("USD");
 
         tossBankReclaimVerifierV2 = new TossBankReclaimVerifierV2(
             owner,
             address(escrow),
             INullifierRegistry(address(nullifierRegistry)),
             timestampBuffer,
-            currencies,
+            verifierCurrencies,
             providerHashes
         );
 
@@ -57,7 +58,7 @@ contract FulfillIntentTest is BaseTest {
         escrow.addWhitelistedPaymentVerifier(address(tossBankReclaimVerifierV2));
 
         // Create a deposit
-        IEscrow.Range memory intentRange = IEscrow.Range({ min: 1, max: 1000e6 });
+        IEscrow.Range memory intentRange = IEscrow.Range({ min: 100, max: 1000e6 });
 
         address[] memory verifiers = new address[](1);
         verifiers[0] = address(tossBankReclaimVerifierV2);
@@ -71,26 +72,26 @@ contract FulfillIntentTest is BaseTest {
             data: abi.encode(witnesses)
         });
 
-        IEscrow.Currency[][] memory currencies2 = new IEscrow.Currency[][](1);
-        currencies2[0] = new IEscrow.Currency[](1);
-        currencies2[0][0] = IEscrow.Currency({ code: keccak256("USD"), conversionRate: 1e18 });
+        uint256 conversionRate = 1380 * PRECISE_UNIT;
+        IEscrow.Currency[][] memory currencies = new IEscrow.Currency[][](1);
+        currencies[0] = new IEscrow.Currency[](1);
+        currencies[0][0] = IEscrow.Currency({ code: keccak256("USD"), conversionRate: conversionRate });
 
         vm.startPrank(alice);
         usdt.approve(address(escrow), depositAmount);
-        escrow.createDeposit(
+        depositId = escrow.createDeposit(
             IERC20(address(usdt)),
             depositAmount,
             intentRange,
             verifiers,
             verifierData,
-            currencies2
+            currencies
         );
         vm.stopPrank();
 
         // Signal an intent - the senderNickname in proof is "31337-1"
         // so we need intentId to be 1 and chain to be 31337
         vm.prank(bob);
-        depositId = 1;
         escrow.signalIntent(depositId, intentAmount, bob, address(tossBankReclaimVerifierV2), keccak256("USD"));
         intentId = escrow.accountIntent(bob);
     }
@@ -152,7 +153,7 @@ contract FulfillIntentTest is BaseTest {
 
     function test_fulfillIntent_WithMultipleIntents() public {
         // Create another intent from charlie
-        uint256 intent2Amount = 3; // Small amount like the proof
+        uint256 intent2Amount = 100; // Minimum allowed amount
         vm.prank(charlie);
         escrow.signalIntent(depositId, intent2Amount, charlie, address(tossBankReclaimVerifierV2), keccak256("USD"));
 

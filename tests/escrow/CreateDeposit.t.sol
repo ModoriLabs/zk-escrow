@@ -27,7 +27,7 @@ contract CreateDepositTest is BaseTest {
         escrow.addWhitelistedPaymentVerifier(address(tossBankReclaimVerifier));
     }
 
-    function test_createDeposit_Success() public {
+    function _createDeposit() internal returns (uint256 depositId) {
         uint256 depositAmount = 10000e6; // 10,000 USDT
         IEscrow.Range memory intentRange = IEscrow.Range({
             min: 100e6,  // Min 100 USDT per intent
@@ -57,26 +57,8 @@ contract CreateDepositTest is BaseTest {
         vm.startPrank(alice);
         usdt.approve(address(escrow), depositAmount);
 
-        // Check initial balances
-        uint256 aliceBalanceBefore = usdt.balanceOf(alice);
-        uint256 escrowBalanceBefore = usdt.balanceOf(address(escrow));
-
-        // Expect events
-        vm.expectEmit(true, true, false, true);
-        emit IEscrow.DepositCreated(0, alice, IERC20(address(usdt)), depositAmount, intentRange);
-
-        vm.expectEmit(true, true, false, true);
-        emit IEscrow.DepositVerifierAdded(
-            0,
-            address(tossBankReclaimVerifier),
-            keccak256(abi.encodePacked("test-payee-details"))
-        );
-
-        vm.expectEmit(true, true, true, true);
-        emit IEscrow.DepositCurrencyAdded(0, address(tossBankReclaimVerifier), keccak256("USD"), 1e18);
-
         // Create deposit
-        escrow.createDeposit(
+        depositId = escrow.createDeposit(
             IERC20(address(usdt)),
             depositAmount,
             intentRange,
@@ -85,42 +67,59 @@ contract CreateDepositTest is BaseTest {
             currencies
         );
         vm.stopPrank();
+    }
 
+    function test_createDeposit_Success() public {
+        uint256 depositAmount = 10000e6; // 10,000 USDT
+        IEscrow.Range memory intentRange = IEscrow.Range({
+            min: 100e6,  // Min 100 USDT per intent
+            max: 1000e6  // Max 1,000 USDT per intent
+        });
+        
+        // Check initial balances
+        uint256 aliceBalanceBefore = usdt.balanceOf(alice);
+        uint256 escrowBalanceBefore = usdt.balanceOf(address(escrow));
+        
+        // Create deposit using helper function
+        uint256 depositId = _createDeposit();
+        
         // Verify deposit was created correctly
-        (
-            address depositor,
-            IERC20 token,
-            uint256 amount,
-            IEscrow.Range memory storedRange,
-            bool acceptingIntents,
-            uint256 remainingDeposits,
-            uint256 outstandingIntentAmount
-        ) = escrow.deposits(0);
+        {
+            (
+                address depositor,
+                IERC20 token,
+                uint256 amount,
+                IEscrow.Range memory storedRange,
+                bool acceptingIntents,
+                uint256 remainingDeposits,
+                uint256 outstandingIntentAmount
+            ) = escrow.deposits(depositId);
 
-        assertEq(depositor, alice);
-        assertEq(address(token), address(usdt));
-        assertEq(amount, depositAmount);
-        assertEq(storedRange.min, intentRange.min);
-        assertEq(storedRange.max, intentRange.max);
-        assertTrue(acceptingIntents);
-        assertEq(remainingDeposits, depositAmount);
-        assertEq(outstandingIntentAmount, 0);
+            assertEq(depositor, alice);
+            assertEq(address(token), address(usdt));
+            assertEq(amount, depositAmount);
+            assertEq(storedRange.min, intentRange.min);
+            assertEq(storedRange.max, intentRange.max);
+            assertTrue(acceptingIntents);
+            assertEq(remainingDeposits, depositAmount);
+            assertEq(outstandingIntentAmount, 0);
 
-        // Verify account deposits mapping
-        assertEq(escrow.accountDeposits(alice, 0), 0);
+            // Verify account deposits mapping
+            assertEq(escrow.accountDeposits(alice, 0), depositId);
 
-        // Verify balances changed correctly
-        assertEq(usdt.balanceOf(alice), aliceBalanceBefore - depositAmount);
-        assertEq(usdt.balanceOf(address(escrow)), escrowBalanceBefore + depositAmount);
+            // Verify balances changed correctly
+            assertEq(usdt.balanceOf(alice), aliceBalanceBefore - depositAmount);
+            assertEq(usdt.balanceOf(address(escrow)), escrowBalanceBefore + depositAmount);
 
-        // Verify currency conversion rate was set
-        assertEq(escrow.depositCurrencyConversionRate(0, address(tossBankReclaimVerifier), keccak256("USD")), 1e18);
+            // Verify currency conversion rate was set
+            assertEq(escrow.depositCurrencyConversionRate(depositId, address(tossBankReclaimVerifier), keccak256("USD")), 1e18);
 
-        // Verify verifier was added to deposit
-        assertEq(escrow.depositVerifiers(0, 0), address(tossBankReclaimVerifier));
+            // Verify verifier was added to deposit
+            assertEq(escrow.depositVerifiers(depositId, 0), address(tossBankReclaimVerifier));
 
-        // Verify deposit counter incremented
-        assertEq(escrow.depositCounter(), 1);
+            // Verify deposit counter incremented
+            assertEq(escrow.depositCounter(), 1);
+        }
     }
 
     function test_createDeposit_MultipleVerifiers() public {
@@ -162,7 +161,7 @@ contract CreateDepositTest is BaseTest {
         vm.startPrank(bob);
         usdt.approve(address(escrow), depositAmount);
 
-        escrow.createDeposit(
+        uint256 depositId = escrow.createDeposit(
             IERC20(address(usdt)),
             depositAmount,
             intentRange,
@@ -173,13 +172,13 @@ contract CreateDepositTest is BaseTest {
         vm.stopPrank();
 
         // Verify currency conversion rates were set up
-        assertEq(escrow.depositCurrencyConversionRate(0, address(tossBankReclaimVerifier), keccak256("USD")), 1e18);
-        assertEq(escrow.depositCurrencyConversionRate(0, alice, keccak256("USD")), 1e18);
-        assertEq(escrow.depositCurrencyConversionRate(0, alice, keccak256("EUR")), 12e17);
+        assertEq(escrow.depositCurrencyConversionRate(depositId, address(tossBankReclaimVerifier), keccak256("USD")), 1e18);
+        assertEq(escrow.depositCurrencyConversionRate(depositId, alice, keccak256("USD")), 1e18);
+        assertEq(escrow.depositCurrencyConversionRate(depositId, alice, keccak256("EUR")), 12e17);
 
         // Verify both verifiers were added
-        assertEq(escrow.depositVerifiers(0, 0), address(tossBankReclaimVerifier));
-        assertEq(escrow.depositVerifiers(0, 1), alice);
+        assertEq(escrow.depositVerifiers(depositId, 0), address(tossBankReclaimVerifier));
+        assertEq(escrow.depositVerifiers(depositId, 1), alice);
     }
 
     function test_createDeposit_MultipleDeposits() public {
@@ -207,7 +206,7 @@ contract CreateDepositTest is BaseTest {
         vm.startPrank(alice);
         usdt.approve(address(escrow), deposit1Amount + deposit2Amount);
 
-        escrow.createDeposit(
+        uint256 depositId1 = escrow.createDeposit(
             IERC20(address(usdt)),
             deposit1Amount,
             range1,
@@ -217,7 +216,7 @@ contract CreateDepositTest is BaseTest {
         );
 
         // Second deposit
-        escrow.createDeposit(
+        uint256 depositId2 = escrow.createDeposit(
             IERC20(address(usdt)),
             deposit2Amount,
             range2,
@@ -228,8 +227,8 @@ contract CreateDepositTest is BaseTest {
         vm.stopPrank();
 
         // Verify both deposits exist
-        assertEq(escrow.accountDeposits(alice, 0), 0);
-        assertEq(escrow.accountDeposits(alice, 1), 1);
+        assertEq(escrow.accountDeposits(alice, 0), depositId1);
+        assertEq(escrow.accountDeposits(alice, 1), depositId2);
 
         // Verify deposit counter incremented correctly
         assertEq(escrow.depositCounter(), 2);

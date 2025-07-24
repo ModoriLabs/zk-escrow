@@ -21,6 +21,7 @@ contract BaseTest is Test {
 
     IReclaimVerifier.ReclaimProof public proof;
 
+    uint256 public constant PRECISE_UNIT = 1e18;
     string public constant PROVIDER_HASH = "0xffb501528259e6d684e1c2153fbbacab453fe9c97c336dc4f8f48d70a0e2a13d";
     uint256 public timestampBuffer = 60;
 
