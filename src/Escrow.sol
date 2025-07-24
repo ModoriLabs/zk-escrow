@@ -38,12 +38,14 @@ contract Escrow is Ownable, Pausable, IEscrow {
 
     uint256 public intentExpirationPeriod;
     uint256 public depositCounter;
+    uint256 public maxIntentsPerDeposit;
 
     constructor(
         address _owner,
         uint256 _intentExpirationPeriod
     ) Ownable(_owner) {
         intentExpirationPeriod = _intentExpirationPeriod;
+        maxIntentsPerDeposit = 100; // Default max intents per deposit
         chainIdStr = StringUtils.uint2str(block.chainid);
     }
 
@@ -58,8 +60,23 @@ contract Escrow is Ownable, Pausable, IEscrow {
 
         _validateIntent(_depositId, deposit, _amount, _to, _verifier, _fiatCurrency);
 
-        // Create a new intent
+        require(deposit.intentIds.length <= maxIntentsPerDeposit, "Maximum intents per deposit reached");
+
         uint256 intentId = ++intentCount;
+
+        if (deposit.remainingDeposits < _amount) {
+            (
+                uint256[] memory prunableIntents,
+                uint256 reclaimableAmount
+            ) = _getPrunableIntents(_depositId);
+
+            require(deposit.remainingDeposits + reclaimableAmount >= _amount, "Not enough liquidity");
+
+            _pruneIntents(deposit, prunableIntents);
+            deposit.remainingDeposits += reclaimableAmount;
+            deposit.outstandingIntentAmount -= reclaimableAmount;
+        }
+
         uint256 conversionRate = depositCurrencyConversionRate[_depositId][_verifier][_fiatCurrency];
         intents[intentId] = Intent({
             owner: msg.sender,
@@ -130,13 +147,12 @@ contract Escrow is Ownable, Pausable, IEscrow {
         _pruneIntent(deposit, _intentId);
         deposit.outstandingIntentAmount -= intent.amount;
         IERC20 token = deposit.token;
-        // TODO:
-        // _closeDepositIfNecessary(intent.depositId, deposit);
 
         _transferFunds(IERC20(token), intent);
 
         emit IntentFulfilled(
-            intentHash,
+            _intentId,
+            intent.depositId,
             verifier,
             intent.owner,
             intent.to,
@@ -209,10 +225,16 @@ contract Escrow is Ownable, Pausable, IEscrow {
 
         deposit.outstandingIntentAmount -= intent.amount;
         IERC20 token = deposit.token;
-        // TODO: close deposit if necessary
-        // _closeDepositIfNecessary(intent.depositId, deposit);
 
         _transferFunds(token, intent);
+
+        emit IntentReleased(
+            _intentId,
+            intent.depositId,
+            intent.owner,
+            intent.to,
+            intent.amount
+        );
     }
 
     /**
@@ -236,6 +258,58 @@ contract Escrow is Ownable, Pausable, IEscrow {
         depositCurrencyConversionRate[_depositId][_verifier][_fiatCurrency] = _newConversionRate;
 
         emit DepositConversionRateUpdated(_depositId, _verifier, _fiatCurrency, _newConversionRate);
+    }
+
+    function withdrawDeposit(uint256 _depositId) external {
+        Deposit storage deposit = deposits[_depositId];
+
+        require(deposit.depositor == msg.sender, "Caller must be the depositor");
+
+        (
+            uint256[] memory prunableIntents,
+            uint256 reclaimableAmount
+        ) = _getPrunableIntents(_depositId);
+
+        _pruneIntents(deposit, prunableIntents);
+
+        uint256 returnAmount = deposit.remainingDeposits + reclaimableAmount;
+
+        deposit.outstandingIntentAmount -= reclaimableAmount;
+
+        emit DepositWithdrawn(_depositId, deposit.depositor, returnAmount);
+
+        delete deposit.remainingDeposits;
+        delete deposit.acceptingIntents;
+        _closeDepositIfNecessary(_depositId, deposit);
+
+        IERC20(deposit.token).transfer(msg.sender, returnAmount);
+    }
+
+    /**
+     * @notice Allows the depositor to add more funds to an existing deposit.
+     * The depositor must approve the escrow contract to transfer the additional amount.
+     *
+     * @param _depositId The ID of the deposit to increase
+     * @param _amount The additional amount to add to the deposit
+     */
+    function increaseDeposit(uint256 _depositId, uint256 _amount) external whenNotPaused {
+        Deposit storage deposit = deposits[_depositId];
+
+        require(deposit.depositor == msg.sender, "Caller must be the depositor");
+        require(deposit.depositor != address(0), "Deposit does not exist");
+        require(_amount > 0, "Amount must be greater than 0");
+        require(deposit.acceptingIntents, "Deposit is not accepting intents");
+
+        IERC20 token = deposit.token;
+
+        // Transfer additional funds from depositor to escrow
+        token.transferFrom(msg.sender, address(this), _amount);
+
+        // Update deposit state
+        deposit.amount += _amount;
+        deposit.remainingDeposits += _amount;
+
+        emit DepositIncreased(_depositId, msg.sender, _amount, deposit.amount);
     }
 
     // *** Governance functions ***
@@ -264,6 +338,18 @@ contract Escrow is Ownable, Pausable, IEscrow {
 
         whitelistedPaymentVerifiers[_verifier] = false;
         emit PaymentVerifierRemoved(_verifier);
+    }
+
+    /**
+     * @notice GOVERNANCE ONLY: Updates the maximum number of intents allowed per deposit.
+     *
+     * @param _maxIntentsPerDeposit The new maximum number of intents allowed per deposit
+     */
+    function setMaxIntentsPerDeposit(uint256 _maxIntentsPerDeposit) external onlyOwner {
+        require(_maxIntentsPerDeposit > 0, "Max intents must be greater than 0");
+        uint256 oldMax = maxIntentsPerDeposit;
+        maxIntentsPerDeposit = _maxIntentsPerDeposit;
+        emit MaxIntentsPerDepositUpdated(oldMax, _maxIntentsPerDeposit);
     }
 
     /**
@@ -330,6 +416,37 @@ contract Escrow is Ownable, Pausable, IEscrow {
     }
 
     /**
+     * @notice Cycles through all intents currently open on a deposit and sees if any have expired. If they have expired
+     * the outstanding amounts are summed and returned alongside the intentHashes
+     */
+    function _getPrunableIntents(
+        uint256 _depositId
+    )
+        internal
+        view
+        returns(uint256[] memory prunableIntents, uint256 reclaimedAmount)
+    {
+        uint256[] memory intentIds = deposits[_depositId].intentIds;
+        prunableIntents = new uint256[](intentIds.length);
+
+        for (uint256 i = 0; i < intentIds.length; ++i) {
+            Intent memory intent = intents[intentIds[i]];
+            if (intent.timestamp + intentExpirationPeriod < block.timestamp) {
+                prunableIntents[i] = intentIds[i];
+                reclaimedAmount += intent.amount;
+            }
+        }
+    }
+
+    function _pruneIntents(Deposit storage _deposit, uint256[] memory _intents) internal {
+        for (uint256 i = 0; i < _intents.length; ++i) {
+            if (_intents[i] != 0) {
+                _pruneIntent(_deposit, _intents[i]);
+            }
+        }
+    }
+
+    /**
      * @notice Pruning an intent involves
      * 1. deleting its state from the intents mapping
      * 2. deleting the intent from it's owners intents array
@@ -341,6 +458,36 @@ contract Escrow is Ownable, Pausable, IEscrow {
         delete accountIntent[intent.owner];
         delete intents[_intentId];
         _deposit.intentIds.removeStorage(_intentId);
+    }
+
+    /**
+     * @notice Removes a deposit if no outstanding intents AND no remaining deposits. Deleting a deposit deletes it from the
+     * deposits mapping and removes tracking it in the user's accountDeposits mapping. Also deletes the verification data for the
+     * deposit.
+     */
+    function _closeDepositIfNecessary(uint256 _depositId, Deposit storage _deposit) internal {
+        uint256 openDepositAmount = _deposit.outstandingIntentAmount + _deposit.remainingDeposits;
+        if (openDepositAmount == 0) {
+            accountDeposits[_deposit.depositor].removeStorage(_depositId);
+            _deleteDepositVerifierAndCurrencyData(_depositId);
+            emit DepositClosed(_depositId, _deposit.depositor);
+            delete deposits[_depositId];
+        }
+    }
+
+    /**
+     * @notice Iterates through all verifiers for a deposit and deletes the corresponding verifier data and currencies.
+     */
+    function _deleteDepositVerifierAndCurrencyData(uint256 _depositId) internal {
+        address[] memory verifiers = depositVerifiers[_depositId];
+        for (uint256 i = 0; i < verifiers.length; i++) {
+            address verifier = verifiers[i];
+            delete depositVerifierData[_depositId][verifier];
+            bytes32[] memory currencies = depositCurrencies[_depositId][verifier];
+            for (uint256 j = 0; j < currencies.length; j++) {
+                delete depositCurrencyConversionRate[_depositId][verifier][currencies[j]];
+            }
+        }
     }
 
     function _transferFunds(IERC20 _token, Intent memory _intent) internal {

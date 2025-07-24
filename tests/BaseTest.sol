@@ -34,6 +34,7 @@ contract BaseTest is Test {
 
     uint256 constant TEST_AMOUNT = 8750e6; // 8750 USDT with 6 decimals
     uint256 constant INTENT_EXPIRATION_PERIOD = 1800; // 30 minutes
+    string public constant CHAIN_NAME = "anvil";
 
     function setUp() public virtual {
         console.log("BaseTest setUp");
@@ -71,7 +72,7 @@ contract BaseTest is Test {
         usdt.transferOwnership(address(zkMinter));
 
         // Deploy Escrow contract with MockUSDT
-        escrow = new Escrow(owner, INTENT_EXPIRATION_PERIOD);
+        escrow = new Escrow(owner, INTENT_EXPIRATION_PERIOD, CHAIN_NAME);
         vm.stopPrank();
     }
 

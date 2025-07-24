@@ -271,4 +271,59 @@ contract SignalIntentTest is BaseTest {
         assertEq(bobRecipient, alice);
         assertEq(charlieRecipient, charlie);
     }
+
+    function test_signalIntent_AutoPruneExpiredIntents() public {
+        // Create multiple users to use up all deposit liquidity with intents
+        address user1 = makeAddr("user1");
+        address user2 = makeAddr("user2");
+        address user3 = makeAddr("user3");
+        address user4 = makeAddr("user4");
+        address user5 = makeAddr("user5");
+        
+        // Create 5 intents of 2000e6 each (max allowed) to use all 10000e6
+        vm.prank(user1);
+        escrow.signalIntent(depositId, 2000e6, user1, address(tossBankReclaimVerifier), keccak256("USD"));
+        
+        vm.prank(user2);
+        escrow.signalIntent(depositId, 2000e6, user2, address(tossBankReclaimVerifier), keccak256("USD"));
+        
+        vm.prank(user3);
+        escrow.signalIntent(depositId, 2000e6, user3, address(tossBankReclaimVerifier), keccak256("USD"));
+        
+        vm.prank(user4);
+        escrow.signalIntent(depositId, 2000e6, user4, address(tossBankReclaimVerifier), keccak256("USD"));
+        
+        vm.prank(user5);
+        escrow.signalIntent(depositId, 2000e6, user5, address(tossBankReclaimVerifier), keccak256("USD"));
+
+        // Verify no remaining deposits
+        (,,, , , uint256 remainingBefore, uint256 outstandingBefore) = escrow.deposits(depositId);
+        assertEq(remainingBefore, 0);
+        assertEq(outstandingBefore, 10000e6);
+
+        // New intent should fail due to insufficient liquidity
+        address dave = makeAddr("dave");
+        vm.prank(dave);
+        vm.expectRevert("Not enough liquidity");
+        escrow.signalIntent(depositId, 1000e6, dave, address(tossBankReclaimVerifier), keccak256("USD"));
+
+        // Fast forward time to make intents expired
+        vm.warp(block.timestamp + escrow.intentExpirationPeriod() + 1);
+
+        // Now dave's intent should succeed because expired intents will be auto-pruned
+        vm.prank(dave);
+        escrow.signalIntent(depositId, 2000e6, dave, address(tossBankReclaimVerifier), keccak256("USD"));
+
+        // Verify dave's intent was created
+        uint256 daveIntentId = escrow.accountIntent(dave);
+        assertTrue(daveIntentId > 0);
+
+        // Verify some old intents were pruned (at least one to make room for dave)
+        // The exact pruning behavior depends on implementation details
+        
+        // Verify deposit state after pruning
+        (,,, , , uint256 remainingAfter, uint256 outstandingAfter) = escrow.deposits(depositId);
+        assertTrue(remainingAfter <= 8000e6); // At least 2000e6 was used by dave
+        assertTrue(outstandingAfter >= 2000e6); // At least dave's intent is outstanding
+    }
 }

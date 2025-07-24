@@ -1,0 +1,152 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.30;
+
+import "../BaseTest.sol";
+import { Escrow } from "../../src/Escrow.sol";
+import { IEscrow } from "../../src/interfaces/IEscrow.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+contract IncreaseDepositTest is BaseTest {
+    address public escrowOwner;
+    address public usdtOwner;
+
+    uint256 public depositId;
+    uint256 public initialDepositAmount = 10000e6; // 10,000 USDT
+
+    function setUp() public override {
+        super.setUp();
+
+        escrowOwner = escrow.owner();
+        usdtOwner = usdt.owner();
+
+        // Mint USDT to test users
+        vm.startPrank(usdtOwner);
+        usdt.mint(alice, 100000e6);
+        usdt.mint(bob, 50000e6);
+        usdt.mint(charlie, 30000e6);
+        vm.stopPrank();
+
+        // Whitelist the verifier
+        vm.prank(escrowOwner);
+        escrow.addWhitelistedPaymentVerifier(address(tossBankReclaimVerifier));
+
+        // Create initial deposit
+        depositId = _createDeposit();
+    }
+
+    function _createDeposit() internal returns (uint256) {
+        IEscrow.Range memory intentRange = IEscrow.Range({
+            min: 100e6,
+            max: 2000e6
+        });
+
+        address[] memory verifiers = new address[](1);
+        verifiers[0] = address(tossBankReclaimVerifier);
+
+        IEscrow.DepositVerifierData[] memory verifierData = new IEscrow.DepositVerifierData[](1);
+        verifierData[0] = IEscrow.DepositVerifierData({
+            payeeDetails: "test-payee",
+            data: abi.encode("test")
+        });
+
+        IEscrow.Currency[][] memory currencies = new IEscrow.Currency[][](1);
+        currencies[0] = new IEscrow.Currency[](1);
+        currencies[0][0] = IEscrow.Currency({ code: keccak256("USD"), conversionRate: 1e18 });
+
+        vm.startPrank(alice);
+        usdt.approve(address(escrow), initialDepositAmount);
+        uint256 newDepositId = escrow.createDeposit(
+            IERC20(address(usdt)),
+            initialDepositAmount,
+            intentRange,
+            verifiers,
+            verifierData,
+            currencies
+        );
+        vm.stopPrank();
+
+        return newDepositId;
+    }
+
+    function test_increaseDeposit_Success() public {
+        uint256 additionalAmount = 5000e6; // 5,000 USDT
+
+        // Check initial state
+        (
+            address depositor,
+            IERC20 token,
+            uint256 amountBefore,
+            ,
+            bool acceptingIntents,
+            uint256 remainingBefore,
+            uint256 outstanding
+        ) = escrow.deposits(depositId);
+
+        assertEq(depositor, alice);
+        assertEq(address(token), address(usdt));
+        assertEq(amountBefore, initialDepositAmount);
+        assertTrue(acceptingIntents);
+        assertEq(remainingBefore, initialDepositAmount);
+        assertEq(outstanding, 0);
+
+        uint256 aliceBalanceBefore = usdt.balanceOf(alice);
+        uint256 escrowBalanceBefore = usdt.balanceOf(address(escrow));
+
+        // Approve additional amount
+        vm.prank(alice);
+        usdt.approve(address(escrow), additionalAmount);
+
+        // Increase deposit
+        vm.prank(alice);
+        vm.expectEmit(true, true, false, true);
+        emit IEscrow.DepositIncreased(depositId, alice, additionalAmount, initialDepositAmount + additionalAmount);
+
+        escrow.increaseDeposit(depositId, additionalAmount);
+
+        // Check state after increase
+        (
+            ,
+            ,
+            uint256 amountAfter,
+            ,
+            ,
+            uint256 remainingAfter,
+            uint256 outstandingAfter
+        ) = escrow.deposits(depositId);
+
+        assertEq(amountAfter, initialDepositAmount + additionalAmount);
+        assertEq(remainingAfter, initialDepositAmount + additionalAmount);
+        assertEq(outstandingAfter, 0);
+
+        // Check balances
+        assertEq(usdt.balanceOf(alice), aliceBalanceBefore - additionalAmount);
+        assertEq(usdt.balanceOf(address(escrow)), escrowBalanceBefore + additionalAmount);
+    }
+
+    function test_increaseDeposit_RevertNonExistentDeposit() public {
+        uint256 nonExistentDepositId = 999;
+        uint256 additionalAmount = 5000e6;
+
+        vm.prank(alice);
+        usdt.approve(address(escrow), additionalAmount);
+
+        vm.prank(alice);
+        vm.expectRevert("Deposit does not exist");
+        escrow.increaseDeposit(nonExistentDepositId, additionalAmount);
+    }
+
+    function test_increaseDeposit_RevertWhenPaused() public {
+        uint256 additionalAmount = 5000e6;
+
+        // Pause the contract
+        vm.prank(escrowOwner);
+        escrow.pause();
+
+        vm.prank(alice);
+        usdt.approve(address(escrow), additionalAmount);
+
+        vm.prank(alice);
+        vm.expectRevert(abi.encodeWithSignature("EnforcedPause()"));
+        escrow.increaseDeposit(depositId, additionalAmount);
+    }
+}
