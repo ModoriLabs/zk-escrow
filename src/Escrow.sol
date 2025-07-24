@@ -14,7 +14,7 @@ import { Uint256ArrayUtils } from "./external/Uint256ArrayUtils.sol";
 contract Escrow is Ownable, Pausable, IEscrow {
     using Uint256ArrayUtils for uint256[];
 
-    string public chainIdStr;
+    string public chainName;
     uint256 public intentCount;
 
     // Mapping of address to intentHash (Only one intent per address at a given time)
@@ -38,15 +38,15 @@ contract Escrow is Ownable, Pausable, IEscrow {
 
     uint256 public intentExpirationPeriod;
     uint256 public depositCounter;
-    uint256 public maxIntentsPerDeposit;
+    uint256 public maxIntentsPerDeposit = 100;
 
     constructor(
         address _owner,
-        uint256 _intentExpirationPeriod
+        uint256 _intentExpirationPeriod,
+        string memory _chainName
     ) Ownable(_owner) {
         intentExpirationPeriod = _intentExpirationPeriod;
-        maxIntentsPerDeposit = 100; // Default max intents per deposit
-        chainIdStr = StringUtils.uint2str(block.chainid);
+        chainName = _chainName;
     }
 
     function signalIntent(
@@ -60,21 +60,19 @@ contract Escrow is Ownable, Pausable, IEscrow {
 
         _validateIntent(_depositId, deposit, _amount, _to, _verifier, _fiatCurrency);
 
-        require(deposit.intentIds.length <= maxIntentsPerDeposit, "Maximum intents per deposit reached");
-
         uint256 intentId = ++intentCount;
 
-        if (deposit.remainingDeposits < _amount) {
-            (
-                uint256[] memory prunableIntents,
-                uint256 reclaimableAmount
-            ) = _getPrunableIntents(_depositId);
+        if (deposit.remainingDeposits < _amount || deposit.intentIds.length >= maxIntentsPerDeposit) {
+            (uint256[] memory prunableIntents, uint256 reclaimableAmount) = _getPrunableIntents(_depositId);
 
             require(deposit.remainingDeposits + reclaimableAmount >= _amount, "Not enough liquidity");
 
+            // The require above means reclaimableAmount > 0, so we can prune intents
             _pruneIntents(deposit, prunableIntents);
             deposit.remainingDeposits += reclaimableAmount;
             deposit.outstandingIntentAmount -= reclaimableAmount;
+
+            require(deposit.intentIds.length < maxIntentsPerDeposit, "Maximum intents per deposit reached");
         }
 
         uint256 conversionRate = depositCurrencyConversionRate[_depositId][_verifier][_fiatCurrency];
@@ -141,7 +139,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
         );
         require(success, "Payment verification failed");
 
-        bytes32 expectedIntentHash = keccak256(abi.encode(string.concat(chainIdStr, "-", StringUtils.uint2str(_intentId))));
+        bytes32 expectedIntentHash = keccak256(abi.encode(string.concat(chainName, "-", StringUtils.uint2str(_intentId))));
         require(expectedIntentHash == intentHash, "Intent hash mismatch");
 
         _pruneIntent(deposit, _intentId);
@@ -295,15 +293,10 @@ contract Escrow is Ownable, Pausable, IEscrow {
     function increaseDeposit(uint256 _depositId, uint256 _amount) external whenNotPaused {
         Deposit storage deposit = deposits[_depositId];
 
-        require(deposit.depositor == msg.sender, "Caller must be the depositor");
         require(deposit.depositor != address(0), "Deposit does not exist");
         require(_amount > 0, "Amount must be greater than 0");
-        require(deposit.acceptingIntents, "Deposit is not accepting intents");
 
-        IERC20 token = deposit.token;
-
-        // Transfer additional funds from depositor to escrow
-        token.transferFrom(msg.sender, address(this), _amount);
+        IERC20(deposit.token).transferFrom(msg.sender, address(this), _amount);
 
         // Update deposit state
         deposit.amount += _amount;
