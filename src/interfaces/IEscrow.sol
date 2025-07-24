@@ -59,8 +59,17 @@ interface IEscrow {
     );
 
     event IntentFulfilled(
-        bytes32 intentHash,
-        address verifier,
+        uint256 indexed intentId,
+        uint256 indexed depositId,
+        address indexed verifier,
+        address owner,
+        address to,
+        uint256 amount
+    );
+
+    event IntentReleased(
+        uint256 indexed intentId,
+        uint256 indexed depositId,
         address owner,
         address to,
         uint256 amount
@@ -113,9 +122,25 @@ interface IEscrow {
         uint256 newConversionRate
     );
 
+    event DepositIncreased(
+        uint256 indexed depositId,
+        address indexed depositor,
+        uint256 additionalAmount,
+        uint256 newTotalAmount
+    );
+
+    event DepositWithdrawn(
+        uint256 indexed depositId,
+        address indexed depositor,
+        uint256 amount
+    );
+
+    event DepositClosed(uint256 depositId, address depositor);
+
     event PaymentVerifierAdded(address verifier);
     event PaymentVerifierRemoved(address verifier);
     event IntentExpirationPeriodSet(uint256 intentExpirationPeriod);
+    event MaxIntentsPerDepositUpdated(uint256 oldMax, uint256 newMax);
 
     error InvalidAmount();
     error InvalidRecipient();

@@ -146,6 +146,32 @@ contract EscrowScript is Script {
         vm.stopBroadcast();
     }
 
+    function increaseDeposit(uint256 depositId, uint256 amount) public {
+        uint256 depositorPrivateKey = vm.envOr("PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80));
+        address depositor = vm.addr(depositorPrivateKey);
+
+        console.log("Increasing deposit:");
+        console.log("- Deposit ID:", depositId);
+        console.log("- Additional amount (USDT):", amount / 1e6);
+        console.log("- Depositor:", depositor);
+
+        vm.startBroadcast(depositorPrivateKey);
+
+        // Check current balance
+        uint256 balance = usdt.balanceOf(depositor);
+        require(balance >= amount, "Insufficient USDT balance");
+
+        // Approve escrow to spend additional USDT
+        usdt.approve(address(escrow), amount);
+
+        // Increase the deposit
+        escrow.increaseDeposit(depositId, amount);
+
+        console.log("Deposit increased successfully!");
+
+        vm.stopBroadcast();
+    }
+
     // Convenience functions with default parameters
     function run() public {
         console.log("Use one of the specific functions:");
@@ -153,6 +179,7 @@ contract EscrowScript is Script {
         console.log("- signalIntent(depositId, amount, to, currency)");
         console.log("- fulfillIntent(paymentProof, intentId)");
         console.log("- cancelIntent(intentId)");
+        console.log("- increaseDeposit(depositId, amount)");
         console.log("- checkDeployments() - Check if contracts are deployed");
     }
 

@@ -113,7 +113,24 @@ forge script script/Escrow.s.sol \
 Parameters:
 - `intentId`: ID of the intent to cancel
 
-### 6. View Functions
+### 6. Increase Deposit
+
+Add more funds to an existing deposit:
+
+```bash
+forge script script/Escrow.s.sol \
+  --sig "increaseDeposit(uint256,uint256)" \
+  1 \
+  5000000000 \
+  --rpc-url http://127.0.0.1:8545 \
+  --broadcast
+```
+
+Parameters:
+- `depositId`: ID of the deposit to increase
+- `amount`: Additional amount to add (5,000 USDT = 5000000000)
+
+### 7. View Functions
 
 View deposit details:
 
