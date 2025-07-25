@@ -379,13 +379,31 @@ contract Escrow is Ownable, Pausable, IEscrow {
         address[] calldata _verifiers,
         DepositVerifierData[] calldata _verifierData,
         Currency[][] calldata _currencies
-    ) internal pure {
+    ) internal view {
         require(_intentAmountRange.min != 0, "Invalid intent amount range");
         require(_intentAmountRange.min <= _intentAmountRange.max, "Invalid intent amount range");
         require(_intentAmountRange.min <= _amount, "Amount must be greater than min intent amount");
         require(_verifiers.length > 0, "Invalid verifiers");
         require(_verifiers.length == _verifierData.length, "Invalid verifier data");
         require(_verifiers.length == _currencies.length, "Invalid currencies length");
+
+        for (uint256 i = 0; i < _verifiers.length; i++) {
+            address verifier = _verifiers[i];
+
+            require(verifier != address(0), "Verifier cannot be zero address");
+            require(whitelistedPaymentVerifiers[verifier], "Payment verifier not whitelisted");
+
+            // _verifierData.intentGatingService can be zero address, _verifierData.data can be empty
+            require(bytes(_verifierData[i].payeeDetails).length != 0, "Payee details cannot be empty");
+
+            for (uint256 j = 0; j < _currencies[i].length; j++) {
+                require(
+                    IPaymentVerifierV2(verifier).isCurrency(_currencies[i][j].code),
+                    "Currency not supported by verifier"
+                );
+                require(_currencies[i][j].conversionRate > 0, "Conversion rate must be greater than 0");
+            }
+        }
     }
 
     function _validateIntent(

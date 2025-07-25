@@ -133,6 +133,9 @@ contract TossBankReclaimVerifierV2 is IPaymentVerifierV2, BaseReclaimPaymentVeri
         // Validate timestamp
         uint256 paymentTimestamp = _adjustTimestamp(paymentDetails.dateString);
         require(paymentTimestamp >= _verifyPaymentData.intentTimestamp, "Incorrect payment timestamp");
+
+        // Validate currency
+        require(_verifyPaymentData.fiatCurrency == KRW_CURRENCY, "Incorrect payment currency");
     }
 
     /**
