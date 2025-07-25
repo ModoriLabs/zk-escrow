@@ -8,8 +8,8 @@ contract FulfillIntentTest is BaseEscrowTest {
     uint256 public intentId;
 
     uint256 public depositAmount = 5000e6;
-    // 1000/1000000 USDT * 1380 WON/USDT = 1.38 WON
-    uint256 public intentAmount = 1000; // 1000 / 1e6 USDT
+    // 10000/1000000 USDT * 1380 WON/USDT = 13.8 WON
+    uint256 public intentAmount = 9420; // 0.00942 USDT
 
     function setUp() public override {
         super.setUp();
@@ -145,6 +145,10 @@ contract FulfillIntentTest is BaseEscrowTest {
         assertEq(outstanding, 0);
     }
 
+    // *************
+    // Cancel Intent
+    // *************
+
     function test_cancelIntent_RestoresDepositState() public {
         // Verify state before cancellation
         (,,, , , uint256 remainingBefore, uint256 outstandingBefore) = escrow.deposits(depositId);
@@ -191,6 +195,10 @@ contract FulfillIntentTest is BaseEscrowTest {
         // Verify intent was cancelled
         assertEq(escrow.accountIntent(bob), 0);
     }
+
+    // ****************
+    // Release Funds To Payer
+    // ****************
 
     function test_releaseFundsToPayer_OnlyDepositor() public {
         // Try to release funds as non-depositor
