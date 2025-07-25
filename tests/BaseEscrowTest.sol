@@ -143,6 +143,4 @@ abstract contract BaseEscrowTest is BaseTest {
 
         proof.isAppclipProof = vm.parseJsonBool(json, ".isAppclipProof");
     }
-
-
 }

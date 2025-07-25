@@ -12,6 +12,8 @@ contract EscrowScript is Script {
     Escrow public escrow;
     MockUSDT public usdt;
     address public verifier;
+    uint256 public KRW_CONVERSION_RATE = 1380e18;
+    address public constant VERIFIER_ADDRESS_V2 = 0x2042c7E7A36CAB186189946ad751EAAe6769E661;
 
     function setUp() public {
         // Load deployed contract addresses from environment or use defaults
@@ -52,19 +54,20 @@ contract EscrowScript is Script {
         address[] memory verifiers = new address[](1);
         verifiers[0] = verifier;
 
-        // TODO: check
         IEscrow.DepositVerifierData[] memory verifierData = new IEscrow.DepositVerifierData[](1);
         address[] memory witnessAddresses = new address[](1);
-        witnessAddresses[0] = address(0x2042c7E7A36CAB186189946ad751EAAe6769E661); // Test witness address from
-            // TossBankReclaimVerifierV2.t.sol
-        verifierData[0] =
-            IEscrow.DepositVerifierData({ payeeDetails: payeeDetails, data: abi.encode(witnessAddresses) });
+        // Test witness address from TossBankReclaimVerifierV2.t.sol
+        witnessAddresses[0] = VERIFIER_ADDRESS_V2;
+        verifierData[0] = IEscrow.DepositVerifierData({
+            payeeDetails: payeeDetails,
+            data: abi.encode(witnessAddresses)
+        });
 
         IEscrow.Currency[][] memory currencies = new IEscrow.Currency[][](1);
         currencies[0] = new IEscrow.Currency[](1);
         currencies[0][0] = IEscrow.Currency({
             code: keccak256("KRW"),
-            conversionRate: 1380e18
+            conversionRate: KRW_CONVERSION_RATE
         });
 
         depositId = escrow.createDeposit(
@@ -236,7 +239,7 @@ contract EscrowScript is Script {
         return createDeposit(
             10000e6,  // 10,000 USDT
             1000,     // 1000/1000000 USDT * 1380 WON/USDT = 1.38 WON
-            2000e6,   // 2,000 USDT max
+            2000e6,   // 2,000 USDT max per intent
             unicode"100202642943(토스뱅크)"
         );
     }
