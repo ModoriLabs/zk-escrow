@@ -1,66 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
-import "../BaseTest.sol";
-import { Escrow } from "../../src/Escrow.sol";
-import { IEscrow } from "../../src/interfaces/IEscrow.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../BaseEscrowTest.sol";
 
-contract SignalIntentTest is BaseTest {
-    address public escrowOwner;
-    address public usdtOwner;
-
+contract SignalIntentTest is BaseEscrowTest {
     uint256 public depositId;
     uint256 public depositAmount = 10000e6; // 10,000 USDT
 
     function setUp() public override {
         super.setUp();
-
-        escrowOwner = escrow.owner();
-        usdtOwner = usdt.owner();
-
-        // Mint USDT to test users
-        vm.startPrank(usdtOwner);
-        usdt.mint(alice, 100000e6);
-        usdt.mint(bob, 50000e6);
-        usdt.mint(charlie, 30000e6);
-        vm.stopPrank();
-
-        // Whitelist the verifier
-        vm.prank(escrowOwner);
-        escrow.addWhitelistedPaymentVerifier(address(tossBankReclaimVerifier));
-
-        // Create a deposit for testing signalIntent
-        IEscrow.Range memory intentRange = IEscrow.Range({
-            min: 100e6,
-            max: 2000e6
-        });
-
-        address[] memory verifiers = new address[](1);
-        verifiers[0] = address(tossBankReclaimVerifier);
-
-        IEscrow.DepositVerifierData[] memory verifierData = new IEscrow.DepositVerifierData[](1);
-        verifierData[0] = IEscrow.DepositVerifierData({
-            payeeDetails: "test-payee",
-            data: abi.encode("test")
-        });
-
-        IEscrow.Currency[][] memory currencies = new IEscrow.Currency[][](1);
-        currencies[0] = new IEscrow.Currency[](2);
-        currencies[0][0] = IEscrow.Currency({ code: keccak256("USD"), conversionRate: 1e18 });
-        currencies[0][1] = IEscrow.Currency({ code: keccak256("KRW"), conversionRate: 1e18 });
-
-        vm.startPrank(alice);
-        usdt.approve(address(escrow), depositAmount);
-        depositId = escrow.createDeposit(
-            IERC20(address(usdt)),
-            depositAmount,
-            intentRange,
-            verifiers,
-            verifierData,
-            currencies
-        );
-        vm.stopPrank();
+        depositId = _createDeposit();
     }
 
     function test_signalIntent_DepositStateChanges() public {
@@ -76,8 +25,8 @@ contract SignalIntentTest is BaseTest {
             depositId,
             intentAmount,
             bob, // to address
-            address(tossBankReclaimVerifier),
-            keccak256("USD")
+            address(tossBankReclaimVerifierV2),
+            keccak256("KRW")
         );
 
         // Check deposit state after signaling intent
@@ -106,21 +55,21 @@ contract SignalIntentTest is BaseTest {
         assertEq(intentDepositId, depositId);
         assertEq(intentAmountStored, intentAmount);
         assertEq(intentTimestamp, block.timestamp);
-        assertEq(intentVerifier, address(tossBankReclaimVerifier));
-        assertEq(intentCurrency, keccak256("USD"));
-        assertEq(intentConversionRate, 1e18);
+        assertEq(intentVerifier, address(tossBankReclaimVerifierV2));
+        assertEq(intentCurrency, keccak256("KRW"));
+        assertEq(intentConversionRate, KRW_CONVERSION_RATE);
     }
 
     function test_signalIntent_MultipleIntents() public {
         // Signal first intent from bob
         uint256 intent1Amount = 1000e6;
         vm.prank(bob);
-        escrow.signalIntent(depositId, intent1Amount, bob, address(tossBankReclaimVerifier), keccak256("KRW"));
+        escrow.signalIntent(depositId, intent1Amount, bob, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         // Signal second intent from charlie
         uint256 intent2Amount = 1500e6;
         vm.prank(charlie);
-        escrow.signalIntent(depositId, intent2Amount, charlie, address(tossBankReclaimVerifier), keccak256("KRW"));
+        escrow.signalIntent(depositId, intent2Amount, charlie, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         // Check deposit state after multiple intents
         (,,, , , uint256 remaining, uint256 outstanding) = escrow.deposits(depositId);
@@ -140,37 +89,37 @@ contract SignalIntentTest is BaseTest {
 
         // Use up the entire deposit with multiple intents (10000e6 total)
         vm.prank(bob);
-        escrow.signalIntent(depositId, 2000e6, bob, address(tossBankReclaimVerifier), keccak256("USD"));
+        escrow.signalIntent(depositId, 2000e6, bob, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         vm.prank(charlie);
-        escrow.signalIntent(depositId, 2000e6, charlie, address(tossBankReclaimVerifier), keccak256("USD"));
+        escrow.signalIntent(depositId, 2000e6, charlie, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         vm.prank(dave);
-        escrow.signalIntent(depositId, 2000e6, dave, address(tossBankReclaimVerifier), keccak256("USD"));
+        escrow.signalIntent(depositId, 2000e6, dave, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         vm.prank(eve);
-        escrow.signalIntent(depositId, 2000e6, eve, address(tossBankReclaimVerifier), keccak256("USD"));
+        escrow.signalIntent(depositId, 2000e6, eve, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         vm.prank(frank);
-        escrow.signalIntent(depositId, 2000e6, frank, address(tossBankReclaimVerifier), keccak256("USD"));
+        escrow.signalIntent(depositId, 2000e6, frank, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         // Now the deposit should be completely used up (remaining = 0)
         // Try to signal another intent should fail
         address george = makeAddr("george");
         vm.prank(george);
         vm.expectRevert(); // Should revert due to underflow in remainingDeposits -= _amount
-        escrow.signalIntent(depositId, 100e6, george, address(tossBankReclaimVerifier), keccak256("USD")); // Even minimum amount should fail
+        escrow.signalIntent(depositId, 100e6, george, address(tossBankReclaimVerifierV2), keccak256("KRW")); // Even minimum amount should fail
     }
 
     function test_signalIntent_RevertIntentAlreadyExists() public {
         // Signal first intent from bob
         vm.prank(bob);
-        escrow.signalIntent(depositId, 500e6, bob, address(tossBankReclaimVerifier), keccak256("USD"));
+        escrow.signalIntent(depositId, 500e6, bob, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         // Try to signal another intent from the same user
         vm.prank(bob);
         vm.expectRevert(abi.encodeWithSelector(IEscrow.IntentAlreadyExists.selector));
-        escrow.signalIntent(depositId, 300e6, bob, address(tossBankReclaimVerifier), keccak256("USD"));
+        escrow.signalIntent(depositId, 300e6, bob, address(tossBankReclaimVerifierV2), keccak256("KRW"));
     }
 
     function test_signalIntent_RevertDepositNotFound() public {
@@ -178,25 +127,25 @@ contract SignalIntentTest is BaseTest {
 
         vm.prank(bob);
         vm.expectRevert("Deposit does not exist");
-        escrow.signalIntent(nonExistentDepositId, 500e6, bob, address(tossBankReclaimVerifier), keccak256("USD"));
+        escrow.signalIntent(nonExistentDepositId, 500e6, bob, address(tossBankReclaimVerifierV2), keccak256("KRW"));
     }
 
     function test_signalIntent_RevertInvalidAmount() public {
         // Test amount below minimum
         vm.prank(bob);
         vm.expectRevert(abi.encodeWithSelector(IEscrow.InvalidAmount.selector));
-        escrow.signalIntent(depositId, 50e6, bob, address(tossBankReclaimVerifier), keccak256("USD")); // Below 100e6 min
+        escrow.signalIntent(depositId, 50e6, bob, address(tossBankReclaimVerifierV2), keccak256("KRW")); // Below 100e6 min
 
         // Test amount above maximum
         vm.prank(charlie);
         vm.expectRevert(abi.encodeWithSelector(IEscrow.InvalidAmount.selector));
-        escrow.signalIntent(depositId, 3000e6, charlie, address(tossBankReclaimVerifier), keccak256("USD")); // Above 2000e6 max
+        escrow.signalIntent(depositId, 3000e6, charlie, address(tossBankReclaimVerifierV2), keccak256("KRW")); // Above 2000e6 max
     }
 
     function test_signalIntent_RevertInvalidRecipient() public {
         vm.prank(bob);
         vm.expectRevert(abi.encodeWithSelector(IEscrow.InvalidRecipient.selector));
-        escrow.signalIntent(depositId, 500e6, address(0), address(tossBankReclaimVerifier), keccak256("USD"));
+        escrow.signalIntent(depositId, 500e6, address(0), address(tossBankReclaimVerifierV2), keccak256("KRW"));
     }
 
     function test_signalIntent_RevertUnsupportedVerifier() public {
@@ -204,13 +153,13 @@ contract SignalIntentTest is BaseTest {
 
         vm.prank(bob);
         vm.expectRevert("Payment verifier not supported");
-        escrow.signalIntent(depositId, 500e6, bob, unsupportedVerifier, keccak256("USD"));
+        escrow.signalIntent(depositId, 500e6, bob, unsupportedVerifier, keccak256("KRW"));
     }
 
     function test_signalIntent_RevertUnsupportedCurrency() public {
         vm.prank(bob);
         vm.expectRevert("Currency not supported");
-        escrow.signalIntent(depositId, 500e6, bob, address(tossBankReclaimVerifier), keccak256("EUR")); // EUR not supported in setup
+        escrow.signalIntent(depositId, 500e6, bob, address(tossBankReclaimVerifierV2), keccak256("EUR")); // EUR not supported in setup
     }
 
     function test_signalIntent_RevertWhenPaused() public {
@@ -220,7 +169,7 @@ contract SignalIntentTest is BaseTest {
 
         vm.prank(bob);
         vm.expectRevert(abi.encodeWithSignature("EnforcedPause()"));
-        escrow.signalIntent(depositId, 500e6, bob, address(tossBankReclaimVerifier), keccak256("USD"));
+        escrow.signalIntent(depositId, 500e6, bob, address(tossBankReclaimVerifierV2), keccak256("KRW"));
     }
 
     function test_signalIntent_EmitsEvent() public {
@@ -228,18 +177,18 @@ contract SignalIntentTest is BaseTest {
 
         vm.prank(bob);
         vm.expectEmit(true, true, true, true);
-        emit IEscrow.IntentSignaled(bob, address(tossBankReclaimVerifier), intentAmount, 1);
-        escrow.signalIntent(depositId, intentAmount, bob, address(tossBankReclaimVerifier), keccak256("USD"));
+        emit IEscrow.IntentSignaled(bob, address(tossBankReclaimVerifierV2), intentAmount, 1);
+        escrow.signalIntent(depositId, intentAmount, bob, address(tossBankReclaimVerifierV2), keccak256("KRW"));
     }
 
     function test_signalIntent_DifferentCurrencies() public {
         // Signal intent with USD
         vm.prank(bob);
-        escrow.signalIntent(depositId, 500e6, bob, address(tossBankReclaimVerifier), keccak256("USD"));
+        escrow.signalIntent(depositId, 500e6, bob, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         // Signal intent with KRW
         vm.prank(charlie);
-        escrow.signalIntent(depositId, 800e6, charlie, address(tossBankReclaimVerifier), keccak256("KRW"));
+        escrow.signalIntent(depositId, 800e6, charlie, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         // Verify both intents exist
         uint256 bobIntentId = escrow.accountIntent(bob);
@@ -248,18 +197,18 @@ contract SignalIntentTest is BaseTest {
         (,,,,,, bytes32 bobCurrency,) = escrow.intents(bobIntentId);
         (,,,,,, bytes32 charlieCurrency,) = escrow.intents(charlieIntentId);
 
-        assertEq(bobCurrency, keccak256("USD"));
+        assertEq(bobCurrency, keccak256("KRW"));
         assertEq(charlieCurrency, keccak256("KRW"));
     }
 
     function test_signalIntent_DifferentRecipients() public {
         // Bob signals intent with alice as recipient
         vm.prank(bob);
-        escrow.signalIntent(depositId, 600e6, alice, address(tossBankReclaimVerifier), keccak256("USD"));
+        escrow.signalIntent(depositId, 600e6, alice, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         // Charlie signals intent with charlie as recipient
         vm.prank(charlie);
-        escrow.signalIntent(depositId, 400e6, charlie, address(tossBankReclaimVerifier), keccak256("USD"));
+        escrow.signalIntent(depositId, 400e6, charlie, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         // Verify intent recipients
         uint256 bobIntentId = escrow.accountIntent(bob);
@@ -279,22 +228,22 @@ contract SignalIntentTest is BaseTest {
         address user3 = makeAddr("user3");
         address user4 = makeAddr("user4");
         address user5 = makeAddr("user5");
-        
+
         // Create 5 intents of 2000e6 each (max allowed) to use all 10000e6
         vm.prank(user1);
-        escrow.signalIntent(depositId, 2000e6, user1, address(tossBankReclaimVerifier), keccak256("USD"));
-        
+        escrow.signalIntent(depositId, 2000e6, user1, address(tossBankReclaimVerifierV2), keccak256("KRW"));
+
         vm.prank(user2);
-        escrow.signalIntent(depositId, 2000e6, user2, address(tossBankReclaimVerifier), keccak256("USD"));
-        
+        escrow.signalIntent(depositId, 2000e6, user2, address(tossBankReclaimVerifierV2), keccak256("KRW"));
+
         vm.prank(user3);
-        escrow.signalIntent(depositId, 2000e6, user3, address(tossBankReclaimVerifier), keccak256("USD"));
-        
+        escrow.signalIntent(depositId, 2000e6, user3, address(tossBankReclaimVerifierV2), keccak256("KRW"));
+
         vm.prank(user4);
-        escrow.signalIntent(depositId, 2000e6, user4, address(tossBankReclaimVerifier), keccak256("USD"));
-        
+        escrow.signalIntent(depositId, 2000e6, user4, address(tossBankReclaimVerifierV2), keccak256("KRW"));
+
         vm.prank(user5);
-        escrow.signalIntent(depositId, 2000e6, user5, address(tossBankReclaimVerifier), keccak256("USD"));
+        escrow.signalIntent(depositId, 2000e6, user5, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         // Verify no remaining deposits
         (,,, , , uint256 remainingBefore, uint256 outstandingBefore) = escrow.deposits(depositId);
@@ -305,14 +254,14 @@ contract SignalIntentTest is BaseTest {
         address dave = makeAddr("dave");
         vm.prank(dave);
         vm.expectRevert("Not enough liquidity");
-        escrow.signalIntent(depositId, 1000e6, dave, address(tossBankReclaimVerifier), keccak256("USD"));
+        escrow.signalIntent(depositId, 1000e6, dave, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         // Fast forward time to make intents expired
         vm.warp(block.timestamp + escrow.intentExpirationPeriod() + 1);
 
         // Now dave's intent should succeed because expired intents will be auto-pruned
         vm.prank(dave);
-        escrow.signalIntent(depositId, 2000e6, dave, address(tossBankReclaimVerifier), keccak256("USD"));
+        escrow.signalIntent(depositId, 2000e6, dave, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         // Verify dave's intent was created
         uint256 daveIntentId = escrow.accountIntent(dave);
@@ -320,7 +269,7 @@ contract SignalIntentTest is BaseTest {
 
         // Verify some old intents were pruned (at least one to make room for dave)
         // The exact pruning behavior depends on implementation details
-        
+
         // Verify deposit state after pruning
         (,,, , , uint256 remainingAfter, uint256 outstandingAfter) = escrow.deposits(depositId);
         assertTrue(remainingAfter <= 8000e6); // At least 2000e6 was used by dave

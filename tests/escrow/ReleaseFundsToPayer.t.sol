@@ -1,19 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
-import "../BaseTest.sol";
-import { Escrow } from "../../src/Escrow.sol";
-import { IEscrow } from "../../src/interfaces/IEscrow.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { TossBankReclaimVerifierV2 } from "../../src/verifiers/TossBankReclaimVerifierV2.sol";
-import { IPaymentVerifierV2 } from "../../src/verifiers/interfaces/IPaymentVerifierV2.sol";
-import { INullifierRegistry } from "../../src/verifiers/nullifierRegistries/INullifierRegistry.sol";
+import "../BaseEscrowTest.sol";
 
-contract ReleaseFundsToPayerTest is BaseTest {
-    address public escrowOwner;
-    address public usdtOwner;
-    TossBankReclaimVerifierV2 public tossBankReclaimVerifierV2;
-
+contract ReleaseFundsToPayerTest is BaseEscrowTest {
     uint256 public depositId;
     uint256 public intentId;
     uint256 public depositAmount = 5000e6; // 5,000 USDT
@@ -21,40 +11,6 @@ contract ReleaseFundsToPayerTest is BaseTest {
 
     function setUp() public override {
         super.setUp();
-
-        escrowOwner = escrow.owner();
-        usdtOwner = usdt.owner();
-
-        // Mint USDT to test users
-        vm.startPrank(usdtOwner);
-        usdt.mint(alice, 100000e6);
-        usdt.mint(bob, 50000e6);
-        usdt.mint(charlie, 30000e6);
-        vm.stopPrank();
-
-        // Create TossBankReclaimVerifierV2 for escrow (V2 interface)
-        string[] memory providerHashes = new string[](1);
-        providerHashes[0] = PROVIDER_HASH;
-
-        bytes32[] memory verifierCurrencies = new bytes32[](1);
-        verifierCurrencies[0] = keccak256("USD");
-
-        tossBankReclaimVerifierV2 = new TossBankReclaimVerifierV2(
-            owner,
-            address(escrow),
-            INullifierRegistry(address(nullifierRegistry)),
-            timestampBuffer,
-            verifierCurrencies,
-            providerHashes
-        );
-
-        // Grant write permission to V2 verifier
-        vm.prank(owner);
-        nullifierRegistry.addWritePermission(address(tossBankReclaimVerifierV2));
-
-        // Whitelist the V2 verifier
-        vm.prank(escrowOwner);
-        escrow.addWhitelistedPaymentVerifier(address(tossBankReclaimVerifierV2));
 
         // Create a deposit and intent
         _setupDepositAndIntent();
@@ -78,7 +34,7 @@ contract ReleaseFundsToPayerTest is BaseTest {
         uint256 conversionRate = 1380 * PRECISE_UNIT;
         IEscrow.Currency[][] memory currencies = new IEscrow.Currency[][](1);
         currencies[0] = new IEscrow.Currency[](1);
-        currencies[0][0] = IEscrow.Currency({ code: keccak256("USD"), conversionRate: conversionRate });
+        currencies[0][0] = IEscrow.Currency({ code: keccak256("KRW"), conversionRate: conversionRate });
 
         vm.startPrank(alice);
         usdt.approve(address(escrow), depositAmount);
@@ -94,7 +50,7 @@ contract ReleaseFundsToPayerTest is BaseTest {
 
         // Signal an intent
         vm.prank(bob);
-        escrow.signalIntent(depositId, intentAmount, bob, address(tossBankReclaimVerifierV2), keccak256("USD"));
+        escrow.signalIntent(depositId, intentAmount, bob, address(tossBankReclaimVerifierV2), keccak256("KRW"));
         intentId = escrow.accountIntent(bob);
     }
 
@@ -113,7 +69,7 @@ contract ReleaseFundsToPayerTest is BaseTest {
 
         // Verify intent was removed
         assertEq(escrow.accountIntent(bob), 0);
-        
+
         // Verify intent was pruned from deposit's intentIds array
         assertEq(escrow.getDepositIntentIds(depositId).length, 0);
 
@@ -125,7 +81,7 @@ contract ReleaseFundsToPayerTest is BaseTest {
         // Verify tokens were transferred to intent recipient
         uint256 bobBalanceAfter = usdt.balanceOf(bob);
         uint256 escrowBalanceAfter = usdt.balanceOf(address(escrow));
-        
+
         assertEq(bobBalanceAfter, bobBalanceBefore + intentAmount);
         assertEq(escrowBalanceAfter, escrowBalanceBefore - intentAmount);
     }
@@ -169,14 +125,14 @@ contract ReleaseFundsToPayerTest is BaseTest {
         uint256 intent3Amount = 300e6;
 
         vm.prank(charlie);
-        escrow.signalIntent(depositId, intent2Amount, charlie, address(tossBankReclaimVerifierV2), keccak256("USD"));
+        escrow.signalIntent(depositId, intent2Amount, charlie, address(tossBankReclaimVerifierV2), keccak256("KRW"));
         uint256 intent2Id = escrow.accountIntent(charlie);
 
         vm.prank(bob); // Bob creates another intent (will replace his previous one)
         escrow.cancelIntent(intentId); // Cancel first intent
-        
+
         vm.prank(bob);
-        escrow.signalIntent(depositId, intent3Amount, bob, address(tossBankReclaimVerifierV2), keccak256("USD"));
+        escrow.signalIntent(depositId, intent3Amount, bob, address(tossBankReclaimVerifierV2), keccak256("KRW"));
         uint256 intent3Id = escrow.accountIntent(bob);
 
         // Check deposit state before releases
@@ -219,7 +175,7 @@ contract ReleaseFundsToPayerTest is BaseTest {
 
         // Create intent where bob pays but alice receives
         vm.prank(bob);
-        escrow.signalIntent(depositId, intentAmount, alice, address(tossBankReclaimVerifierV2), keccak256("USD"));
+        escrow.signalIntent(depositId, intentAmount, alice, address(tossBankReclaimVerifierV2), keccak256("KRW"));
         uint256 newIntentId = escrow.accountIntent(bob);
 
         uint256 aliceBalanceBefore = usdt.balanceOf(alice);
@@ -249,9 +205,9 @@ contract ReleaseFundsToPayerTest is BaseTest {
     function test_releaseFundsToPayer_WithZeroAmount() public {
         // Create a minimal intent (testing edge case)
         uint256 minAmount = 100e6; // Minimum allowed
-        
+
         vm.prank(charlie);
-        escrow.signalIntent(depositId, minAmount, charlie, address(tossBankReclaimVerifierV2), keccak256("USD"));
+        escrow.signalIntent(depositId, minAmount, charlie, address(tossBankReclaimVerifierV2), keccak256("KRW"));
         uint256 minIntentId = escrow.accountIntent(charlie);
 
         uint256 charlieBalanceBefore = usdt.balanceOf(charlie);
@@ -268,9 +224,9 @@ contract ReleaseFundsToPayerTest is BaseTest {
     function test_releaseFundsToPayer_DepositStateConsistency() public {
         // Create multiple intents to test deposit state consistency
         uint256 intent2Amount = 800e6;
-        
+
         vm.prank(charlie);
-        escrow.signalIntent(depositId, intent2Amount, charlie, address(tossBankReclaimVerifierV2), keccak256("USD"));
+        escrow.signalIntent(depositId, intent2Amount, charlie, address(tossBankReclaimVerifierV2), keccak256("KRW"));
         uint256 intent2Id = escrow.accountIntent(charlie);
 
         // Check initial state
@@ -303,7 +259,7 @@ contract ReleaseFundsToPayerTest is BaseTest {
     function test_releaseFundsToPayer_MultipleDeposits() public {
         // Create a second deposit from bob
         uint256 deposit2Amount = 3000e6;
-        
+
         IEscrow.Range memory intentRange = IEscrow.Range({ min: 100e6, max: 1000e6 });
         address[] memory verifiers = new address[](1);
         verifiers[0] = address(tossBankReclaimVerifierV2);
@@ -318,7 +274,7 @@ contract ReleaseFundsToPayerTest is BaseTest {
 
         IEscrow.Currency[][] memory currencies = new IEscrow.Currency[][](1);
         currencies[0] = new IEscrow.Currency[](1);
-        currencies[0][0] = IEscrow.Currency({ code: keccak256("USD"), conversionRate: 1380 * PRECISE_UNIT });
+        currencies[0][0] = IEscrow.Currency({ code: keccak256("KRW"), conversionRate: 1380 * PRECISE_UNIT });
 
         vm.startPrank(bob);
         usdt.approve(address(escrow), deposit2Amount);
@@ -334,7 +290,7 @@ contract ReleaseFundsToPayerTest is BaseTest {
 
         // Create intent on second deposit
         vm.prank(charlie);
-        escrow.signalIntent(deposit2Id, 500e6, charlie, address(tossBankReclaimVerifierV2), keccak256("USD"));
+        escrow.signalIntent(deposit2Id, 500e6, charlie, address(tossBankReclaimVerifierV2), keccak256("KRW"));
         uint256 intent2Id = escrow.accountIntent(charlie);
 
         // Alice can only release from her deposit (deposit1)

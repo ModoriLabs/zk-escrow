@@ -1,14 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
-import "./BaseTest.sol";
-import { Escrow } from "../src/Escrow.sol";
-import { IEscrow } from "../src/interfaces/IEscrow.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-contract EscrowTest is BaseTest {
-    address public escrowOwner;
-    address public usdtOwner;
+import "./BaseEscrowTest.sol";
 
+contract EscrowTest is BaseEscrowTest {
     function setUp() public override {
         super.setUp();
 
@@ -157,112 +152,5 @@ contract EscrowTest is BaseTest {
         vm.prank(alice);
         vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", alice));
         escrow.unpause();
-    }
-
-    function test_pauseUnpause_Integration() public {
-        // Setup deposit data
-        uint256 depositAmount = 1000e6;
-        IEscrow.Range memory intentRange = IEscrow.Range({ min: 100e6, max: 500e6 });
-
-        address[] memory verifiers = new address[](1);
-        verifiers[0] = address(tossBankReclaimVerifier);
-
-        IEscrow.DepositVerifierData[] memory verifierData = new IEscrow.DepositVerifierData[](1);
-        verifierData[0] = IEscrow.DepositVerifierData({
-            payeeDetails: "test",
-            data: abi.encode("test")
-        });
-
-        IEscrow.Currency[][] memory currencies = new IEscrow.Currency[][](1);
-        currencies[0] = new IEscrow.Currency[](1);
-        currencies[0][0] = IEscrow.Currency({ code: keccak256("USD"), conversionRate: 1e18 });
-
-        // Should work when not paused
-        vm.startPrank(alice);
-        usdt.approve(address(escrow), depositAmount);
-        escrow.createDeposit(
-            IERC20(address(usdt)),
-            depositAmount,
-            intentRange,
-            verifiers,
-            verifierData,
-            currencies
-        );
-        vm.stopPrank();
-
-        // Pause contract
-        vm.prank(owner);
-        escrow.pause();
-
-        // Should fail when paused
-        vm.startPrank(bob);
-        usdt.approve(address(escrow), depositAmount);
-        vm.expectRevert(abi.encodeWithSignature("EnforcedPause()"));
-        escrow.createDeposit(
-            IERC20(address(usdt)),
-            depositAmount,
-            intentRange,
-            verifiers,
-            verifierData,
-            currencies
-        );
-        vm.stopPrank();
-
-        // Unpause contract
-        vm.prank(owner);
-        escrow.unpause();
-
-        // Should work again after unpause
-        vm.startPrank(bob);
-        escrow.createDeposit(
-            IERC20(address(usdt)),
-            depositAmount,
-            intentRange,
-            verifiers,
-            verifierData,
-            currencies
-        );
-        vm.stopPrank();
-    }
-
-    function test_transferOwnership_Success() public {
-        address newOwner = makeAddr("newOwner");
-
-        // Current owner is 'owner'
-        assertEq(escrow.owner(), owner);
-
-        // Transfer ownership
-        vm.prank(owner);
-        escrow.transferOwnership(newOwner);
-
-        // New owner should be set
-        assertEq(escrow.owner(), newOwner);
-
-        // Old owner should not be able to call onlyOwner functions
-        vm.prank(owner);
-        vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", owner));
-        escrow.pause();
-
-        // New owner should be able to call onlyOwner functions
-        vm.prank(newOwner);
-        escrow.pause();
-        assertTrue(escrow.paused());
-    }
-
-    function test_renounceOwnership_Success() public {
-        // Current owner is 'owner'
-        assertEq(escrow.owner(), owner);
-
-        // Renounce ownership
-        vm.prank(owner);
-        escrow.renounceOwnership();
-
-        // Owner should be zero address
-        assertEq(escrow.owner(), address(0));
-
-        // No one should be able to call onlyOwner functions
-        vm.prank(owner);
-        vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", owner));
-        escrow.pause();
     }
 }

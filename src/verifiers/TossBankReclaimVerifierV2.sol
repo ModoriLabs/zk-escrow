@@ -34,6 +34,7 @@ contract TossBankReclaimVerifierV2 is IPaymentVerifierV2, BaseReclaimPaymentVeri
     // 11 extracted parameters + 1 providerHash
     uint8 internal constant MAX_EXTRACT_VALUES = 12;
     uint8 internal constant MIN_WITNESS_SIGNATURE_REQUIRED = 1;
+    bytes32 internal constant KRW_CURRENCY = keccak256("KRW");
 
     /* ============ Constructor ============ */
     constructor(
