@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.8.29;
+pragma solidity 0.8.30;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { AddressArrayUtils } from "../external/AddressArrayUtils.sol";
@@ -8,7 +8,6 @@ import { StringArrayUtils } from "../external/StringArrayUtils.sol";
 import { BasePaymentVerifier } from "./BasePaymentVerifier.sol";
 import { INullifierRegistry } from "./nullifierRegistries/INullifierRegistry.sol";
 import { IReclaimVerifier } from "./interfaces/IReclaimVerifier.sol";
-import { console } from "forge-std/src/console.sol";
 
 contract BaseReclaimPaymentVerifier is IReclaimVerifier, BasePaymentVerifier {
     using AddressArrayUtils for address[];

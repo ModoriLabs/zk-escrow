@@ -18,9 +18,6 @@ contract TossBankReclaimVerifierTest is BaseTest {
         // Log both for debugging
         emit log_named_bytes32("Calculated Identifier", calculatedIdentifier);
         emit log_named_bytes32("Expected Identifier", expectedIdentifier);
-
-        // Note: This might not match exactly due to JSON canonicalization differences
-        // between TypeScript and Solidity. Use for debugging purposes.
     }
 
     function test_IsProviderHash() public {

@@ -6,7 +6,7 @@ import "script/Base.s.sol";
 
 contract DeployKRW is BaseScript {
     function run() external {
-        address prevKRW = getDeployedAddress("KRW");
+        address prevKRW = _getDeployedAddress("KRW");
         if (prevKRW != address(0)) {
             console.log("KRW already deployed at:", prevKRW);
             return; // Exit if already deployed

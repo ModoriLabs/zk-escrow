@@ -11,9 +11,9 @@ import { Bytes32ConversionUtils } from "../lib/Bytes32ConversionUtils.sol";
 
 import { BaseReclaimPaymentVerifier } from "./BaseReclaimPaymentVerifier.sol";
 import { INullifierRegistry } from "./nullifierRegistries/INullifierRegistry.sol";
-import { IPaymentVerifier } from "./interfaces/IPaymentVerifier.sol";
+import { IPaymentVerifierV2 } from "./interfaces/IPaymentVerifierV2.sol";
 
-contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier {
+contract TossBankReclaimVerifierV2 is IPaymentVerifierV2, BaseReclaimPaymentVerifier {
 
     using StringConversionUtils for string;
     using Bytes32ConversionUtils for bytes32;
@@ -34,6 +34,7 @@ contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier
     // 11 extracted parameters + 1 providerHash
     uint8 internal constant MAX_EXTRACT_VALUES = 12;
     uint8 internal constant MIN_WITNESS_SIGNATURE_REQUIRED = 1;
+    bytes32 internal constant KRW_CURRENCY = keccak256("KRW");
 
     /* ============ Constructor ============ */
     constructor(
@@ -110,7 +111,7 @@ contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier
         bool _isAppclipProof
     ) internal view {
         uint256 expectedAmount = _verifyPaymentData.intentAmount * _verifyPaymentData.conversionRate / PRECISE_UNIT;
-        uint8 decimals = IERC20Metadata(_verifyPaymentData.mintToken).decimals();
+        uint8 decimals = IERC20Metadata(_verifyPaymentData.depositToken).decimals();
 
         uint256 paymentAmount = paymentDetails.amountString.stringToUint(decimals);
         require(paymentAmount >= expectedAmount, "Incorrect payment amount");
@@ -132,6 +133,9 @@ contract TossBankReclaimVerifier is IPaymentVerifier, BaseReclaimPaymentVerifier
         // Validate timestamp
         uint256 paymentTimestamp = _adjustTimestamp(paymentDetails.dateString);
         require(paymentTimestamp >= _verifyPaymentData.intentTimestamp, "Incorrect payment timestamp");
+
+        // Validate currency
+        require(_verifyPaymentData.fiatCurrency == KRW_CURRENCY, "Incorrect payment currency");
     }
 
     /**

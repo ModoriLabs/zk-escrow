@@ -71,12 +71,12 @@ contract InteractWithDeployedContracts is Script {
                 console.log("Intent ID for Alice:", intentId);
 
                 if (intentId > 0) {
-                    (address owner, address to, uint256 amount, uint256 timestamp, address verifier) = getIntent(zkMinter, intentId);
+                    (address owner, address to, uint256 amount, uint256 timestamp, address intentVerifier) = getIntent(zkMinter, intentId);
                     console.log("Intent owner:", owner);
                     console.log("Intent to:", to);
                     console.log("Intent amount:", amount);
                     console.log("Intent timestamp:", timestamp);
-                    console.log("Intent verifier:", verifier);
+                    console.log("Intent verifier:", intentVerifier);
                 }
             } catch Error(string memory reason) {
                 console.log("Failed to signal intent:", reason);

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.29;
+pragma solidity 0.8.30;
 
 import "forge-std/src/Test.sol";
 import "forge-std/src/console2.sol";
@@ -39,7 +39,7 @@ contract BasePaymentVerifierTest is BaseTest {
         // Deploy the BasePaymentVerifier
         basePaymentVerifier = new BasePaymentVerifier(
             owner,
-            escrow,
+            address(escrow),
             nullifierRegistry,
             TIMESTAMP_BUFFER,
             initialCurrencies
@@ -70,7 +70,7 @@ contract BasePaymentVerifierTest is BaseTest {
     }
 
     function test_Constructor_SetsEscrowCorrectly() public {
-        assertEq(basePaymentVerifier.escrow(), escrow);
+        assertEq(basePaymentVerifier.escrow(), address(escrow));
     }
 
     function test_Constructor_SetsNullifierRegistryCorrectly() public {
