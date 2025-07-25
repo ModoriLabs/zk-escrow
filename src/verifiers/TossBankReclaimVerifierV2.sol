@@ -160,7 +160,6 @@ contract TossBankReclaimVerifierV2 is IPaymentVerifierV2, BaseReclaimPaymentVeri
             MAX_EXTRACT_VALUES,
             true
         );
-        // TODO: toss dateString is Korean timezone, so we need to convert it to UTC
 
         return PaymentDetails({
             // values[0] is documentTitle
