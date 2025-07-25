@@ -6,6 +6,7 @@ import { Escrow } from "src/Escrow.sol";
 import { IEscrow } from "src/interfaces/IEscrow.sol";
 import { MockUSDT } from "src/MockUSDT.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { TossBankReclaimVerifierV2 } from "src/verifiers/TossBankReclaimVerifierV2.sol";
 
 contract EscrowScript is Script {
     Escrow public escrow;
@@ -51,12 +52,13 @@ contract EscrowScript is Script {
         address[] memory verifiers = new address[](1);
         verifiers[0] = verifier;
 
+        // TODO: check
         IEscrow.DepositVerifierData[] memory verifierData = new IEscrow.DepositVerifierData[](1);
-        address[] memory witnessAddresses = new address[](0); // Empty witness array
-        verifierData[0] = IEscrow.DepositVerifierData({
-            payeeDetails: payeeDetails,
-            data: abi.encode(witnessAddresses)
-        });
+        address[] memory witnessAddresses = new address[](1);
+        witnessAddresses[0] = address(0x2042c7E7A36CAB186189946ad751EAAe6769E661); // Test witness address from
+            // TossBankReclaimVerifierV2.t.sol
+        verifierData[0] =
+            IEscrow.DepositVerifierData({ payeeDetails: payeeDetails, data: abi.encode(witnessAddresses) });
 
         IEscrow.Currency[][] memory currencies = new IEscrow.Currency[][](1);
         currencies[0] = new IEscrow.Currency[](2);
