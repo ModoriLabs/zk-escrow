@@ -8,8 +8,6 @@ interface IBasePaymentVerifier {
     event TimestampBufferSet(uint256 timestampBuffer);
 
     /* ============ Functions ============ */
-    function addCurrency(bytes32 _currencyCode) external;
-    function removeCurrency(bytes32 _currencyCode) external;
-    function setTimestampBuffer(uint256 _timestampBuffer) external;
     function getCurrencies() external view returns (bytes32[] memory);
+    function isCurrency(bytes32 _currencyCode) external view returns (bool);
 }
