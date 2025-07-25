@@ -20,7 +20,7 @@ contract EscrowScript is Script {
         verifier = vm.envOr("VERIFIER_ADDRESS", address(0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9));
     }
 
-        function createDeposit(
+    function createDeposit(
         uint256 amount,
         uint256 minIntent,
         uint256 maxIntent,
@@ -61,12 +61,8 @@ contract EscrowScript is Script {
             IEscrow.DepositVerifierData({ payeeDetails: payeeDetails, data: abi.encode(witnessAddresses) });
 
         IEscrow.Currency[][] memory currencies = new IEscrow.Currency[][](1);
-        currencies[0] = new IEscrow.Currency[](2);
+        currencies[0] = new IEscrow.Currency[](1);
         currencies[0][0] = IEscrow.Currency({
-            code: keccak256("USD"),
-            conversionRate: 1e18
-        });
-        currencies[0][1] = IEscrow.Currency({
             code: keccak256("KRW"),
             conversionRate: 1380e18
         });
@@ -250,7 +246,7 @@ contract EscrowScript is Script {
             depositId,
             500e6,  // 500 USDT
             msg.sender,  // to self
-            keccak256("USD")
+            keccak256("KRW")
         );
     }
 

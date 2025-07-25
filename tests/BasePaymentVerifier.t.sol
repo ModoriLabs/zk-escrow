@@ -13,6 +13,7 @@ contract BasePaymentVerifierTest is BaseTest {
 
     address public writer;
     address public attacker;
+    address public escrow;
 
     // Currency constants (mimicking the TypeScript test)
     bytes32 public constant USD = bytes32("USD");
@@ -27,6 +28,7 @@ contract BasePaymentVerifierTest is BaseTest {
 
         writer = makeAddr("writer");
         attacker = makeAddr("attacker");
+        escrow = makeAddr("escrow");
 
         // Create initial currencies array
         bytes32[] memory initialCurrencies = new bytes32[](3);

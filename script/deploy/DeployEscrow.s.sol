@@ -10,6 +10,7 @@ contract DeployEscrow is BaseScript {
     function _getChainName(uint256 chainId) internal pure returns (string memory) {
         if (chainId == 31337) return "anvil";
         if (chainId == 84532) return "basesep";
+        if (chainId == 8453) return "base";
         // Add more chain mappings as needed
         return "unknown";
     }
