@@ -7,8 +7,9 @@ import { IEscrow } from "src/interfaces/IEscrow.sol";
 import { MockUSDT } from "src/MockUSDT.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { TossBankReclaimVerifierV2 } from "src/verifiers/TossBankReclaimVerifierV2.sol";
+import { BaseScript } from "./Base.s.sol";
 
-contract EscrowScript is Script {
+contract EscrowScript is BaseScript {
     Escrow public escrow;
     MockUSDT public usdt;
     address public verifier;
@@ -17,9 +18,9 @@ contract EscrowScript is Script {
 
     function setUp() public {
         // Load deployed contract addresses from environment or use defaults
-        escrow = Escrow(vm.envOr("ESCROW_ADDRESS", address(0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0)));
-        usdt = MockUSDT(vm.envOr("USDT_ADDRESS", address(0x5FbDB2315678afecb367f032d93F642f64180aa3)));
-        verifier = vm.envOr("VERIFIER_ADDRESS", address(0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9));
+        escrow = Escrow(_getDeployedAddress("Escrow"));
+        usdt = MockUSDT(_getDeployedAddress("MockUSDT"));
+        verifier = _getDeployedAddress("TossBankReclaimVerifierV2");
     }
 
     function createDeposit(
@@ -28,15 +29,14 @@ contract EscrowScript is Script {
         uint256 maxIntent,
         string memory payeeDetails
     ) public returns (uint256 depositId) {
-        uint256 deployerPrivateKey = vm.envOr("PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80));
-        address depositor = vm.addr(deployerPrivateKey);
+        address depositor = broadcaster;
 
         console.log("Creating deposit:");
         console.log("- Depositor:", depositor);
         console.log("- Amount (USDT):", amount / 1e6);
         // console.log("- Intent range:", minIntent / 1e6, "-", maxIntent / 1e6, "USDT");
 
-        vm.startBroadcast(deployerPrivateKey);
+        vm.startBroadcast();
 
         // Check USDT balance
         uint256 balance = usdt.balanceOf(depositor);
@@ -90,15 +90,15 @@ contract EscrowScript is Script {
         address to,
         bytes32 currency
     ) public returns (uint256 intentId) {
-        uint256 signerPrivateKey = vm.envOr("PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80));
-        address signer = vm.addr(signerPrivateKey);
+        address signer = broadcaster;
 
         console.log("Signaling intent:");
+        console.log("- Signer:", signer);
         console.log("- Deposit ID:", depositId);
         console.log("- Amount (USDT):", amount / 1e6);
         console.log("- To:", to);
 
-        vm.startBroadcast(signerPrivateKey);
+        vm.startBroadcast();
 
         escrow.signalIntent(
             depositId,
@@ -118,12 +118,12 @@ contract EscrowScript is Script {
         bytes memory paymentProof,
         uint256 intentId
     ) public {
-        uint256 fulfillerPrivateKey = vm.envOr("PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80));
-        address fulfiller = vm.addr(fulfillerPrivateKey);
+        address fulfiller = broadcaster;
 
         console.log("Fulfilling intent ID:", intentId);
+        console.log("- Fulfiller:", fulfiller);
 
-        vm.startBroadcast(fulfillerPrivateKey);
+        vm.startBroadcast();
 
         escrow.fulfillIntent(paymentProof, intentId);
 
@@ -133,12 +133,11 @@ contract EscrowScript is Script {
     }
 
     function cancelIntent(uint256 intentId) public {
-        uint256 cancellerPrivateKey = vm.envOr("PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80));
-        address canceller = vm.addr(cancellerPrivateKey);
+        address canceller = broadcaster;
 
         console.log("Canceling intent ID:", intentId);
 
-        vm.startBroadcast(cancellerPrivateKey);
+        vm.startBroadcast();
 
         escrow.cancelIntent(intentId);
 
@@ -148,15 +147,14 @@ contract EscrowScript is Script {
     }
 
     function increaseDeposit(uint256 depositId, uint256 amount) public {
-        uint256 depositorPrivateKey = vm.envOr("PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80));
-        address depositor = vm.addr(depositorPrivateKey);
+        address depositor = broadcaster;
 
         console.log("Increasing deposit:");
         console.log("- Deposit ID:", depositId);
         console.log("- Additional amount (USDT):", amount / 1e6);
         console.log("- Depositor:", depositor);
 
-        vm.startBroadcast(depositorPrivateKey);
+        vm.startBroadcast();
 
         // Check current balance
         uint256 balance = usdt.balanceOf(depositor);
@@ -220,8 +218,7 @@ contract EscrowScript is Script {
         }
 
         // Check USDT balance for the current user
-        uint256 deployerPrivateKey = vm.envOr("PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80));
-        address depositor = vm.addr(deployerPrivateKey);
+        address depositor = broadcaster;
 
         if (usdtCodeSize > 0) {
             uint256 balance = usdt.balanceOf(depositor);
@@ -248,7 +245,7 @@ contract EscrowScript is Script {
         return signalIntent(
             depositId,
             500e6,  // 500 USDT
-            msg.sender,  // to self
+            broadcaster,  // to self
             keccak256("KRW")
         );
     }

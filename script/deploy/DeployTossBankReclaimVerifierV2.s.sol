@@ -20,46 +20,38 @@ contract DeployTossBankReclaimVerifierV2 is BaseScript {
         // Get required contract addresses from deployments
         address escrowAddress = _getDeployedAddress("Escrow");
         require(escrowAddress != address(0), "Escrow not deployed");
-        
+
         address nullifierRegistryAddress = _getDeployedAddress("NullifierRegistry");
         require(nullifierRegistryAddress != address(0), "NullifierRegistry not deployed");
 
         vm.startBroadcast();
         address owner = broadcaster;
-        
+
         // Prepare provider hashes
         string[] memory providerHashes = new string[](1);
         providerHashes[0] = PROVIDER_HASH;
-        
+
+        bytes32[] memory verifierCurrencies = new bytes32[](1);
+        verifierCurrencies[0] = keccak256("KRW");
+
         // Deploy TossBankReclaimVerifierV2
         TossBankReclaimVerifierV2 verifier = new TossBankReclaimVerifierV2(
             owner,
             escrowAddress,
             INullifierRegistry(nullifierRegistryAddress),
             timestampBuffer,
-            new bytes32[](0), // empty currencies for now
+            verifierCurrencies,
             providerHashes
         );
-        
+
         console.log("TossBankReclaimVerifierV2 deployed to:", address(verifier));
         console.log("Owner:", owner);
         console.log("Escrow:", escrowAddress);
         console.log("NullifierRegistry:", nullifierRegistryAddress);
         console.log("Timestamp buffer:", timestampBuffer);
-        
+
         vm.stopBroadcast();
 
         _updateDeploymentFile("TossBankReclaimVerifierV2", address(verifier));
-
-        // Save deployment info for verification
-        console.log("\n=== DEPLOYMENT SUMMARY ===");
-        console.log("Contract: TossBankReclaimVerifierV2");
-        console.log("Address:", address(verifier));
-        console.log("Owner:", owner);
-        console.log("Escrow:", escrowAddress);
-        console.log("NullifierRegistry:", nullifierRegistryAddress);
-        console.log("Timestamp buffer:", timestampBuffer);
-        console.log("Provider hash:", PROVIDER_HASH);
-        console.log("========================\n");
     }
 }

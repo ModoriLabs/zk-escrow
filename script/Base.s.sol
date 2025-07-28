@@ -3,6 +3,7 @@ pragma solidity >=0.8.25 <0.9.0;
 
 import { Script } from "forge-std/src/Script.sol";
 import { console } from "forge-std/src/console.sol";
+import { VmSafe } from "forge-std/src/Vm.sol";
 
 abstract contract BaseScript is Script {
     /// @dev Included to enable compilation of the script without a $MNEMONIC environment variable.
@@ -123,6 +124,10 @@ abstract contract BaseScript is Script {
      * @param contractAddress The address of the deployed contract
      */
     function _updateDeploymentFile(string memory contractName, address contractAddress) internal {
+        if (!vm.isContext(VmSafe.ForgeContext.ScriptBroadcast)) {
+            return;
+        }
+
         uint256 chainId = block.chainid;
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/deployments/", vm.toString(chainId), deploymentFileSuffix);
@@ -144,10 +149,18 @@ abstract contract BaseScript is Script {
         // Add/update the specific contract address
         string memory updatedJson = vm.serializeAddress(objectKey, contractName, contractAddress);
 
-        // Write the updated deployment file
-        vm.writeFile(path, updatedJson);
+        // Write the updated deployment file with pretty formatting
+        vm.writeJson(updatedJson, path);
         console.log("Updated deployment file:", path);
         console.log(string.concat("Added/Updated ", contractName, ":"), contractAddress);
+    }
+
+    function _getChainNameForEscrow(uint256 chainId) internal pure returns (string memory) {
+        if (chainId == 31337) return "anvil";
+        if (chainId == 84532) return "basesep";
+        if (chainId == 8453) return "base";
+        // Add more chain mappings as needed
+        revert("Unknown chain");
     }
 
     modifier broadcast() {

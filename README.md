@@ -15,8 +15,24 @@ forge script script/deploy/DeployKRW.s.sol --rpc-url holesky --private-key $TEST
 forge script script/deploy/DeployZkMinter.s.sol --rpc-url holesky --private-key $TESTNET_PRIVATE_KEY --broadcast
 ```
 
+```sh
+forge script script/deploy/DeployMockUSDT.s.sol --rpc-url base_sepolia --broadcast
+
+forge script script/deploy/DeployNullifierRegistry.s.sol --rpc-url base_sepolia --broadcast
+
+forge script script/deploy/DeployEscrow.s.sol --rpc-url base_sepolia --private-key $TESTNET_PRIVATE_KEY --broadcast
+```
+
 ### Verify contracts
 
+#### Base Sepolia
+```sh
+forge script script/verify/VerifyEscrow.s.sol \
+  --rpc-url base_sepolia --broadcast --private-key $TESTNET_PRIVATE_KEY \
+  --sig "verifyAll()"
+```
+
+#### Holesky
 ```sh
 forge script script/VerifyContracts.s.sol \
   --rpc-url holesky --private-key $TESTNET_PRIVATE_KEY \
@@ -38,6 +54,15 @@ forge script script/TossBankReclaimVerifier.s.sol --rpc-url holesky --broadcast 
 ```
 
 ## Contract Addresses
+
+### base_sepolia (test)
+
+| Contracts                    | Address                                                                                                                  |
+|------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| Escrow | [0x945926B0945F6028D2A4190760341FCD51250f42](https://sepolia.basescan.org/address/0x945926B0945F6028D2A4190760341FCD51250f42) |
+| MockUSDT | [0x72f91969485c7efa53990fb0763ffa57ba73f3be](https://sepolia.basescan.org/address/0x72f91969485c7efa53990fb0763ffa57ba73f3be) |
+| NullifierRegistry | [0xfE9a7603641e5Ac1cc155C62bAA7242dABf93B5a](https://sepolia.basescan.org/address/0xfE9a7603641e5Ac1cc155C62bAA7242dABf93B5a) |
+| TossBankReclaimVerifierV2 | [0xB2bACB93a5046Fa2A9b5709CB06d41dAb0De6D37](https://sepolia.basescan.org/address/0xB2bACB93a5046Fa2A9b5709CB06d41dAb0De6D37) |
 
 ### holesky (prod)
 

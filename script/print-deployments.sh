@@ -19,6 +19,8 @@ if [ "$CHAIN_ID" == "1" ]; then
   EXPLORER="https://etherscan.io/address/"
 elif [ "$CHAIN_ID" == "17000" ]; then
   EXPLORER="https://holesky.etherscan.io/address/"
+elif [ "$CHAIN_ID" == "84532" ]; then
+  EXPLORER="https://sepolia.basescan.org/address/"
 elif [ "$CHAIN_ID" == "31337" ]; then
   EXPLORER=""  # localhost has no explorer
 else
