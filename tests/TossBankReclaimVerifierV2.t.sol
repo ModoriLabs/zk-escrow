@@ -340,4 +340,155 @@ contract TossBankReclaimVerifierV2Test is BaseEscrowTest {
             })
         );
     }
+
+    // ============ Escrow Management Tests ============
+
+    function test_AddEscrow() public {
+        address newEscrow = address(0x1234);
+        
+        // Check initial state
+        assertFalse(tossBankReclaimVerifierV2.isEscrow(newEscrow), "New address should not be an escrow initially");
+        
+        // Add new escrow
+        vm.prank(owner);
+        vm.expectEmit(true, false, false, false);
+        emit TossBankReclaimVerifierV2.EscrowAdded(newEscrow);
+        tossBankReclaimVerifierV2.addEscrow(newEscrow);
+        
+        // Verify escrow was added
+        assertTrue(tossBankReclaimVerifierV2.isEscrow(newEscrow), "Address should be an escrow after adding");
+        
+        // Verify escrow is in the list
+        address[] memory escrows = tossBankReclaimVerifierV2.getEscrows();
+        assertEq(escrows.length, 2, "Should have 2 escrows (original + new)");
+        assertEq(escrows[1], newEscrow, "New escrow should be in the list");
+    }
+    
+    function test_RevertWhen_AddEscrow_AlreadyEscrow() public {
+        vm.prank(owner);
+        vm.expectRevert("Already an escrow");
+        tossBankReclaimVerifierV2.addEscrow(address(escrow));
+    }
+    
+    function test_RevertWhen_AddEscrow_InvalidAddress() public {
+        vm.prank(owner);
+        vm.expectRevert("Invalid escrow address");
+        tossBankReclaimVerifierV2.addEscrow(address(0));
+    }
+    
+    function test_RevertWhen_AddEscrow_NotOwner() public {
+        address newEscrow = address(0x1234);
+        
+        vm.prank(alice);
+        vm.expectRevert();
+        tossBankReclaimVerifierV2.addEscrow(newEscrow);
+    }
+    
+    function test_RemoveEscrow() public {
+        address newEscrow = address(0x1234);
+        
+        // First add an escrow
+        vm.prank(owner);
+        tossBankReclaimVerifierV2.addEscrow(newEscrow);
+        
+        // Then remove it
+        vm.prank(owner);
+        vm.expectEmit(true, false, false, false);
+        emit TossBankReclaimVerifierV2.EscrowRemoved(newEscrow);
+        tossBankReclaimVerifierV2.removeEscrow(newEscrow);
+        
+        // Verify escrow was removed
+        assertFalse(tossBankReclaimVerifierV2.isEscrow(newEscrow), "Address should not be an escrow after removal");
+        
+        // Verify escrow is not in the list
+        address[] memory escrows = tossBankReclaimVerifierV2.getEscrows();
+        assertEq(escrows.length, 1, "Should have 1 escrow (only original)");
+    }
+    
+    function test_RevertWhen_RemoveEscrow_NotEscrow() public {
+        address nonEscrow = address(0x1234);
+        
+        vm.prank(owner);
+        vm.expectRevert("Not an escrow");
+        tossBankReclaimVerifierV2.removeEscrow(nonEscrow);
+    }
+    
+    function test_RevertWhen_RemoveEscrow_NotOwner() public {
+        vm.prank(alice);
+        vm.expectRevert();
+        tossBankReclaimVerifierV2.removeEscrow(address(escrow));
+    }
+    
+    function test_GetEscrows() public {
+        // Check initial state
+        address[] memory initialEscrows = tossBankReclaimVerifierV2.getEscrows();
+        assertEq(initialEscrows.length, 1, "Should have 1 escrow initially");
+        assertEq(initialEscrows[0], address(escrow), "Initial escrow should be the deployed escrow");
+        
+        // Add multiple escrows
+        address escrow1 = address(0x1234);
+        address escrow2 = address(0x5678);
+        
+        vm.startPrank(owner);
+        tossBankReclaimVerifierV2.addEscrow(escrow1);
+        tossBankReclaimVerifierV2.addEscrow(escrow2);
+        vm.stopPrank();
+        
+        // Check updated list
+        address[] memory allEscrows = tossBankReclaimVerifierV2.getEscrows();
+        assertEq(allEscrows.length, 3, "Should have 3 escrows");
+        assertEq(allEscrows[0], address(escrow), "First escrow should be original");
+        assertEq(allEscrows[1], escrow1, "Second escrow should be escrow1");
+        assertEq(allEscrows[2], escrow2, "Third escrow should be escrow2");
+    }
+    
+    function test_RevertWhen_NonEscrow_CallsVerifyPayment() public {
+        address nonEscrow = address(0x9999);
+        
+        bytes memory encodedProof = abi.encode(proof);
+        address[] memory witnesses = new address[](1);
+        witnesses[0] = address(VERIFIER_ADDRESS_V2);
+        bytes memory data = abi.encode(witnesses);
+        
+        vm.prank(nonEscrow);
+        vm.expectRevert("Only escrows can call");
+        tossBankReclaimVerifierV2.verifyPayment(
+            IPaymentVerifierV2.VerifyPaymentData({
+                paymentProof: encodedProof,
+                depositToken: address(usdt),
+                intentAmount: 2,
+                payeeDetails: unicode"100202642943(토스뱅크)",
+                intentTimestamp: 1732845455,
+                fiatCurrency: keccak256("KRW"),
+                conversionRate: 1e18,
+                data: data
+            })
+        );
+    }
+    
+    function test_RemoveEscrow_UpdatesArrayCorrectly() public {
+        // Add multiple escrows
+        address escrow1 = address(0x1234);
+        address escrow2 = address(0x5678);
+        address escrow3 = address(0x9ABC);
+        
+        vm.startPrank(owner);
+        tossBankReclaimVerifierV2.addEscrow(escrow1);
+        tossBankReclaimVerifierV2.addEscrow(escrow2);
+        tossBankReclaimVerifierV2.addEscrow(escrow3);
+        
+        // Remove middle escrow
+        tossBankReclaimVerifierV2.removeEscrow(escrow2);
+        vm.stopPrank();
+        
+        // Check array is updated correctly
+        address[] memory escrows = tossBankReclaimVerifierV2.getEscrows();
+        assertEq(escrows.length, 3, "Should have 3 escrows after removal");
+        assertEq(escrows[0], address(escrow), "First should be original escrow");
+        assertEq(escrows[1], escrow1, "Second should be escrow1");
+        assertEq(escrows[2], escrow3, "Third should be escrow3");
+        
+        // Verify escrow2 is no longer authorized
+        assertFalse(tossBankReclaimVerifierV2.isEscrow(escrow2), "Escrow2 should not be authorized");
+    }
 }

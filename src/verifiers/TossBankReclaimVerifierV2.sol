@@ -18,6 +18,18 @@ contract TossBankReclaimVerifierV2 is IPaymentVerifierV2, BaseReclaimPaymentVeri
     using StringConversionUtils for string;
     using Bytes32ConversionUtils for bytes32;
 
+    /* ============ State Variables ============ */
+
+    // Mapping to track authorized escrows
+    mapping(address => bool) public isEscrow;
+    // Array to store all escrows for enumeration
+    address[] public escrows;
+
+    /* ============ Events ============ */
+
+    event EscrowAdded(address indexed escrow);
+    event EscrowRemoved(address indexed escrow);
+
     /* ============ Structs ============ */
 
     // Struct to hold the payment details extracted from the proof
@@ -53,7 +65,12 @@ contract TossBankReclaimVerifierV2 is IPaymentVerifierV2, BaseReclaimPaymentVeri
             _currencies,
             _providerHashes
         )
-    { }
+    {
+        // Add initial escrow
+        isEscrow[_escrow] = true;
+        escrows.push(_escrow);
+        emit EscrowAdded(_escrow);
+    }
 
     function verifyPayment(
         VerifyPaymentData calldata _verifyPaymentData
@@ -62,7 +79,7 @@ contract TossBankReclaimVerifierV2 is IPaymentVerifierV2, BaseReclaimPaymentVeri
         override
         returns (bool, bytes32)
     {
-        require(msg.sender == escrow, "Only escrow can call");
+        require(isEscrow[msg.sender], "Only escrows can call");
 
         (
             PaymentDetails memory paymentDetails,
@@ -105,6 +122,12 @@ contract TossBankReclaimVerifierV2 is IPaymentVerifierV2, BaseReclaimPaymentVeri
         witnesses = abi.decode(_data, (address[]));
     }
 
+    /**
+     * Verifies the payment details.
+     * @param paymentDetails The payment details extracted from the proof.
+     * @param _verifyPaymentData The verify payment data from the escrow.
+     * @param _isAppclipProof Whether the proof is an appclip proof.
+     */
     function _verifyPaymentDetails(
         PaymentDetails memory paymentDetails,
         VerifyPaymentData memory _verifyPaymentData,
@@ -147,6 +170,49 @@ contract TossBankReclaimVerifierV2 is IPaymentVerifierV2, BaseReclaimPaymentVeri
         uint256 paymentTimestamp = DateParsing._dateStringToTimestamp(_dateString) + timestampBuffer;
         paymentTimestamp = paymentTimestamp - 9 * 60 * 60; // UTC+9
         return paymentTimestamp;
+    }
+
+    /**
+     * Adds a new escrow address.
+     * @param _escrow The escrow address to add.
+     */
+    function addEscrow(address _escrow) external onlyOwner {
+        require(!isEscrow[_escrow], "Already an escrow");
+        require(_escrow != address(0), "Invalid escrow address");
+        
+        isEscrow[_escrow] = true;
+        escrows.push(_escrow);
+        
+        emit EscrowAdded(_escrow);
+    }
+
+    /**
+     * Removes an escrow address.
+     * @param _escrow The escrow address to remove.
+     */
+    function removeEscrow(address _escrow) external onlyOwner {
+        require(isEscrow[_escrow], "Not an escrow");
+        
+        isEscrow[_escrow] = false;
+        
+        // Remove from array
+        for (uint256 i = 0; i < escrows.length; i++) {
+            if (escrows[i] == _escrow) {
+                escrows[i] = escrows[escrows.length - 1];
+                escrows.pop();
+                break;
+            }
+        }
+        
+        emit EscrowRemoved(_escrow);
+    }
+
+    /**
+     * Returns all escrow addresses.
+     * @return The array of escrow addresses.
+     */
+    function getEscrows() external view returns (address[] memory) {
+        return escrows;
     }
 
     /**
