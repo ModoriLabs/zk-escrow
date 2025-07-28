@@ -5,7 +5,7 @@ import "../BaseEscrowTest.sol";
 
 contract MaxIntentsPerDepositTest is BaseEscrowTest {
     uint256 public depositId;
-    uint256 public depositAmount = 100000e6; // 100,000 USDT - large amount for many intents
+    uint256 public depositAmount = 100_000e6; // 100,000 USDT - large amount for many intents
     uint256 public intentAmount = 100e6; // 100 USDT per intent (minimum)
 
     function setUp() public override {
@@ -13,9 +13,9 @@ contract MaxIntentsPerDepositTest is BaseEscrowTest {
 
         // Create many test users for max intents testing
         vm.startPrank(usdtOwner);
-        for (uint i = 0; i < 150; i++) {
+        for (uint256 i = 0; i < 150; i++) {
             address user = address(uint160(0x1000 + i));
-            usdt.mint(user, 10000e6);
+            usdt.mint(user, 10_000e6);
         }
         vm.stopPrank();
 
@@ -57,16 +57,10 @@ contract MaxIntentsPerDepositTest is BaseEscrowTest {
         escrow.setMaxIntentsPerDeposit(maxIntents);
 
         // Create maximum allowed intents
-        for (uint i = 0; i < maxIntents; i++) {
+        for (uint256 i = 0; i < maxIntents; i++) {
             address user = address(uint160(0x1000 + i));
             vm.prank(user);
-            escrow.signalIntent(
-                depositId,
-                intentAmount,
-                user,
-                address(tossBankReclaimVerifierV2),
-                keccak256("KRW")
-            );
+            escrow.signalIntent(depositId, intentAmount, user, address(tossBankReclaimVerifierV2), keccak256("KRW"));
         }
 
         // Verify we have max intents
@@ -76,13 +70,7 @@ contract MaxIntentsPerDepositTest is BaseEscrowTest {
         address extraUser = address(uint160(0x1000 + maxIntents));
         vm.prank(extraUser);
         vm.expectRevert("Maximum intents per deposit reached");
-        escrow.signalIntent(
-            depositId,
-            intentAmount,
-            extraUser,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW")
-        );
+        escrow.signalIntent(depositId, intentAmount, extraUser, address(tossBankReclaimVerifierV2), keccak256("KRW"));
     }
 
     function test_signalIntent_AllowAfterCancellation() public {
@@ -95,16 +83,10 @@ contract MaxIntentsPerDepositTest is BaseEscrowTest {
         address[] memory users = new address[](maxIntents);
         uint256[] memory intentIds = new uint256[](maxIntents);
 
-        for (uint i = 0; i < maxIntents; i++) {
+        for (uint256 i = 0; i < maxIntents; i++) {
             users[i] = address(uint160(0x1000 + i));
             vm.prank(users[i]);
-            escrow.signalIntent(
-                depositId,
-                intentAmount,
-                users[i],
-                address(tossBankReclaimVerifierV2),
-                keccak256("KRW")
-            );
+            escrow.signalIntent(depositId, intentAmount, users[i], address(tossBankReclaimVerifierV2), keccak256("KRW"));
             intentIds[i] = escrow.accountIntent(users[i]);
         }
 
@@ -115,13 +97,7 @@ contract MaxIntentsPerDepositTest is BaseEscrowTest {
         // Should now be able to create a new intent
         address newUser = address(uint160(0x2000));
         vm.prank(newUser);
-        escrow.signalIntent(
-            depositId,
-            intentAmount,
-            newUser,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW")
-        );
+        escrow.signalIntent(depositId, intentAmount, newUser, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         // Verify the new intent was created
         assertTrue(escrow.accountIntent(newUser) > 0);
@@ -137,16 +113,10 @@ contract MaxIntentsPerDepositTest is BaseEscrowTest {
         address[] memory users = new address[](maxIntents);
         uint256[] memory intentIds = new uint256[](maxIntents);
 
-        for (uint i = 0; i < maxIntents; i++) {
+        for (uint256 i = 0; i < maxIntents; i++) {
             users[i] = address(uint160(0x1000 + i));
             vm.prank(users[i]);
-            escrow.signalIntent(
-                depositId,
-                intentAmount,
-                users[i],
-                address(tossBankReclaimVerifierV2),
-                keccak256("KRW")
-            );
+            escrow.signalIntent(depositId, intentAmount, users[i], address(tossBankReclaimVerifierV2), keccak256("KRW"));
             intentIds[i] = escrow.accountIntent(users[i]);
         }
 
@@ -157,13 +127,7 @@ contract MaxIntentsPerDepositTest is BaseEscrowTest {
         // Should now be able to create a new intent
         address newUser = address(uint160(0x2000));
         vm.prank(newUser);
-        escrow.signalIntent(
-            depositId,
-            intentAmount,
-            newUser,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW")
-        );
+        escrow.signalIntent(depositId, intentAmount, newUser, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         // Verify the new intent was created
         assertTrue(escrow.accountIntent(newUser) > 0);
@@ -176,16 +140,10 @@ contract MaxIntentsPerDepositTest is BaseEscrowTest {
         escrow.setMaxIntentsPerDeposit(maxIntents);
 
         // Create maximum allowed intents
-        for (uint i = 0; i < maxIntents; i++) {
+        for (uint256 i = 0; i < maxIntents; i++) {
             address user = address(uint160(0x1000 + i));
             vm.prank(user);
-            escrow.signalIntent(
-                depositId,
-                intentAmount,
-                user,
-                address(tossBankReclaimVerifierV2),
-                keccak256("KRW")
-            );
+            escrow.signalIntent(depositId, intentAmount, user, address(tossBankReclaimVerifierV2), keccak256("KRW"));
         }
 
         // Fast forward time to make intents prunable
@@ -194,13 +152,7 @@ contract MaxIntentsPerDepositTest is BaseEscrowTest {
         // New intent should succeed because expired intents will be pruned
         address newUser = address(uint160(0x2000));
         vm.prank(newUser);
-        escrow.signalIntent(
-            depositId,
-            intentAmount,
-            newUser,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW")
-        );
+        escrow.signalIntent(depositId, intentAmount, newUser, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         // Verify new intent was created
         assertTrue(escrow.accountIntent(newUser) > 0);
@@ -237,16 +189,10 @@ contract MaxIntentsPerDepositTest is BaseEscrowTest {
 
     function test_setMaxIntentsPerDeposit_DoesNotAffectExisting() public {
         // Create 5 intents
-        for (uint i = 0; i < 5; i++) {
+        for (uint256 i = 0; i < 5; i++) {
             address user = address(uint160(0x1000 + i));
             vm.prank(user);
-            escrow.signalIntent(
-                depositId,
-                intentAmount,
-                user,
-                address(tossBankReclaimVerifierV2),
-                keccak256("KRW")
-            );
+            escrow.signalIntent(depositId, intentAmount, user, address(tossBankReclaimVerifierV2), keccak256("KRW"));
         }
 
         // Reduce max intents to 3
@@ -260,12 +206,6 @@ contract MaxIntentsPerDepositTest is BaseEscrowTest {
         address newUser = address(uint160(0x2000));
         vm.prank(newUser);
         vm.expectRevert("Maximum intents per deposit reached");
-        escrow.signalIntent(
-            depositId,
-            intentAmount,
-            newUser,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW")
-        );
+        escrow.signalIntent(depositId, intentAmount, newUser, address(tossBankReclaimVerifierV2), keccak256("KRW"));
     }
 }

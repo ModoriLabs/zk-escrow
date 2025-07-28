@@ -75,32 +75,27 @@ contract BaseTest is Test {
     }
 
     function getIdentifierFromClaimInfo(Claims.ClaimInfo memory claimInfo) internal pure returns (bytes32) {
-        string memory concatenated = string(abi.encodePacked(
-            claimInfo.provider,
-            "\n",
-            claimInfo.parameters,
-            "\n",
-            bytes(claimInfo.context).length > 0 ? claimInfo.context : ""
-        ));
+        string memory concatenated = string(
+            abi.encodePacked(
+                claimInfo.provider,
+                "\n",
+                claimInfo.parameters,
+                "\n",
+                bytes(claimInfo.context).length > 0 ? claimInfo.context : ""
+            )
+        );
 
         return keccak256(bytes(concatenated));
     }
 
     function _signalIntent() internal {
-        zkMinter.signalIntent({
-            _to: alice,
-            _amount: 8750e6,
-            _verifier: address(tossBankReclaimVerifier)
-        });
+        zkMinter.signalIntent({ _to: alice, _amount: 8750e6, _verifier: address(tossBankReclaimVerifier) });
     }
 
     function _fulfillIntent() internal {
         _loadProof();
         bytes memory paymentProof = abi.encode(proof);
-        zkMinter.fulfillIntent({
-            _paymentProof: paymentProof,
-            _intentId: 1
-        });
+        zkMinter.fulfillIntent({ _paymentProof: paymentProof, _intentId: 1 });
     }
 
     function _loadProof() internal {

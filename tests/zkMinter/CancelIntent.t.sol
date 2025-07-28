@@ -37,7 +37,8 @@ contract CancelIntentTest is BaseTest {
         zkMinter.cancelIntent(1);
 
         // Verify intent is cleared from storage
-        (address ownerAfter, address toAfter, uint256 amountAfter, uint256 timestampAfter, address verifierAfter) = zkMinter.intents(1);
+        (address ownerAfter, address toAfter, uint256 amountAfter, uint256 timestampAfter, address verifierAfter) =
+            zkMinter.intents(1);
         assertEq(ownerAfter, address(0));
         assertEq(toAfter, address(0));
         assertEq(amountAfter, 0);
@@ -63,11 +64,7 @@ contract CancelIntentTest is BaseTest {
         zkMinter.cancelIntent(1);
 
         // Should be able to signal a new intent after cancellation
-        zkMinter.signalIntent({
-            _to: alice,
-            _amount: TEST_AMOUNT,
-            _verifier: address(tossBankReclaimVerifier)
-        });
+        zkMinter.signalIntent({ _to: alice, _amount: TEST_AMOUNT, _verifier: address(tossBankReclaimVerifier) });
 
         // Verify new intent was created
         assertEq(zkMinter.accountIntent(sender), 2);

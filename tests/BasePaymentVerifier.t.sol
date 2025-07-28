@@ -37,13 +37,8 @@ contract BasePaymentVerifierTest is BaseTest {
         initialCurrencies[2] = AED;
 
         // Deploy the BasePaymentVerifier
-        basePaymentVerifier = new BasePaymentVerifier(
-            owner,
-            address(escrow),
-            nullifierRegistry,
-            TIMESTAMP_BUFFER,
-            initialCurrencies
-        );
+        basePaymentVerifier =
+            new BasePaymentVerifier(owner, address(escrow), nullifierRegistry, TIMESTAMP_BUFFER, initialCurrencies);
     }
 
     /* ============ Constructor Tests ============ */

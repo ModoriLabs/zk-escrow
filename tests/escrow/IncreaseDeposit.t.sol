@@ -5,7 +5,7 @@ import "../BaseEscrowTest.sol";
 
 contract IncreaseDepositTest is BaseEscrowTest {
     uint256 public depositId;
-    uint256 public initialDepositAmount = 10000e6; // 10,000 USDT
+    uint256 public initialDepositAmount = 10_000e6; // 10,000 USDT
 
     function setUp() public override {
         super.setUp();
@@ -13,7 +13,6 @@ contract IncreaseDepositTest is BaseEscrowTest {
         // Create initial deposit
         depositId = _createDeposit();
     }
-
 
     function test_increaseDeposit_Success() public {
         uint256 additionalAmount = 5000e6; // 5,000 USDT
@@ -51,15 +50,7 @@ contract IncreaseDepositTest is BaseEscrowTest {
         escrow.increaseDeposit(depositId, additionalAmount);
 
         // Check state after increase
-        (
-            ,
-            ,
-            uint256 amountAfter,
-            ,
-            ,
-            uint256 remainingAfter,
-            uint256 outstandingAfter
-        ) = escrow.deposits(depositId);
+        (,, uint256 amountAfter,,, uint256 remainingAfter, uint256 outstandingAfter) = escrow.deposits(depositId);
 
         assertEq(amountAfter, initialDepositAmount + additionalAmount);
         assertEq(remainingAfter, initialDepositAmount + additionalAmount);

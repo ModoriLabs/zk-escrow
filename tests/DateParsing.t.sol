@@ -20,36 +20,36 @@ contract DateParsingTest is Test {
         helper = new DateParsingHelper();
     }
 
-        function test_dateStringToTimestamp_SpaceFormat() public {
+    function test_dateStringToTimestamp_SpaceFormat() public {
         // Test the specific format "2025-06-17 22:08:30"
         string memory dateString = "2025-06-17 22:08:30";
         uint256 timestamp = helper.dateStringToTimestamp(dateString);
 
         // Expected timestamp for 2025-06-17 22:08:30 UTC
         // The function returns 1750198110 which corresponds to this date/time
-        uint256 expectedTimestamp = 1750198110;
+        uint256 expectedTimestamp = 1_750_198_110;
 
         assertEq(timestamp, expectedTimestamp, "Timestamp should match expected value");
     }
 
-        function test_dateStringToTimestamp_ISOFormat() public {
+    function test_dateStringToTimestamp_ISOFormat() public {
         // Test the ISO format "2025-06-17T22:08:30"
         string memory dateString = "2025-06-17T22:08:30";
         uint256 timestamp = helper.dateStringToTimestamp(dateString);
 
         // Should be the same timestamp as the space format
-        uint256 expectedTimestamp = 1750198110;
+        uint256 expectedTimestamp = 1_750_198_110;
 
         assertEq(timestamp, expectedTimestamp, "ISO format should produce same timestamp");
     }
 
-        function test_dateStringToTimestamp_WithMilliseconds() public {
+    function test_dateStringToTimestamp_WithMilliseconds() public {
         // Test format with milliseconds "2025-06-17T22:08:30.123Z"
         string memory dateString = "2025-06-17T22:08:30.123Z";
         uint256 timestamp = helper.dateStringToTimestamp(dateString);
 
         // Should ignore milliseconds and timezone, same timestamp
-        uint256 expectedTimestamp = 1750198110;
+        uint256 expectedTimestamp = 1_750_198_110;
 
         assertEq(timestamp, expectedTimestamp, "Should ignore milliseconds and timezone");
     }
@@ -60,7 +60,7 @@ contract DateParsingTest is Test {
         uint256 timestamp = helper.dateStringToTimestamp(dateString);
 
         // January 1, 2024, 00:00:00 UTC = 1704067200
-        uint256 expectedTimestamp = 1704067200;
+        uint256 expectedTimestamp = 1_704_067_200;
 
         assertEq(timestamp, expectedTimestamp, "Different date should parse correctly");
     }
@@ -71,7 +71,7 @@ contract DateParsingTest is Test {
         uint256 timestamp = helper.dateStringToTimestamp(dateString);
 
         // February 29, 2024, 12:30:45 UTC = 1709209845
-        uint256 expectedTimestamp = 1709209845;
+        uint256 expectedTimestamp = 1_709_209_845;
 
         assertEq(timestamp, expectedTimestamp, "Leap year date should parse correctly");
     }
@@ -84,7 +84,7 @@ contract DateParsingTest is Test {
         helper.dateStringToTimestamp(invalidDate);
     }
 
-        function test_RevertWhen_TooManyComponents() public {
+    function test_RevertWhen_TooManyComponents() public {
         // Test with too many separators causing array out of bounds
         string memory invalidDate = "2025-06-17-22-08-30-123";
 
@@ -105,6 +105,6 @@ contract DateParsingTest is Test {
         string memory endOfYear = "2025-12-31 23:59:59";
         uint256 endTimestamp = helper.dateStringToTimestamp(endOfYear);
         // December 31, 2025, 23:59:59 UTC = 1767225599
-        assertEq(endTimestamp, 1767225599, "End of year should parse correctly");
+        assertEq(endTimestamp, 1_767_225_599, "End of year should parse correctly");
     }
 }

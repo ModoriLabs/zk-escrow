@@ -5,7 +5,7 @@ import "../BaseEscrowTest.sol";
 
 contract SignalIntentTest is BaseEscrowTest {
     uint256 public depositId;
-    uint256 public depositAmount = 10000e6; // 10,000 USDT
+    uint256 public depositAmount = 10_000e6; // 10,000 USDT
 
     function setUp() public override {
         super.setUp();
@@ -14,7 +14,7 @@ contract SignalIntentTest is BaseEscrowTest {
 
     function test_signalIntent_DepositStateChanges() public {
         // Check initial deposit state
-        (,,, , , uint256 remainingBefore, uint256 outstandingBefore) = escrow.deposits(depositId);
+        (,,,,, uint256 remainingBefore, uint256 outstandingBefore) = escrow.deposits(depositId);
         assertEq(remainingBefore, depositAmount);
         assertEq(outstandingBefore, 0);
 
@@ -30,7 +30,7 @@ contract SignalIntentTest is BaseEscrowTest {
         );
 
         // Check deposit state after signaling intent
-        (,,, , , uint256 remainingAfter, uint256 outstandingAfter) = escrow.deposits(depositId);
+        (,,,,, uint256 remainingAfter, uint256 outstandingAfter) = escrow.deposits(depositId);
         assertEq(remainingAfter, depositAmount - intentAmount);
         assertEq(outstandingAfter, intentAmount);
 
@@ -72,7 +72,7 @@ contract SignalIntentTest is BaseEscrowTest {
         escrow.signalIntent(depositId, intent2Amount, charlie, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         // Check deposit state after multiple intents
-        (,,, , , uint256 remaining, uint256 outstanding) = escrow.deposits(depositId);
+        (,,,,, uint256 remaining, uint256 outstanding) = escrow.deposits(depositId);
         assertEq(remaining, depositAmount - intent1Amount - intent2Amount);
         assertEq(outstanding, intent1Amount + intent2Amount);
 
@@ -108,7 +108,8 @@ contract SignalIntentTest is BaseEscrowTest {
         address george = makeAddr("george");
         vm.prank(george);
         vm.expectRevert(); // Should revert due to underflow in remainingDeposits -= _amount
-        escrow.signalIntent(depositId, 100e6, george, address(tossBankReclaimVerifierV2), keccak256("KRW")); // Even minimum amount should fail
+        escrow.signalIntent(depositId, 100e6, george, address(tossBankReclaimVerifierV2), keccak256("KRW")); // Even
+            // minimum amount should fail
     }
 
     function test_signalIntent_RevertIntentAlreadyExists() public {
@@ -134,12 +135,14 @@ contract SignalIntentTest is BaseEscrowTest {
         // Test amount below minimum
         vm.prank(bob);
         vm.expectRevert(abi.encodeWithSelector(IEscrow.InvalidAmount.selector));
-        escrow.signalIntent(depositId, 50e6, bob, address(tossBankReclaimVerifierV2), keccak256("KRW")); // Below 100e6 min
+        escrow.signalIntent(depositId, 50e6, bob, address(tossBankReclaimVerifierV2), keccak256("KRW")); // Below 100e6
+            // min
 
         // Test amount above maximum
         vm.prank(charlie);
         vm.expectRevert(abi.encodeWithSelector(IEscrow.InvalidAmount.selector));
-        escrow.signalIntent(depositId, 3000e6, charlie, address(tossBankReclaimVerifierV2), keccak256("KRW")); // Above 2000e6 max
+        escrow.signalIntent(depositId, 3000e6, charlie, address(tossBankReclaimVerifierV2), keccak256("KRW")); // Above
+            // 2000e6 max
     }
 
     function test_signalIntent_RevertInvalidRecipient() public {
@@ -159,7 +162,8 @@ contract SignalIntentTest is BaseEscrowTest {
     function test_signalIntent_RevertUnsupportedCurrency() public {
         vm.prank(bob);
         vm.expectRevert("Currency not supported");
-        escrow.signalIntent(depositId, 500e6, bob, address(tossBankReclaimVerifierV2), keccak256("EUR")); // EUR not supported in setup
+        escrow.signalIntent(depositId, 500e6, bob, address(tossBankReclaimVerifierV2), keccak256("EUR")); // EUR not
+            // supported in setup
     }
 
     function test_signalIntent_RevertWhenPaused() public {
@@ -246,9 +250,9 @@ contract SignalIntentTest is BaseEscrowTest {
         escrow.signalIntent(depositId, 2000e6, user5, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         // Verify no remaining deposits
-        (,,, , , uint256 remainingBefore, uint256 outstandingBefore) = escrow.deposits(depositId);
+        (,,,,, uint256 remainingBefore, uint256 outstandingBefore) = escrow.deposits(depositId);
         assertEq(remainingBefore, 0);
-        assertEq(outstandingBefore, 10000e6);
+        assertEq(outstandingBefore, 10_000e6);
 
         // New intent should fail due to insufficient liquidity
         address dave = makeAddr("dave");
@@ -271,7 +275,7 @@ contract SignalIntentTest is BaseEscrowTest {
         // The exact pruning behavior depends on implementation details
 
         // Verify deposit state after pruning
-        (,,, , , uint256 remainingAfter, uint256 outstandingAfter) = escrow.deposits(depositId);
+        (,,,,, uint256 remainingAfter, uint256 outstandingAfter) = escrow.deposits(depositId);
         assertTrue(remainingAfter <= 8000e6); // At least 2000e6 was used by dave
         assertTrue(outstandingAfter >= 2000e6); // At least dave's intent is outstanding
     }

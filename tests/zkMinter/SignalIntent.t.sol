@@ -29,39 +29,23 @@ contract SignalIntentTest is BaseTest {
 
     function test_RevertWhen_signalIntent_WithZeroAmount() public {
         vm.expectRevert(IZkMinter.InvalidAmount.selector);
-        zkMinter.signalIntent({
-            _to: alice,
-            _amount: 0,
-            _verifier: address(tossBankReclaimVerifier)
-        });
+        zkMinter.signalIntent({ _to: alice, _amount: 0, _verifier: address(tossBankReclaimVerifier) });
     }
 
     function test_RevertWhen_signalIntent_WithZeroAddress() public {
         vm.expectRevert("Invalid recipient address");
-        zkMinter.signalIntent({
-            _to: address(0),
-            _amount: 100,
-            _verifier: address(tossBankReclaimVerifier)
-        });
+        zkMinter.signalIntent({ _to: address(0), _amount: 100, _verifier: address(tossBankReclaimVerifier) });
     }
 
     function test_RevertWhen_signalIntent_WithInvalidVerifier() public {
         vm.expectRevert("Invalid verifier address");
-        zkMinter.signalIntent({
-            _to: alice,
-            _amount: 100,
-            _verifier: address(0)
-        });
+        zkMinter.signalIntent({ _to: alice, _amount: 100, _verifier: address(0) });
     }
 
     function test_RevertWhen_signalIntent_IntentAlreadyExists() public {
         _signalIntent();
 
         vm.expectRevert("Intent already exists for this address");
-        zkMinter.signalIntent({
-            _to: alice,
-            _amount: 200,
-            _verifier: address(tossBankReclaimVerifier)
-        });
+        zkMinter.signalIntent({ _to: alice, _amount: 200, _verifier: address(tossBankReclaimVerifier) });
     }
 }
