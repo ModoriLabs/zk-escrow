@@ -10,7 +10,7 @@ contract VaultTest is BaseTest {
     Vault vault;
     uint256 amount = 5 * 1e6;
 
-    uint256 privateKey = 123456789;
+    uint256 privateKey = 123_456_789;
     address notary = vm.addr(privateKey);
     // generate a new address
     address recipientAddress = makeAddr("recipientAddress");

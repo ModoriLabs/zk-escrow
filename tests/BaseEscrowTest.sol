@@ -26,9 +26,9 @@ abstract contract BaseEscrowTest is BaseTest {
 
         // Mint USDT to test users
         vm.startPrank(usdtOwner);
-        usdt.mint(alice, 1000000e6); // 1M USDT
-        usdt.mint(bob, 500000e6);    // 500K USDT
-        usdt.mint(charlie, 300000e6); // 300K USDT
+        usdt.mint(alice, 1_000_000e6); // 1M USDT
+        usdt.mint(bob, 500_000e6); // 500K USDT
+        usdt.mint(charlie, 300_000e6); // 300K USDT
         vm.stopPrank();
 
         // Deploy Escrow contract with MockUSDT
@@ -72,20 +72,18 @@ abstract contract BaseEscrowTest is BaseTest {
         uint256 depositAmount,
         uint256 minIntent,
         uint256 maxIntent
-    ) internal returns (uint256 depositId) {
-        IEscrow.Range memory intentRange = IEscrow.Range({
-            min: minIntent,
-            max: maxIntent
-        });
+    )
+        internal
+        returns (uint256 depositId)
+    {
+        IEscrow.Range memory intentRange = IEscrow.Range({ min: minIntent, max: maxIntent });
 
         address[] memory verifiers = new address[](1);
         verifiers[0] = address(tossBankReclaimVerifierV2);
 
         IEscrow.DepositVerifierData[] memory verifierData = new IEscrow.DepositVerifierData[](1);
-        verifierData[0] = IEscrow.DepositVerifierData({
-            payeeDetails: "test-payee-details",
-            data: abi.encode("test-data")
-        });
+        verifierData[0] =
+            IEscrow.DepositVerifierData({ payeeDetails: "test-payee-details", data: abi.encode("test-data") });
 
         IEscrow.Currency[][] memory currencies = new IEscrow.Currency[][](1);
         currencies[0] = new IEscrow.Currency[](1);
@@ -93,14 +91,8 @@ abstract contract BaseEscrowTest is BaseTest {
 
         vm.startPrank(depositor);
         usdt.approve(address(escrow), depositAmount);
-        depositId = escrow.createDeposit(
-            IERC20(address(usdt)),
-            depositAmount,
-            intentRange,
-            verifiers,
-            verifierData,
-            currencies
-        );
+        depositId =
+            escrow.createDeposit(IERC20(address(usdt)), depositAmount, intentRange, verifiers, verifierData, currencies);
         vm.stopPrank();
     }
 
@@ -108,7 +100,7 @@ abstract contract BaseEscrowTest is BaseTest {
      * @notice Creates a deposit with default parameters (alice, 10K USDT, 100-2000 USDT intent range)
      */
     function _createDeposit() internal returns (uint256 depositId) {
-        return _createDeposit(alice, 10000e6, 100e6, 2000e6);
+        return _createDeposit(alice, 10_000e6, 100e6, 2000e6);
     }
 
     function _loadProofV2() internal {

@@ -5,7 +5,7 @@ import "../BaseEscrowTest.sol";
 
 contract UpdateDepositConversionRateTest is BaseEscrowTest {
     uint256 public depositId;
-    uint256 public depositAmount = 10000e6; // 10,000 USDT
+    uint256 public depositAmount = 10_000e6; // 10,000 USDT
 
     function setUp() public override {
         super.setUp();
@@ -14,30 +14,19 @@ contract UpdateDepositConversionRateTest is BaseEscrowTest {
     }
 
     function test_updateDepositConversionRate_UpdateKRWRate() public {
-        uint256 oldKrwRate = escrow.depositCurrencyConversionRate(
-            depositId,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW")
-        );
+        uint256 oldKrwRate =
+            escrow.depositCurrencyConversionRate(depositId, address(tossBankReclaimVerifierV2), keccak256("KRW"));
         uint256 newKrwRate = 1400e18; // New KRW rate: 1400
 
         assertEq(oldKrwRate, KRW_CONVERSION_RATE); // Initial KRW rate should be 1380
 
         // Update KRW conversion rate as depositor
         vm.prank(alice);
-        escrow.updateDepositConversionRate(
-            depositId,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW"),
-            newKrwRate
-        );
+        escrow.updateDepositConversionRate(depositId, address(tossBankReclaimVerifierV2), keccak256("KRW"), newKrwRate);
 
         // Verify the KRW rate was updated
-        uint256 updatedKrwRate = escrow.depositCurrencyConversionRate(
-            depositId,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW")
-        );
+        uint256 updatedKrwRate =
+            escrow.depositCurrencyConversionRate(depositId, address(tossBankReclaimVerifierV2), keccak256("KRW"));
         assertEq(updatedKrwRate, newKrwRate);
     }
 
@@ -47,12 +36,7 @@ contract UpdateDepositConversionRateTest is BaseEscrowTest {
         // Try to update as non-depositor (bob)
         vm.prank(bob);
         vm.expectRevert(abi.encodeWithSelector(IEscrow.OnlyDepositor.selector));
-        escrow.updateDepositConversionRate(
-            depositId,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW"),
-            newRate
-        );
+        escrow.updateDepositConversionRate(depositId, address(tossBankReclaimVerifierV2), keccak256("KRW"), newRate);
     }
 
     function test_updateDepositConversionRate_RevertUnsupportedCurrency() public {
@@ -76,12 +60,7 @@ contract UpdateDepositConversionRateTest is BaseEscrowTest {
         // Try to update rate for unsupported verifier
         vm.prank(alice);
         vm.expectRevert("Currency or verifier not supported");
-        escrow.updateDepositConversionRate(
-            depositId,
-            unsupportedVerifier,
-            keccak256("KRW"),
-            newRate
-        );
+        escrow.updateDepositConversionRate(depositId, unsupportedVerifier, keccak256("KRW"), newRate);
     }
 
     function test_updateDepositConversionRate_RevertZeroRate() public {
@@ -90,12 +69,7 @@ contract UpdateDepositConversionRateTest is BaseEscrowTest {
         // Try to update with zero rate
         vm.prank(alice);
         vm.expectRevert("Conversion rate must be greater than 0");
-        escrow.updateDepositConversionRate(
-            depositId,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW"),
-            zeroRate
-        );
+        escrow.updateDepositConversionRate(depositId, address(tossBankReclaimVerifierV2), keccak256("KRW"), zeroRate);
     }
 
     function test_updateDepositConversionRate_RevertNonExistentDeposit() public {
@@ -106,10 +80,7 @@ contract UpdateDepositConversionRateTest is BaseEscrowTest {
         vm.prank(alice);
         vm.expectRevert(abi.encodeWithSelector(IEscrow.OnlyDepositor.selector));
         escrow.updateDepositConversionRate(
-            nonExistentDepositId,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW"),
-            newRate
+            nonExistentDepositId, address(tossBankReclaimVerifierV2), keccak256("KRW"), newRate
         );
     }
 
@@ -123,12 +94,7 @@ contract UpdateDepositConversionRateTest is BaseEscrowTest {
         // Try to update rate when paused
         vm.prank(alice);
         vm.expectRevert(abi.encodeWithSignature("EnforcedPause()"));
-        escrow.updateDepositConversionRate(
-            depositId,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW"),
-            newRate
-        );
+        escrow.updateDepositConversionRate(depositId, address(tossBankReclaimVerifierV2), keccak256("KRW"), newRate);
     }
 
     function test_updateDepositConversionRate_MultipleUpdates() public {
@@ -138,50 +104,26 @@ contract UpdateDepositConversionRateTest is BaseEscrowTest {
 
         // First update
         vm.prank(alice);
-        escrow.updateDepositConversionRate(
-            depositId,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW"),
-            firstRate
-        );
+        escrow.updateDepositConversionRate(depositId, address(tossBankReclaimVerifierV2), keccak256("KRW"), firstRate);
 
-        uint256 rate1 = escrow.depositCurrencyConversionRate(
-            depositId,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW")
-        );
+        uint256 rate1 =
+            escrow.depositCurrencyConversionRate(depositId, address(tossBankReclaimVerifierV2), keccak256("KRW"));
         assertEq(rate1, firstRate);
 
         // Second update
         vm.prank(alice);
-        escrow.updateDepositConversionRate(
-            depositId,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW"),
-            secondRate
-        );
+        escrow.updateDepositConversionRate(depositId, address(tossBankReclaimVerifierV2), keccak256("KRW"), secondRate);
 
-        uint256 rate2 = escrow.depositCurrencyConversionRate(
-            depositId,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW")
-        );
+        uint256 rate2 =
+            escrow.depositCurrencyConversionRate(depositId, address(tossBankReclaimVerifierV2), keccak256("KRW"));
         assertEq(rate2, secondRate);
 
         // Third update
         vm.prank(alice);
-        escrow.updateDepositConversionRate(
-            depositId,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW"),
-            thirdRate
-        );
+        escrow.updateDepositConversionRate(depositId, address(tossBankReclaimVerifierV2), keccak256("KRW"), thirdRate);
 
-        uint256 rate3 = escrow.depositCurrencyConversionRate(
-            depositId,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW")
-        );
+        uint256 rate3 =
+            escrow.depositCurrencyConversionRate(depositId, address(tossBankReclaimVerifierV2), keccak256("KRW"));
         assertEq(rate3, thirdRate);
     }
 
@@ -191,27 +133,16 @@ contract UpdateDepositConversionRateTest is BaseEscrowTest {
 
         // Update USD conversion rate
         vm.prank(alice);
-        escrow.updateDepositConversionRate(
-            depositId,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW"),
-            newUsdRate
-        );
+        escrow.updateDepositConversionRate(depositId, address(tossBankReclaimVerifierV2), keccak256("KRW"), newUsdRate);
 
         // Signal new intent - should use updated conversion rate
         vm.prank(bob);
-        escrow.signalIntent(
-            depositId,
-            intentAmount,
-            bob,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW")
-        );
+        escrow.signalIntent(depositId, intentAmount, bob, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         uint256 intentId = escrow.accountIntent(bob);
 
         // Check that intent uses the updated conversion rate
-        (,,,,,, , uint256 conversionRate) = escrow.intents(intentId);
+        (,,,,,,, uint256 conversionRate) = escrow.intents(intentId);
         assertEq(conversionRate, newUsdRate);
     }
 
@@ -221,40 +152,26 @@ contract UpdateDepositConversionRateTest is BaseEscrowTest {
 
         // Signal intent with original conversion rate
         vm.prank(bob);
-        escrow.signalIntent(
-            depositId,
-            intentAmount,
-            bob,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW")
-        );
+        escrow.signalIntent(depositId, intentAmount, bob, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         uint256 intentId = escrow.accountIntent(bob);
 
         // Check original conversion rate in intent
-        (,,,,,, , uint256 originalConversionRate) = escrow.intents(intentId);
+        (,,,,,,, uint256 originalConversionRate) = escrow.intents(intentId);
         assertEq(originalConversionRate, originalRate);
 
         // Update conversion rate after intent creation
         uint256 newRate = 2e18;
         vm.prank(alice);
-        escrow.updateDepositConversionRate(
-            depositId,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW"),
-            newRate
-        );
+        escrow.updateDepositConversionRate(depositId, address(tossBankReclaimVerifierV2), keccak256("KRW"), newRate);
 
         // Check that existing intent still has original conversion rate
-        (,,,,,, , uint256 unchangedConversionRate) = escrow.intents(intentId);
+        (,,,,,,, uint256 unchangedConversionRate) = escrow.intents(intentId);
         assertEq(unchangedConversionRate, originalRate);
 
         // Verify deposit has new rate
-        uint256 depositRate = escrow.depositCurrencyConversionRate(
-            depositId,
-            address(tossBankReclaimVerifierV2),
-            keccak256("KRW")
-        );
+        uint256 depositRate =
+            escrow.depositCurrencyConversionRate(depositId, address(tossBankReclaimVerifierV2), keccak256("KRW"));
         assertEq(depositRate, newRate);
     }
 }

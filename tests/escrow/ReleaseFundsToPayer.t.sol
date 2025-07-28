@@ -26,10 +26,8 @@ contract ReleaseFundsToPayerTest is BaseEscrowTest {
         IEscrow.DepositVerifierData[] memory verifierData = new IEscrow.DepositVerifierData[](1);
         address[] memory witnesses = new address[](1);
         witnesses[0] = address(VERIFIER_ADDRESS_V2);
-        verifierData[0] = IEscrow.DepositVerifierData({
-            payeeDetails: unicode"100202642943(토스뱅크)",
-            data: abi.encode(witnesses)
-        });
+        verifierData[0] =
+            IEscrow.DepositVerifierData({ payeeDetails: unicode"100202642943(토스뱅크)", data: abi.encode(witnesses) });
 
         uint256 conversionRate = 1380 * PRECISE_UNIT;
         IEscrow.Currency[][] memory currencies = new IEscrow.Currency[][](1);
@@ -38,14 +36,8 @@ contract ReleaseFundsToPayerTest is BaseEscrowTest {
 
         vm.startPrank(alice);
         usdt.approve(address(escrow), depositAmount);
-        depositId = escrow.createDeposit(
-            IERC20(address(usdt)),
-            depositAmount,
-            intentRange,
-            verifiers,
-            verifierData,
-            currencies
-        );
+        depositId =
+            escrow.createDeposit(IERC20(address(usdt)), depositAmount, intentRange, verifiers, verifierData, currencies);
         vm.stopPrank();
 
         // Signal an intent
@@ -56,7 +48,7 @@ contract ReleaseFundsToPayerTest is BaseEscrowTest {
 
     function test_releaseFundsToPayer_Success() public {
         // Check initial state
-        (,,, , , uint256 remainingBefore, uint256 outstandingBefore) = escrow.deposits(depositId);
+        (,,,,, uint256 remainingBefore, uint256 outstandingBefore) = escrow.deposits(depositId);
         assertEq(remainingBefore, depositAmount - intentAmount);
         assertEq(outstandingBefore, intentAmount);
 
@@ -74,7 +66,7 @@ contract ReleaseFundsToPayerTest is BaseEscrowTest {
         assertEq(escrow.getDepositIntentIds(depositId).length, 0);
 
         // Verify deposit state was updated
-        (,,, , , uint256 remainingAfter, uint256 outstandingAfter) = escrow.deposits(depositId);
+        (,,,,, uint256 remainingAfter, uint256 outstandingAfter) = escrow.deposits(depositId);
         assertEq(remainingAfter, depositAmount - intentAmount); // Remaining stays the same
         assertEq(outstandingAfter, 0); // Outstanding amount reduced
 
@@ -136,7 +128,7 @@ contract ReleaseFundsToPayerTest is BaseEscrowTest {
         uint256 intent3Id = escrow.accountIntent(bob);
 
         // Check deposit state before releases
-        (,,, , , uint256 remainingBefore, uint256 outstandingBefore) = escrow.deposits(depositId);
+        (,,,,, uint256 remainingBefore, uint256 outstandingBefore) = escrow.deposits(depositId);
         assertEq(outstandingBefore, intent2Amount + intent3Amount);
 
         uint256 charlieBalanceBefore = usdt.balanceOf(charlie);
@@ -151,7 +143,7 @@ contract ReleaseFundsToPayerTest is BaseEscrowTest {
         assertEq(escrow.accountIntent(charlie), 0);
 
         // Check deposit state after first release
-        (,,, , , , uint256 outstandingAfterFirst) = escrow.deposits(depositId);
+        (,,,,,, uint256 outstandingAfterFirst) = escrow.deposits(depositId);
         assertEq(outstandingAfterFirst, intent3Amount);
 
         // Release Bob's intent
@@ -163,7 +155,7 @@ contract ReleaseFundsToPayerTest is BaseEscrowTest {
         assertEq(escrow.accountIntent(bob), 0);
 
         // Check final deposit state
-        (,,, , , , uint256 outstandingFinal) = escrow.deposits(depositId);
+        (,,,,,, uint256 outstandingFinal) = escrow.deposits(depositId);
         assertEq(outstandingFinal, 0);
         assertEq(escrow.getDepositIntentIds(depositId).length, 0);
     }
@@ -230,7 +222,7 @@ contract ReleaseFundsToPayerTest is BaseEscrowTest {
         uint256 intent2Id = escrow.accountIntent(charlie);
 
         // Check initial state
-        (,,, , , uint256 remainingBefore, uint256 outstandingBefore) = escrow.deposits(depositId);
+        (,,,,, uint256 remainingBefore, uint256 outstandingBefore) = escrow.deposits(depositId);
         assertEq(remainingBefore, depositAmount - intentAmount - intent2Amount);
         assertEq(outstandingBefore, intentAmount + intent2Amount);
 
@@ -239,7 +231,7 @@ contract ReleaseFundsToPayerTest is BaseEscrowTest {
         escrow.releaseFundsToPayer(intentId);
 
         // Check state after first release
-        (,,, , , uint256 remainingAfter1, uint256 outstandingAfter1) = escrow.deposits(depositId);
+        (,,,,, uint256 remainingAfter1, uint256 outstandingAfter1) = escrow.deposits(depositId);
         assertEq(remainingAfter1, depositAmount - intentAmount - intent2Amount); // Remaining unchanged
         assertEq(outstandingAfter1, intent2Amount); // Outstanding reduced by first intent
 
@@ -248,7 +240,7 @@ contract ReleaseFundsToPayerTest is BaseEscrowTest {
         escrow.releaseFundsToPayer(intent2Id);
 
         // Check final state
-        (,,, , , uint256 remainingFinal, uint256 outstandingFinal) = escrow.deposits(depositId);
+        (,,,,, uint256 remainingFinal, uint256 outstandingFinal) = escrow.deposits(depositId);
         assertEq(remainingFinal, depositAmount - intentAmount - intent2Amount); // Remaining still unchanged
         assertEq(outstandingFinal, 0); // All outstanding intents released
 
@@ -267,10 +259,8 @@ contract ReleaseFundsToPayerTest is BaseEscrowTest {
         IEscrow.DepositVerifierData[] memory verifierData = new IEscrow.DepositVerifierData[](1);
         address[] memory witnesses = new address[](1);
         witnesses[0] = address(VERIFIER_ADDRESS_V2);
-        verifierData[0] = IEscrow.DepositVerifierData({
-            payeeDetails: unicode"100202642943(토스뱅크)",
-            data: abi.encode(witnesses)
-        });
+        verifierData[0] =
+            IEscrow.DepositVerifierData({ payeeDetails: unicode"100202642943(토스뱅크)", data: abi.encode(witnesses) });
 
         IEscrow.Currency[][] memory currencies = new IEscrow.Currency[][](1);
         currencies[0] = new IEscrow.Currency[](1);
@@ -279,12 +269,7 @@ contract ReleaseFundsToPayerTest is BaseEscrowTest {
         vm.startPrank(bob);
         usdt.approve(address(escrow), deposit2Amount);
         uint256 deposit2Id = escrow.createDeposit(
-            IERC20(address(usdt)),
-            deposit2Amount,
-            intentRange,
-            verifiers,
-            verifierData,
-            currencies
+            IERC20(address(usdt)), deposit2Amount, intentRange, verifiers, verifierData, currencies
         );
         vm.stopPrank();
 

@@ -115,7 +115,7 @@ contract FulfillRedeemTest is BaseTest {
         vm.prank(address(zkMinter));
         usdt.mint(bob, REDEEM_AMOUNT);
 
-                // Both users signal redeem requests
+        // Both users signal redeem requests
         _signalRedeem(); // alice signals redeem (id = 1)
 
         // Bob approves and signals redeem
@@ -178,7 +178,7 @@ contract FulfillRedeemTest is BaseTest {
         zkMinter.fulfillRedeem(1);
     }
 
-        function test_fulfillRedeem_DecrementsTotalSupply() public {
+    function test_fulfillRedeem_DecrementsTotalSupply() public {
         _mintTokensToAlice();
         uint256 initialTotalSupply = usdt.totalSupply();
 

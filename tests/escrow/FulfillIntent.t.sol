@@ -16,8 +16,8 @@ contract FulfillIntentTest is BaseEscrowTest {
 
         // Mint USDT to test users
         vm.startPrank(usdtOwner);
-        usdt.mint(alice, 100000e6);
-        usdt.mint(bob, 50000e6);
+        usdt.mint(alice, 100_000e6);
+        usdt.mint(bob, 50_000e6);
         vm.stopPrank();
 
         // Create a deposit
@@ -30,10 +30,8 @@ contract FulfillIntentTest is BaseEscrowTest {
         // This payee details should match what's in the proof
         address[] memory witnesses = new address[](1);
         witnesses[0] = address(VERIFIER_ADDRESS_V2); // From the V2 test
-        verifierData[0] = IEscrow.DepositVerifierData({
-            payeeDetails: unicode"100202642943(토스뱅크)",
-            data: abi.encode(witnesses)
-        });
+        verifierData[0] =
+            IEscrow.DepositVerifierData({ payeeDetails: unicode"100202642943(토스뱅크)", data: abi.encode(witnesses) });
 
         IEscrow.Currency[][] memory currencies = new IEscrow.Currency[][](1);
         currencies[0] = new IEscrow.Currency[](1);
@@ -41,14 +39,8 @@ contract FulfillIntentTest is BaseEscrowTest {
 
         vm.startPrank(alice);
         usdt.approve(address(escrow), depositAmount);
-        depositId = escrow.createDeposit(
-            IERC20(address(usdt)),
-            depositAmount,
-            intentRange,
-            verifiers,
-            verifierData,
-            currencies
-        );
+        depositId =
+            escrow.createDeposit(IERC20(address(usdt)), depositAmount, intentRange, verifiers, verifierData, currencies);
         vm.stopPrank();
 
         // Signal an intent - the senderNickname in proof is "31337-1"
@@ -62,7 +54,7 @@ contract FulfillIntentTest is BaseEscrowTest {
         _loadProofV2();
 
         // Check state before fulfillment
-        (,,, , , uint256 remainingBefore, uint256 outstandingBefore) = escrow.deposits(depositId);
+        (,,,,, uint256 remainingBefore, uint256 outstandingBefore) = escrow.deposits(depositId);
         assertEq(remainingBefore, depositAmount - intentAmount);
         assertEq(outstandingBefore, intentAmount);
 
@@ -75,7 +67,7 @@ contract FulfillIntentTest is BaseEscrowTest {
         assertEq(escrow.accountIntent(bob), 0);
 
         // 2. outstandingIntentAmount should decrease by intent.amount
-        (,,, , , uint256 remainingAfter, uint256 outstandingAfter) = escrow.deposits(depositId);
+        (,,,,, uint256 remainingAfter, uint256 outstandingAfter) = escrow.deposits(depositId);
         assertEq(outstandingAfter, 0);
 
         // 3. Tokens should be transferred to bob
@@ -86,7 +78,7 @@ contract FulfillIntentTest is BaseEscrowTest {
         assertEq(remainingAfter, depositAmount - intentAmount); // Remaining should stay the same
     }
 
-   function test_fulfillIntent_RequiresValidPaymentProof() public {
+    function test_fulfillIntent_RequiresValidPaymentProof() public {
         // Try to fulfill with invalid payment proof
         bytes memory invalidProof = abi.encode("invalid");
 
@@ -122,7 +114,7 @@ contract FulfillIntentTest is BaseEscrowTest {
         uint256 intent2Id = escrow.accountIntent(charlie);
 
         // Check deposit state with multiple intents
-        (,,, , , uint256 remaining, uint256 outstanding) = escrow.deposits(depositId);
+        (,,,,, uint256 remaining, uint256 outstanding) = escrow.deposits(depositId);
         assertEq(remaining, depositAmount - intentAmount - intent2Amount);
         assertEq(outstanding, intentAmount + intent2Amount);
 
@@ -131,7 +123,7 @@ contract FulfillIntentTest is BaseEscrowTest {
         escrow.cancelIntent(intentId);
 
         // Check state after cancelling one intent
-        (,,, , , remaining, outstanding) = escrow.deposits(depositId);
+        (,,,,, remaining, outstanding) = escrow.deposits(depositId);
         assertEq(remaining, depositAmount - intent2Amount);
         assertEq(outstanding, intent2Amount);
 
@@ -140,7 +132,7 @@ contract FulfillIntentTest is BaseEscrowTest {
         escrow.cancelIntent(intent2Id);
 
         // Check final state
-        (,,, , , remaining, outstanding) = escrow.deposits(depositId);
+        (,,,,, remaining, outstanding) = escrow.deposits(depositId);
         assertEq(remaining, depositAmount);
         assertEq(outstanding, 0);
     }
@@ -151,7 +143,7 @@ contract FulfillIntentTest is BaseEscrowTest {
 
     function test_cancelIntent_RestoresDepositState() public {
         // Verify state before cancellation
-        (,,, , , uint256 remainingBefore, uint256 outstandingBefore) = escrow.deposits(depositId);
+        (,,,,, uint256 remainingBefore, uint256 outstandingBefore) = escrow.deposits(depositId);
         assertEq(remainingBefore, depositAmount - intentAmount);
         assertEq(outstandingBefore, intentAmount);
 
@@ -160,7 +152,7 @@ contract FulfillIntentTest is BaseEscrowTest {
         escrow.cancelIntent(intentId);
 
         // Verify state is restored after cancellation
-        (,,, , , uint256 remainingAfter, uint256 outstandingAfter) = escrow.deposits(depositId);
+        (,,,,, uint256 remainingAfter, uint256 outstandingAfter) = escrow.deposits(depositId);
         assertEq(remainingAfter, depositAmount); // Should be restored
         assertEq(outstandingAfter, 0); // Should be back to 0
         assertEq(escrow.getDepositIntentIds(depositId).length, 0);
@@ -212,7 +204,7 @@ contract FulfillIntentTest is BaseEscrowTest {
 
         // Verify intent was removed and deposit state updated
         assertEq(escrow.accountIntent(bob), 0);
-        (,,, , , uint256 remaining, uint256 outstanding) = escrow.deposits(depositId);
+        (,,,,, uint256 remaining, uint256 outstanding) = escrow.deposits(depositId);
         // When releasing funds to payer, the remaining deposits stay the same (not restored)
         // and outstanding intent amount goes to zero
         assertEq(remaining, depositAmount - intentAmount); // The amount should not be restored

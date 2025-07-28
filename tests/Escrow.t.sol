@@ -11,8 +11,8 @@ contract EscrowTest is BaseEscrowTest {
         usdtOwner = usdt.owner();
 
         vm.startPrank(usdtOwner);
-        usdt.mint(alice, 100000e6); // 100,000 USDT
-        usdt.mint(bob, 50000e6);    // 50,000 USDT
+        usdt.mint(alice, 100_000e6); // 100,000 USDT
+        usdt.mint(bob, 50_000e6); // 50,000 USDT
         vm.stopPrank();
     }
 

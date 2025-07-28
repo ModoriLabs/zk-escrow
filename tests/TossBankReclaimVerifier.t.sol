@@ -89,7 +89,7 @@ contract TossBankReclaimVerifierTest is BaseTest {
                 mintToken: address(usdt),
                 intentAmount: TEST_AMOUNT,
                 payeeDetails: unicode"59733704003503(KB국민은행)",
-                intentTimestamp: 1732845455, // when intent is created
+                intentTimestamp: 1_732_845_455, // when intent is created
                 conversionRate: 1e18,
                 data: data
             })
