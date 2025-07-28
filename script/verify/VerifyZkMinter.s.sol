@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "./Base.s.sol";
+import "./BaseVerifyScript.s.sol";
 
 /*
 Usage Examples:
@@ -15,7 +15,7 @@ forge script script/VerifyContracts.s.sol --rpc-url holesky --private-key $TESTN
 Note: Contract addresses are automatically loaded from deployments/{chainId}-deploy.json
 */
 
-contract VerifyContracts is BaseScript {
+contract VerifyZkMinter is BaseVerifyScript {
 
     struct DeployedContracts {
         address krw;
@@ -123,35 +123,16 @@ contract VerifyContracts is BaseScript {
     }
 
     function _verifyNullifierRegistry(address registryAddress) internal {
-        console.log("Verifying NullifierRegistry at:", registryAddress);
-
         // Constructor args: address _owner
         address owner = broadcaster;
         bytes memory constructorArgs = abi.encode(owner);
 
-        string memory etherscanApiKey = vm.envString("ETHERSCAN_API_KEY");
-
-        string[] memory cmd = new string[](9);
-        cmd[0] = "forge";
-        cmd[1] = "verify-contract";
-        cmd[2] = vm.toString(registryAddress);
-        cmd[3] = "src/verifiers/nullifierRegistries/NullifierRegistry.sol:NullifierRegistry";
-        cmd[4] = "--chain-id";
-        cmd[5] = vm.toString(block.chainid);
-        cmd[6] = "--constructor-args";
-        cmd[7] = vm.toString(constructorArgs);
-        cmd[8] = string.concat("--etherscan-api-key=", etherscanApiKey);
-
-        console.log("Executing: forge verify-contract", vm.toString(registryAddress), "NullifierRegistry");
-
-        try vm.ffi(cmd) returns (bytes memory result) {
-            console.log("NullifierRegistry verification result:", string(result));
-            console.log("NullifierRegistry verification completed successfully");
-        } catch Error(string memory reason) {
-            console.log("NullifierRegistry verification failed:", reason);
-        } catch {
-            console.log("NullifierRegistry verification failed with unknown error");
-        }
+        _executeVerification(
+            registryAddress,
+            "src/verifiers/nullifierRegistries/NullifierRegistry.sol:NullifierRegistry",
+            constructorArgs,
+            "NullifierRegistry"
+        );
     }
 
     function _verifyZkMinter(address zkMinterAddress, address tokenAddress) internal {
