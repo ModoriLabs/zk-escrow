@@ -1,3 +1,4 @@
+# ZK Escrow
 
 ## Getting Started
 
@@ -26,20 +27,26 @@ forge script script/deploy/DeployEscrow.s.sol --rpc-url base_sepolia --private-k
 ### Verify contracts
 
 #### Base Sepolia
+
 ```sh
 forge script script/verify/VerifyEscrow.s.sol \
-  --rpc-url base_sepolia --broadcast --private-key $TESTNET_PRIVATE_KEY \
+  --rpc-url base_sepolia --private-key $TESTNET_PRIVATE_KEY \
   --sig "verifyAll()"
 ```
 
 #### Holesky
+
 ```sh
-forge script script/VerifyContracts.s.sol \
+forge script script/verify/VerifyZkMinter.s.sol \
   --rpc-url holesky --private-key $TESTNET_PRIVATE_KEY \
   --sig "verifyAll()" --ffi
 ```
 
-### ZkMinter
+### Escrow contracts
+
+### ZkMinter contracts
+
+#### ZkMinter
 
 ```sh
 BANK_ACCOUNT="100000000000(토스뱅크)" forge script script/ZkMinter.s.sol \
@@ -47,7 +54,7 @@ BANK_ACCOUNT="100000000000(토스뱅크)" forge script script/ZkMinter.s.sol \
   --sig "setVerifierData()"
 ```
 
-### TossBankReclaimerVerifier
+#### TossBankReclaimerVerifier
 
 ```sh
 forge script script/TossBankReclaimVerifier.s.sol --rpc-url holesky --broadcast --private-key $TESTNET_PRIVATE_KEY --sig addProviderHash
@@ -59,10 +66,10 @@ forge script script/TossBankReclaimVerifier.s.sol --rpc-url holesky --broadcast 
 
 | Contracts                    | Address                                                                                                                  |
 |------------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| Escrow | [0x945926B0945F6028D2A4190760341FCD51250f42](https://sepolia.basescan.org/address/0x945926B0945F6028D2A4190760341FCD51250f42) |
+| Escrow | [0x02286886C36877D564b2b5532f7de40Dc81f2400](https://sepolia.basescan.org/address/0x02286886C36877D564b2b5532f7de40Dc81f2400) |
 | MockUSDT | [0x72f91969485c7efa53990fb0763ffa57ba73f3be](https://sepolia.basescan.org/address/0x72f91969485c7efa53990fb0763ffa57ba73f3be) |
 | NullifierRegistry | [0xfE9a7603641e5Ac1cc155C62bAA7242dABf93B5a](https://sepolia.basescan.org/address/0xfE9a7603641e5Ac1cc155C62bAA7242dABf93B5a) |
-| TossBankReclaimVerifierV2 | [0xB2bACB93a5046Fa2A9b5709CB06d41dAb0De6D37](https://sepolia.basescan.org/address/0xB2bACB93a5046Fa2A9b5709CB06d41dAb0De6D37) |
+| TossBankReclaimVerifierV2 | [0x08A773D828Ae1195FE7355e8885bD47456815da1](https://sepolia.basescan.org/address/0x08A773D828Ae1195FE7355e8885bD47456815da1) |
 
 ### holesky (prod)
 

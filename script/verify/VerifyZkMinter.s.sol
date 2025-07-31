@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "./BaseVerifyScript.s.sol";
+import "../BaseVerifyScript.s.sol";
 
 /*
 Usage Examples:
