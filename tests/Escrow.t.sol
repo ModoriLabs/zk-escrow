@@ -156,7 +156,28 @@ contract EscrowTest is BaseEscrowTest {
 
     // ============ withdrawDeposit Tests ============
 
-    function test_withdrawDeposit_CannotWithdrawMoreThanAvailable() public {
+    function test_withdrawDeposit_DeleteDeposit_WhenNoIntents() public {
+        // Create a deposit with 1000 USDT
+        uint256 depositAmount = 1000e6;
+        uint256 depositId = _createDeposit(alice, depositAmount, 100e6, 500e6);
+
+        uint256 aliceBalanceBefore = usdt.balanceOf(alice);
+        uint256 escrowBalanceBefore = usdt.balanceOf(address(escrow));
+
+        // Withdraw deposit - this withdraws only what's available (remaining + expired intents)
+        vm.prank(alice);
+        escrow.withdrawDeposit(depositId);
+
+        // Verify deposit is deleted
+        (address depositor,,,,,,) = escrow.deposits(depositId);
+        assertEq(depositor, address(0), "Deposit should be deleted");
+
+        // Verify token is transferred to alice
+        assertEq(usdt.balanceOf(alice) - aliceBalanceBefore, depositAmount, "Alice should receive all USDT");
+        assertEq(usdt.balanceOf(address(escrow)), 0, "Escrow should have no USDT");
+    }
+
+    function test_withdrawDeposit_CannotWithdrawMoreThanAvailable_WhenIntentsExist() public {
         // Create a deposit with 1000 USDT
         uint256 depositAmount = 1000e6;
         uint256 depositId = _createDeposit(alice, depositAmount, 100e6, 500e6);
