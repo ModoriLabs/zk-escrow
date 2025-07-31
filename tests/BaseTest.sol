@@ -38,8 +38,6 @@ contract BaseTest is Test {
     uint256 constant TEST_AMOUNT = 8750e6; // 8750 USDT with 6 decimals
 
     function setUp() public virtual {
-        console.log("BaseTest setUp");
-
         usdt = new MockUSDT(owner);
         nullifierRegistry = new NullifierRegistry(owner);
 

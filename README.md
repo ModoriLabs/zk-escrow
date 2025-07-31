@@ -1,5 +1,9 @@
 # ZK Escrow
 
+## Description
+
+1. nullifier is `keccak256(abi.encodePacked(dateString, senderNickname))`.
+
 ## Getting Started
 
 ### Install dependencies
