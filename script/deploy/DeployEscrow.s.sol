@@ -50,6 +50,7 @@ contract DeployEscrow is BaseScript {
             tossBankReclaimVerifierV2 = TossBankReclaimVerifierV2(existingTossBankReclaimVerifierV2);
             console.log("Using existing TossBankReclaimVerifierV2 at:", address(tossBankReclaimVerifierV2));
         } else {
+            console.log("Deploying new TossBankReclaimVerifierV2");
             // Deploy new TossBankReclaimVerifierV2 if not found
             string[] memory providerHashes = new string[](1);
             providerHashes[0] = PROVIDER_HASH;
@@ -63,6 +64,7 @@ contract DeployEscrow is BaseScript {
                 verifierCurrencies,
                 providerHashes
             );
+            _updateDeploymentFile("TossBankReclaimVerifierV2", address(tossBankReclaimVerifierV2));
         }
 
         // Give write permission to verifier
@@ -71,6 +73,12 @@ contract DeployEscrow is BaseScript {
 
         escrow.addWhitelistedPaymentVerifier(address(tossBankReclaimVerifierV2));
         console.log("Added whitelisted payment verifier to Escrow");
+
+        // addEscrow is done in the constructor of TossBankReclaimVerifierV2
+        if (!tossBankReclaimVerifierV2.isEscrow(address(escrow))) {
+            tossBankReclaimVerifierV2.addEscrow(address(escrow));
+            console.log("Added escrow to TossBankReclaimVerifierV2");
+        }
         vm.stopBroadcast();
 
         // Log final addresses

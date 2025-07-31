@@ -258,6 +258,13 @@ contract Escrow is Ownable, Pausable, IEscrow {
         emit DepositConversionRateUpdated(_depositId, _verifier, _fiatCurrency, _newConversionRate);
     }
 
+    /**
+     * @notice Only callable by the depositor for a deposit. Allows depositor to withdraw the remaining funds in the deposit.
+     * Deposit is marked as to not accept new intents and the funds locked due to intents can be withdrawn once they expire by calling this function
+     * again. Deposit will be deleted as long as there are no more outstanding intents.
+     *
+     * @param _depositId   DepositId the depositor is attempting to withdraw.
+     */
     function withdrawDeposit(uint256 _depositId) external {
         Deposit storage deposit = deposits[_depositId];
 
@@ -278,9 +285,10 @@ contract Escrow is Ownable, Pausable, IEscrow {
 
         delete deposit.remainingDeposits;
         delete deposit.acceptingIntents;
+        IERC20 token = deposit.token; // store before deleting
         _closeDepositIfNecessary(_depositId, deposit);
 
-        IERC20(deposit.token).transfer(msg.sender, returnAmount);
+        token.transfer(msg.sender, returnAmount);
     }
 
     /**
