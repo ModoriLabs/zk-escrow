@@ -171,6 +171,17 @@ contract EscrowScript is BaseScript {
         vm.stopBroadcast();
     }
 
+    function updateDepositConversionRate(uint256 depositId, uint256 conversionRate) public {
+        vm.startBroadcast();
+        bytes32 currency = keccak256("KRW");
+        uint256 oldConversionRate = escrow.depositCurrencyConversionRate(depositId, verifier, currency);
+        escrow.updateDepositConversionRate(depositId, verifier, currency, conversionRate);
+        console.log("Deposit conversion rate updated successfully!");
+        console.log("Old conversion rate:", oldConversionRate);
+        console.log("New conversion rate:", conversionRate);
+        vm.stopBroadcast();
+    }
+
     // Convenience functions with default parameters
     function run() public {
         console.log("Use one of the specific functions:");
