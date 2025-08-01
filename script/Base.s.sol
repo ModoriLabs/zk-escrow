@@ -30,7 +30,11 @@ abstract contract BaseScript is Script {
     ///
     /// The use case for $ETH_FROM is to specify the broadcaster key and its address via the command line.
     constructor() {
-        PRIVATE_KEY = vm.envOr("TESTNET_PRIVATE_KEY", uint256(1));
+        if (block.chainid == 31337) {
+            PRIVATE_KEY = vm.envOr("ANVIL_DEPLOYER_PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80));
+        } else {
+            PRIVATE_KEY = vm.envOr("TESTNET_PRIVATE_KEY", uint256(1));
+        }
         broadcaster = vm.rememberKey(PRIVATE_KEY);
         console.log("Broadcaster: ", broadcaster);
 
