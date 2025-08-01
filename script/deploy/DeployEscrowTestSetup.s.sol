@@ -9,8 +9,9 @@ import { NullifierRegistry } from "src/verifiers/nullifierRegistries/NullifierRe
 import { INullifierRegistry } from "src/verifiers/nullifierRegistries/INullifierRegistry.sol";
 import { MockUSDT } from "src/MockUSDT.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { BaseScript } from "../Base.s.sol";
 
-contract DeployEscrowTestSetup is Script {
+contract DeployEscrowTestSetup is BaseScript {
     // Contract instances
     Escrow public escrow;
     TossBankReclaimVerifierV2 public tossBankReclaimVerifier;
@@ -38,14 +39,17 @@ contract DeployEscrowTestSetup is Script {
         // 1. Deploy MockUSDT
         usdt = new MockUSDT(deployer);
         console.log("MockUSDT deployed at:", address(usdt));
+        _updateDeploymentFile("MockUSDT", address(usdt));
 
         // 2. Deploy NullifierRegistry
         nullifierRegistry = new NullifierRegistry(deployer);
         console.log("NullifierRegistry deployed at:", address(nullifierRegistry));
+        _updateDeploymentFile("NullifierRegistry", address(nullifierRegistry));
 
         // 3. Deploy Escrow
         escrow = new Escrow(deployer, INTENT_EXPIRATION_PERIOD, CHAIN_NAME);
         console.log("Escrow deployed at:", address(escrow));
+        _updateDeploymentFile("Escrow", address(escrow));
 
         // 4. Deploy TossBankReclaimVerifierV2
         string[] memory providerHashes = new string[](1);
@@ -63,6 +67,7 @@ contract DeployEscrowTestSetup is Script {
             providerHashes
         );
         console.log("TossBankReclaimVerifierV2 deployed at:", address(tossBankReclaimVerifier));
+        _updateDeploymentFile("TossBankReclaimVerifierV2", address(tossBankReclaimVerifier));
 
         // 5. Setup permissions and configurations
 
