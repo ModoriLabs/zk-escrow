@@ -12,6 +12,13 @@
 bun install
 ```
 
+### Test setup
+
+```sh
+forge script script/deploy/DeployEscrowTestSetup.s.sol --rpc-url anvil --broadcast
+forge script script/Escrow.s.sol --sig "createDefaultDeposit()" --rpc-url anvil --broadcast
+```
+
 ### Deploy Contracts
 
 ```sh
