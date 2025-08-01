@@ -82,6 +82,9 @@ contract DeployEscrowTestSetup is BaseScript {
 
         // Print summary
         printDeploymentSummary();
+
+        // Save deployment addresses to JSON
+        saveDeploymentJson();
     }
 
     function printDeploymentSummary() internal view {
@@ -97,5 +100,29 @@ contract DeployEscrowTestSetup is BaseScript {
         console.log("Verifier Wallet Address:", VERIFIER_WALLET_ADDRESS);
         console.log("Timestamp Buffer:", timestampBuffer, "seconds");
         console.log("=========================\n");
+    }
+
+    function saveDeploymentJson() internal {
+        string memory json = "deployment";
+
+        // Add contract addresses
+        vm.serializeAddress(json, "MockUSDT", address(usdt));
+        vm.serializeAddress(json, "NullifierRegistry", address(nullifierRegistry));
+        vm.serializeAddress(json, "Escrow", address(escrow));
+        vm.serializeAddress(json, "TossBankReclaimVerifierV2", address(tossBankReclaimVerifier));
+        vm.serializeAddress(json, "owner", escrow.owner());
+
+        // Add configuration
+        vm.serializeUint(json, "intentExpirationPeriod", INTENT_EXPIRATION_PERIOD);
+        vm.serializeString(json, "providerHash", PROVIDER_HASH);
+        vm.serializeAddress(json, "verifierWalletAddress", VERIFIER_WALLET_ADDRESS);
+        vm.serializeUint(json, "timestampBuffer", timestampBuffer);
+
+        // Add metadata
+        string memory finalJson = vm.serializeUint(json, "deployedAt", block.timestamp);
+
+        // Write to file
+        vm.writeJson(finalJson, "./deployments/31337-deploy.json");
+        console.log("Deployment data saved to 31337-deploy.json");
     }
 }
