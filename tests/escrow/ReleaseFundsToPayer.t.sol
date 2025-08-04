@@ -81,12 +81,12 @@ contract ReleaseFundsToPayerTest is BaseEscrowTest {
     function test_releaseFundsToPayer_OnlyDepositor() public {
         // Try to release funds as non-depositor (bob)
         vm.prank(bob);
-        vm.expectRevert("Caller must be the depositor");
+        vm.expectRevert(abi.encodeWithSelector(IEscrow.OnlyDepositor.selector));
         escrow.releaseFundsToPayer(intentId);
 
         // Try to release funds as charlie
         vm.prank(charlie);
-        vm.expectRevert("Caller must be the depositor");
+        vm.expectRevert(abi.encodeWithSelector(IEscrow.OnlyDepositor.selector));
         escrow.releaseFundsToPayer(intentId);
 
         // Alice (depositor) should be able to release funds
@@ -284,7 +284,7 @@ contract ReleaseFundsToPayerTest is BaseEscrowTest {
 
         // Alice cannot release from bob's deposit
         vm.prank(alice);
-        vm.expectRevert("Caller must be the depositor");
+        vm.expectRevert(abi.encodeWithSelector(IEscrow.OnlyDepositor.selector));
         escrow.releaseFundsToPayer(intent2Id);
 
         // Bob can release from his deposit

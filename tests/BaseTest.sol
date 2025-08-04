@@ -100,7 +100,7 @@ contract BaseTest is Test {
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/tests/fixtures/proof.json");
         string memory json = vm.readFile(path);
-        bytes memory data = vm.parseJson(json);
+        // bytes memory data = vm.parseJson(json);
         // proof = abi.decode(data, (IReclaimVerifier.ReclaimProof));
 
         // Parse individual fields instead of decoding entire struct

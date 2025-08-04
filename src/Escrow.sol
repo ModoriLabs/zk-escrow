@@ -217,7 +217,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
         Deposit storage deposit = deposits[intent.depositId];
 
         require(intent.owner != address(0), "Intent does not exist");
-        require(deposit.depositor == msg.sender, "Caller must be the depositor");
+        require(deposit.depositor == msg.sender, OnlyDepositor());
 
         _pruneIntent(deposit, _intentId);
 
@@ -259,6 +259,27 @@ contract Escrow is Ownable, Pausable, IEscrow {
     }
 
     /**
+     * @notice Allows the depositor to update the intent amount range for their deposit.
+     * This function can only be called by the original depositor of the deposit.
+     *
+     * @param _depositId The ID of the deposit to update
+     * @param _min The new minimum intent amount allowed
+     * @param _max The new maximum intent amount allowed
+     */
+    function updateDepositIntentAmountRange(uint256 _depositId, uint256 _min, uint256 _max) external whenNotPaused {
+        Deposit storage deposit = deposits[_depositId];
+
+        // This also ensures that the deposit exists
+        require(deposit.depositor == msg.sender, OnlyDepositor());
+        require(_min > 0 && _min <= _max && _max <= deposit.amount, InvalidIntentAmountRange());
+
+        Range memory oldRange = deposit.intentAmountRange;
+        deposit.intentAmountRange = Range({min: _min, max: _max});
+
+        emit DepositIntentAmountRangeUpdated(_depositId, oldRange, deposit.intentAmountRange);
+    }
+
+    /**
      * @notice Only callable by the depositor for a deposit. Allows depositor to withdraw the remaining funds in the deposit.
      * Deposit is marked as to not accept new intents and the funds locked due to intents can be withdrawn once they expire by calling this function
      * again. Deposit will be deleted as long as there are no more outstanding intents.
@@ -268,7 +289,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
     function withdrawDeposit(uint256 _depositId) external {
         Deposit storage deposit = deposits[_depositId];
 
-        require(deposit.depositor == msg.sender, "Caller must be the depositor");
+        require(deposit.depositor == msg.sender, OnlyDepositor());
 
         (
             uint256[] memory prunableIntents,
@@ -301,8 +322,8 @@ contract Escrow is Ownable, Pausable, IEscrow {
     function increaseDeposit(uint256 _depositId, uint256 _amount) external whenNotPaused {
         Deposit storage deposit = deposits[_depositId];
 
-        require(deposit.depositor != address(0), "Deposit does not exist");
-        require(_amount > 0, "Amount must be greater than 0");
+        require(deposit.depositor != address(0), DepositNotFound());
+        require(_amount > 0, InvalidAmount());
 
         IERC20(deposit.token).transferFrom(msg.sender, address(this), _amount);
 
@@ -388,9 +409,12 @@ contract Escrow is Ownable, Pausable, IEscrow {
         DepositVerifierData[] calldata _verifierData,
         Currency[][] calldata _currencies
     ) internal view {
-        require(_intentAmountRange.min != 0, "Invalid intent amount range");
-        require(_intentAmountRange.min <= _intentAmountRange.max, "Invalid intent amount range");
-        require(_intentAmountRange.min <= _amount, "Amount must be greater than min intent amount");
+        require(
+            _intentAmountRange.min != 0 &&
+            _intentAmountRange.min <= _intentAmountRange.max &&
+            _intentAmountRange.min <= _amount,
+            InvalidIntentAmountRange()
+        );
         require(_verifiers.length > 0, "Invalid verifiers");
         require(_verifiers.length == _verifierData.length, "Invalid verifier data");
         require(_verifiers.length == _currencies.length, "Invalid currencies length");
@@ -423,8 +447,8 @@ contract Escrow is Ownable, Pausable, IEscrow {
         bytes32 _fiatCurrency
     ) internal view {
         require(accountIntent[msg.sender] == 0, IntentAlreadyExists());
-        require(_deposit.depositor != address(0), "Deposit does not exist");
-        require(_deposit.acceptingIntents, "Deposit is not accepting intents");
+        require(_deposit.depositor != address(0), DepositNotFound());
+        require(_deposit.acceptingIntents, DepositNotAcceptingIntents());
         require(_amount >= _deposit.intentAmountRange.min, InvalidAmount());
         require(_amount <= _deposit.intentAmountRange.max, InvalidAmount());
         require(_to != address(0), InvalidRecipient());

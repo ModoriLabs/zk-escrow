@@ -69,7 +69,7 @@ contract IncreaseDepositTest is BaseEscrowTest {
         usdt.approve(address(escrow), additionalAmount);
 
         vm.prank(alice);
-        vm.expectRevert("Deposit does not exist");
+        vm.expectRevert(abi.encodeWithSelector(IEscrow.DepositNotFound.selector));
         escrow.increaseDeposit(nonExistentDepositId, additionalAmount);
     }
 

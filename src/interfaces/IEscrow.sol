@@ -137,6 +137,12 @@ interface IEscrow {
 
     event DepositClosed(uint256 depositId, address depositor);
 
+    event DepositIntentAmountRangeUpdated(
+        uint256 indexed depositId,
+        Range oldRange,
+        Range newRange
+    );
+
     event PaymentVerifierAdded(address verifier);
     event PaymentVerifierRemoved(address verifier);
     event IntentExpirationPeriodSet(uint256 intentExpirationPeriod);
@@ -150,4 +156,7 @@ interface IEscrow {
     error RedeemRequestNotFound();
     error RedeemAlreadyExists();
     error OnlyDepositor();
+    error InvalidIntentAmountRange();
+    error DepositNotFound();
+    error DepositNotAcceptingIntents();
 }
