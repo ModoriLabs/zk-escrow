@@ -61,6 +61,16 @@ forge script script/verify/VerifyZkMinter.s.sol \
 forge script script/Escrow.s.sol --rpc-url base_sepolia --private-key $TESTNET_PRIVATE_KEY --broadcast --sig "updateDepositConversionRate(uint256,uint256)" 1 1400000000000000000000
 ```
 
+```sh
+forge script script/Escrow.s.sol \
+    --rpc-url base_sepolia \
+    --private-key $TESTNET_PRIVATE_KEY \
+    --sig "increaseDeposit(uint256,uint256)" \
+    1 \
+    10000000 \ # 10 USDC
+    --broadcast
+```
+
 ### ZkMinter contracts
 
 #### ZkMinter
