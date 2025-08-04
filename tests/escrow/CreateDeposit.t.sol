@@ -214,19 +214,19 @@ contract CreateDepositTest is BaseEscrowTest {
         vm.startPrank(alice);
         usdt.approve(address(escrow), depositAmount);
 
-        vm.expectRevert("Invalid intent amount range");
+        vm.expectRevert(abi.encodeWithSelector(IEscrow.InvalidIntentAmountRange.selector));
         escrow.createDeposit(IERC20(address(usdt)), depositAmount, invalidRange1, verifiers, verifierData, currencies);
 
         // Test case 2: min > max
         IEscrow.Range memory invalidRange2 = IEscrow.Range({ min: 100e6, max: 50e6 });
 
-        vm.expectRevert("Invalid intent amount range");
+        vm.expectRevert(abi.encodeWithSelector(IEscrow.InvalidIntentAmountRange.selector));
         escrow.createDeposit(IERC20(address(usdt)), depositAmount, invalidRange2, verifiers, verifierData, currencies);
 
         // Test case 3: min > amount
         IEscrow.Range memory invalidRange3 = IEscrow.Range({ min: 2000e6, max: 3000e6 });
 
-        vm.expectRevert("Amount must be greater than min intent amount");
+        vm.expectRevert(abi.encodeWithSelector(IEscrow.InvalidIntentAmountRange.selector));
         escrow.createDeposit(IERC20(address(usdt)), depositAmount, invalidRange3, verifiers, verifierData, currencies);
 
         vm.stopPrank();

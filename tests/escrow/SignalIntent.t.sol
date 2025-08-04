@@ -127,7 +127,7 @@ contract SignalIntentTest is BaseEscrowTest {
         uint256 nonExistentDepositId = 999;
 
         vm.prank(bob);
-        vm.expectRevert("Deposit does not exist");
+        vm.expectRevert(abi.encodeWithSelector(IEscrow.DepositNotFound.selector));
         escrow.signalIntent(nonExistentDepositId, 500e6, bob, address(tossBankReclaimVerifierV2), keccak256("KRW"));
     }
 

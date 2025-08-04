@@ -195,7 +195,7 @@ contract FulfillIntentTest is BaseEscrowTest {
     function test_releaseFundsToPayer_OnlyDepositor() public {
         // Try to release funds as non-depositor
         vm.prank(bob); // Bob is not the depositor
-        vm.expectRevert("Caller must be the depositor");
+        vm.expectRevert(abi.encodeWithSelector(IEscrow.OnlyDepositor.selector));
         escrow.releaseFundsToPayer(intentId);
 
         // Alice (depositor) should be able to release funds
