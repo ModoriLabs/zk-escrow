@@ -57,9 +57,13 @@ forge script script/verify/VerifyZkMinter.s.sol \
 
 #### Escrow
 
+updateDepositConversionRate
+
 ```sh
 forge script script/Escrow.s.sol --rpc-url base_sepolia --private-key $TESTNET_PRIVATE_KEY --broadcast --sig "updateDepositConversionRate(uint256,uint256)" 1 1400000000000000000000
 ```
+
+increaseDeposit
 
 ```sh
 forge script script/Escrow.s.sol \
@@ -69,6 +73,12 @@ forge script script/Escrow.s.sol \
     1 \
     10000000 \ # 10 USDC
     --broadcast
+```
+
+withdrawDeposit
+
+```sh
+forge script script/Escrow.s.sol:EscrowScript --sig "withdrawDeposit(uint256)" 1 --rpc-url base
 ```
 
 ### ZkMinter contracts

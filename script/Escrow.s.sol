@@ -171,6 +171,50 @@ contract EscrowScript is BaseScript {
         vm.stopBroadcast();
     }
 
+    function withdrawDeposit(uint256 depositId) public {
+        address depositor = broadcaster;
+
+        console.log("Withdrawing deposit:");
+        console.log("- Deposit ID:", depositId);
+        console.log("- Depositor:", depositor);
+
+        // Get deposit details before withdrawal
+        (
+            address depositOwner,
+            IERC20 token,
+            uint256 totalAmount,
+            IEscrow.Range memory range,
+            bool acceptingIntents,
+            uint256 remainingDeposits,
+            uint256 outstandingIntentAmount
+        ) = escrow.deposits(depositId);
+
+        require(depositOwner == depositor, "Only depositor can withdraw");
+
+        console.log("- Current remaining deposits (USDC):", remainingDeposits / 1e6);
+        console.log("- Outstanding intent amount (USDC):", outstandingIntentAmount / 1e6);
+        console.log("- Accepting intents:", acceptingIntents);
+
+        // Get depositor's USDC balance before withdrawal
+        uint256 balanceBefore = usdc.balanceOf(depositor);
+        console.log("- USDC balance before withdrawal:", balanceBefore / 1e6);
+
+        vm.startBroadcast();
+
+        // Withdraw the deposit
+        escrow.withdrawDeposit(depositId);
+
+        vm.stopBroadcast();
+
+        // Get depositor's USDC balance after withdrawal
+        uint256 balanceAfter = usdc.balanceOf(depositor);
+        uint256 withdrawnAmount = balanceAfter - balanceBefore;
+
+        console.log("- USDC balance after withdrawal:", balanceAfter / 1e6);
+        console.log("- Amount withdrawn (USDC):", withdrawnAmount / 1e6);
+        console.log("Deposit withdrawn successfully!");
+    }
+
     function updateDepositConversionRate(uint256 depositId, uint256 conversionRate) public {
         vm.startBroadcast();
         bytes32 currency = keccak256("KRW");
@@ -190,6 +234,7 @@ contract EscrowScript is BaseScript {
         console.log("- fulfillIntent(paymentProof, intentId)");
         console.log("- cancelIntent(intentId)");
         console.log("- increaseDeposit(depositId, amount)");
+        console.log("- withdrawDeposit(depositId)");
         console.log("- checkDeployments() - Check if contracts are deployed");
     }
 
