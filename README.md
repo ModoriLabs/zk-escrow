@@ -89,6 +89,17 @@ forge script script/TossBankReclaimVerifier.s.sol --rpc-url holesky --broadcast 
 
 ## Contract Addresses
 
+### base (prod)
+
+- owner: 0xf7c76ee9A092562F8C83283f602AeAcd167e46Fb
+
+| Contracts                    | Address                                                                                                                  |
+|------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| Escrow | [0xCd531c6f7821D173e56ae9383529D8Ac6fdd13f8](https://basescan.org/address/0xCd531c6f7821D173e56ae9383529D8Ac6fdd13f8) |
+| NullifierRegistry | [0x18ac6522530f88Cf7d61Dd29609F13397869d330](https://basescan.org/address/0x18ac6522530f88Cf7d61Dd29609F13397869d330) |
+| TossBankReclaimVerifierV2 | [0x8c9bd74c6796eAf8cB48De320FFbe70021021395](https://basescan.org/address/0x8c9bd74c6796eAf8cB48De320FFbe70021021395) |
+| USDC | [0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913](https://basescan.org/address/0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) |
+
 ### base_sepolia (test)
 
 | Contracts                    | Address                                                                                                                  |
