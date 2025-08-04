@@ -38,7 +38,7 @@ contract VerifyEscrow is BaseVerifyScript {
         console.log("=== VERIFYING ALL CONTRACTS ===");
 
         verifyEscrow();
-        verifyMockUSDT();
+        // verifyMockUSDT();
         verifyNullifierRegistry();
         verifyTossBankReclaimVerifierV2();
 

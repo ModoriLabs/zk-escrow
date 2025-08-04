@@ -32,8 +32,12 @@ abstract contract BaseScript is Script {
     constructor() {
         if (block.chainid == 31337) {
             PRIVATE_KEY = vm.envOr("ANVIL_DEPLOYER_PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80));
-        } else {
+        } else if (block.chainid == 84532) {
             PRIVATE_KEY = vm.envOr("TESTNET_PRIVATE_KEY", uint256(1));
+        } else if (block.chainid == 8453) {
+            PRIVATE_KEY = vm.envOr("PROD_DEPLOYER_PRIVATE_KEY", uint256(1));
+        } else {
+            revert("Unknown chain");
         }
         broadcaster = vm.rememberKey(PRIVATE_KEY);
         console.log("Broadcaster: ", broadcaster);
