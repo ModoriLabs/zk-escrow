@@ -7,11 +7,13 @@ import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 import { IPaymentVerifierV2 } from "./verifiers/interfaces/IPaymentVerifierV2.sol";
 import { IEscrow } from "./interfaces/IEscrow.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IMintableERC20 } from "./interfaces/IMintableERC20.sol";
 import { StringUtils } from "./external/ReclaimStringUtils.sol";
 import { Uint256ArrayUtils } from "./external/Uint256ArrayUtils.sol";
 
 contract Escrow is Ownable, Pausable, IEscrow {
+    using SafeERC20 for IERC20;
     using Uint256ArrayUtils for uint256[];
 
     string public chainName;
@@ -209,7 +211,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
             }
         }
 
-        _token.transferFrom(msg.sender, address(this), _amount);
+        _token.safeTransferFrom(msg.sender, address(this), _amount);
     }
 
     function releaseFundsToPayer(uint256 _intentId) external {
@@ -309,7 +311,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
         IERC20 token = deposit.token; // store before deleting
         _closeDepositIfNecessary(_depositId, deposit);
 
-        token.transfer(msg.sender, returnAmount);
+        token.safeTransfer(msg.sender, returnAmount);
     }
 
     /**
@@ -325,7 +327,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
         require(deposit.depositor != address(0), DepositNotFound());
         require(_amount > 0, InvalidAmount());
 
-        IERC20(deposit.token).transferFrom(msg.sender, address(this), _amount);
+        IERC20(deposit.token).safeTransferFrom(msg.sender, address(this), _amount);
 
         // Update deposit state
         deposit.amount += _amount;
@@ -533,9 +535,8 @@ contract Escrow is Ownable, Pausable, IEscrow {
         }
     }
 
+    // @dev the fee is not implemented in this version
     function _transferFunds(IERC20 _token, Intent memory _intent) internal {
-        uint256 fee;
-        uint256 transferAmount = _intent.amount - fee;
-        _token.transfer(_intent.to, transferAmount);
+        _token.safeTransfer(_intent.to, _intent.amount);
     }
 }
