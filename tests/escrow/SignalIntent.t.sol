@@ -181,7 +181,7 @@ contract SignalIntentTest is BaseEscrowTest {
 
         vm.prank(bob);
         vm.expectEmit(true, true, true, true);
-        emit IEscrow.IntentSignaled(bob, address(tossBankReclaimVerifierV2), intentAmount, 1);
+        emit IEscrow.IntentSignaled(bob, address(tossBankReclaimVerifierV2), intentAmount, 1, KRW_CONVERSION_RATE);
         escrow.signalIntent(depositId, intentAmount, bob, address(tossBankReclaimVerifierV2), keccak256("KRW"));
     }
 

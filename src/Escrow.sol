@@ -98,7 +98,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
         deposit.outstandingIntentAmount += _amount;
         deposit.intentIds.push(intentId);
 
-        emit IntentSignaled(_to, _verifier, _amount, intentId);
+        emit IntentSignaled(_to, _verifier, _amount, intentId, conversionRate);
     }
 
     /**
