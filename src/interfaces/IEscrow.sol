@@ -52,7 +52,7 @@ interface IEscrow {
         uint256 timestamp;
     }
 
-    event IntentSignaled(address to, address verifier, uint256 amount, uint256 intentId);
+    event IntentSignaled(address to, address verifier, uint256 amount, uint256 intentId, uint256 conversionRate);
 
     event IntentFulfilled(
         uint256 indexed intentId,
