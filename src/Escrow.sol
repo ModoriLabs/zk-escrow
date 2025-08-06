@@ -28,25 +28,25 @@ contract Escrow is Ownable, Pausable, IEscrow {
     mapping(uint256 => address[]) public depositVerifiers;
     mapping(uint256 depositId => mapping(address => DepositVerifierData)) public depositVerifierData;
 
-    // Mapping of depositId to verifier address to mapping of fiat currency to conversion rate. Each payment service can support
+    // Mapping of depositId to verifier address to mapping of fiat currency to conversion rate. Each payment service can
+    // support
     // multiple currencies. Depositor can specify list of currencies and conversion rates for each payment service.
     // Example: Deposit 1 => Venmo => USD: 1e18
     //                    => Revolut => USD: 1e18, EUR: 1.2e18, SGD: 1.5e18
-    mapping(uint256 depositId => mapping(address verifier => mapping(bytes32 fiatCurrency => uint256 conversionRate))) public depositCurrencyConversionRate;
-    mapping(uint256 depositId => mapping(address verifier => bytes32[] fiatCurrencies)) public depositCurrencies; // Handy mapping to get all currencies for a deposit and verifier
+    mapping(uint256 depositId => mapping(address verifier => mapping(bytes32 fiatCurrency => uint256 conversionRate)))
+        public depositCurrencyConversionRate;
+    mapping(uint256 depositId => mapping(address verifier => bytes32[] fiatCurrencies)) public depositCurrencies; // Handy
+        // mapping to get all currencies for a deposit and verifier
 
     // Governance controlled
-    mapping(address => bool) public whitelistedPaymentVerifiers;      // Mapping of payment verifier addresses to boolean indicating if they are whitelisted
+    mapping(address => bool) public whitelistedPaymentVerifiers; // Mapping of payment verifier addresses to boolean
+        // indicating if they are whitelisted
 
     uint256 public intentExpirationPeriod;
     uint256 public depositCounter;
     uint256 public maxIntentsPerDeposit = 100;
 
-    constructor(
-        address _owner,
-        uint256 _intentExpirationPeriod,
-        string memory _chainName
-    ) Ownable(_owner) {
+    constructor(address _owner, uint256 _intentExpirationPeriod, string memory _chainName) Ownable(_owner) {
         intentExpirationPeriod = _intentExpirationPeriod;
         chainName = _chainName;
     }
@@ -57,7 +57,10 @@ contract Escrow is Ownable, Pausable, IEscrow {
         address _to,
         address _verifier,
         bytes32 _fiatCurrency
-    ) external whenNotPaused {
+    )
+        external
+        whenNotPaused
+    {
         Deposit storage deposit = deposits[_depositId];
 
         _validateIntent(_depositId, deposit, _amount, _to, _verifier, _fiatCurrency);
@@ -116,10 +119,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
         emit IntentCancelled(_intentId);
     }
 
-    function fulfillIntent(
-        bytes calldata _paymentProof,
-        uint256 _intentId
-    ) external whenNotPaused {
+    function fulfillIntent(bytes calldata _paymentProof, uint256 _intentId) external whenNotPaused {
         Intent memory intent = intents[_intentId];
         Deposit storage deposit = deposits[intent.depositId];
 
@@ -141,7 +141,8 @@ contract Escrow is Ownable, Pausable, IEscrow {
         );
         require(success, "Payment verification failed");
 
-        bytes32 expectedIntentHash = keccak256(abi.encode(string.concat(chainName, "-", StringUtils.uint2str(_intentId))));
+        bytes32 expectedIntentHash =
+            keccak256(abi.encode(string.concat(chainName, "-", StringUtils.uint2str(_intentId))));
         require(expectedIntentHash == intentHash, "Intent hash mismatch");
 
         _pruneIntent(deposit, _intentId);
@@ -150,14 +151,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
 
         _transferFunds(IERC20(token), intent);
 
-        emit IntentFulfilled(
-            _intentId,
-            intent.depositId,
-            verifier,
-            intent.owner,
-            intent.to,
-            intent.amount
-        );
+        emit IntentFulfilled(_intentId, intent.depositId, verifier, intent.owner, intent.to, intent.amount);
     }
 
     function createDeposit(
@@ -167,7 +161,11 @@ contract Escrow is Ownable, Pausable, IEscrow {
         address[] calldata _verifiers,
         DepositVerifierData[] calldata _verifierData,
         Currency[][] calldata _currencies
-    ) external whenNotPaused returns(uint256 depositId) {
+    )
+        external
+        whenNotPaused
+        returns (uint256 depositId)
+    {
         _validateCreateDeposit(_amount, _intentAmountRange, _verifiers, _verifierData, _currencies);
 
         depositId = ++depositCounter;
@@ -189,8 +187,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
         for (uint256 i = 0; i < _verifiers.length; i++) {
             address verifier = _verifiers[i];
             require(
-                bytes(depositVerifierData[depositId][verifier].payeeDetails).length == 0,
-                "Verifier data already exists"
+                bytes(depositVerifierData[depositId][verifier].payeeDetails).length == 0, "Verifier data already exists"
             );
             depositVerifierData[depositId][verifier] = _verifierData[i];
             depositVerifiers[depositId].push(verifier);
@@ -228,18 +225,14 @@ contract Escrow is Ownable, Pausable, IEscrow {
 
         _transferFunds(token, intent);
 
-        emit IntentReleased(
-            _intentId,
-            intent.depositId,
-            intent.owner,
-            intent.to,
-            intent.amount
-        );
+        emit IntentReleased(_intentId, intent.depositId, intent.owner, intent.to, intent.amount);
     }
 
     /**
-     * @notice Only callable by the depositor for a deposit. Allows depositor to update the conversion rate for a currency for a
-     * payment verifier. Since intent's store the conversion rate at the time of intent, changing the conversion rate will not affect
+     * @notice Only callable by the depositor for a deposit. Allows depositor to update the conversion rate for a
+     * currency for a
+     * payment verifier. Since intent's store the conversion rate at the time of intent, changing the conversion rate
+     * will not affect
      * any intents that have already been signaled.
      */
     function updateDepositConversionRate(
@@ -247,7 +240,10 @@ contract Escrow is Ownable, Pausable, IEscrow {
         address _verifier,
         bytes32 _fiatCurrency,
         uint256 _newConversionRate
-    ) external whenNotPaused {
+    )
+        external
+        whenNotPaused
+    {
         Deposit storage deposit = deposits[_depositId];
         uint256 oldConversionRate = depositCurrencyConversionRate[_depositId][_verifier][_fiatCurrency];
 
@@ -276,14 +272,16 @@ contract Escrow is Ownable, Pausable, IEscrow {
         require(_min > 0 && _min <= _max && _max <= deposit.amount, InvalidIntentAmountRange());
 
         Range memory oldRange = deposit.intentAmountRange;
-        deposit.intentAmountRange = Range({min: _min, max: _max});
+        deposit.intentAmountRange = Range({ min: _min, max: _max });
 
         emit DepositIntentAmountRangeUpdated(_depositId, oldRange, deposit.intentAmountRange);
     }
 
     /**
-     * @notice Only callable by the depositor for a deposit. Allows depositor to withdraw the remaining funds in the deposit.
-     * Deposit is marked as to not accept new intents and the funds locked due to intents can be withdrawn once they expire by calling this function
+     * @notice Only callable by the depositor for a deposit. Allows depositor to withdraw the remaining funds in the
+     * deposit.
+     * Deposit is marked as to not accept new intents and the funds locked due to intents can be withdrawn once they
+     * expire by calling this function
      * again. Deposit will be deleted as long as there are no more outstanding intents.
      *
      * @param _depositId   DepositId the depositor is attempting to withdraw.
@@ -293,10 +291,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
 
         require(deposit.depositor == msg.sender, OnlyDepositor());
 
-        (
-            uint256[] memory prunableIntents,
-            uint256 reclaimableAmount
-        ) = _getPrunableIntents(_depositId);
+        (uint256[] memory prunableIntents, uint256 reclaimableAmount) = _getPrunableIntents(_depositId);
 
         _pruneIntents(deposit, prunableIntents);
 
@@ -338,7 +333,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
 
     // *** Governance functions ***
 
-        /**
+    /**
      * @notice GOVERNANCE ONLY: Adds a payment verifier to the whitelist.
      *
      * @param _verifier   The payment verifier address to add
@@ -377,7 +372,8 @@ contract Escrow is Ownable, Pausable, IEscrow {
     }
 
     /**
-     * @notice GOVERNANCE ONLY: Updates the intent expiration period, after this period elapses an intent can be pruned to prevent
+     * @notice GOVERNANCE ONLY: Updates the intent expiration period, after this period elapses an intent can be pruned
+     * to prevent
      * locking up a depositor's funds.
      *
      * @param _intentExpirationPeriod   New intent expiration period
@@ -410,11 +406,13 @@ contract Escrow is Ownable, Pausable, IEscrow {
         address[] calldata _verifiers,
         DepositVerifierData[] calldata _verifierData,
         Currency[][] calldata _currencies
-    ) internal view {
+    )
+        internal
+        view
+    {
         require(
-            _intentAmountRange.min != 0 &&
-            _intentAmountRange.min <= _intentAmountRange.max &&
-            _intentAmountRange.min <= _amount,
+            _intentAmountRange.min != 0 && _intentAmountRange.min <= _intentAmountRange.max
+                && _intentAmountRange.min <= _amount,
             InvalidIntentAmountRange()
         );
         require(_verifiers.length > 0, "Invalid verifiers");
@@ -447,7 +445,10 @@ contract Escrow is Ownable, Pausable, IEscrow {
         address _to,
         address _verifier,
         bytes32 _fiatCurrency
-    ) internal view {
+    )
+        internal
+        view
+    {
         require(accountIntent[msg.sender] == 0, IntentAlreadyExists());
         require(_deposit.depositor != address(0), DepositNotFound());
         require(_deposit.acceptingIntents, DepositNotAcceptingIntents());
@@ -464,12 +465,10 @@ contract Escrow is Ownable, Pausable, IEscrow {
      * @notice Cycles through all intents currently open on a deposit and sees if any have expired. If they have expired
      * the outstanding amounts are summed and returned alongside the intentHashes
      */
-    function _getPrunableIntents(
-        uint256 _depositId
-    )
+    function _getPrunableIntents(uint256 _depositId)
         internal
         view
-        returns(uint256[] memory prunableIntents, uint256 reclaimedAmount)
+        returns (uint256[] memory prunableIntents, uint256 reclaimedAmount)
     {
         uint256[] memory intentIds = deposits[_depositId].intentIds;
         prunableIntents = new uint256[](intentIds.length);
@@ -506,8 +505,10 @@ contract Escrow is Ownable, Pausable, IEscrow {
     }
 
     /**
-     * @notice Removes a deposit if no outstanding intents AND no remaining deposits. Deleting a deposit deletes it from the
-     * deposits mapping and removes tracking it in the user's accountDeposits mapping. Also deletes the verification data for the
+     * @notice Removes a deposit if no outstanding intents AND no remaining deposits. Deleting a deposit deletes it from
+     * the
+     * deposits mapping and removes tracking it in the user's accountDeposits mapping. Also deletes the verification
+     * data for the
      * deposit.
      */
     function _closeDepositIfNecessary(uint256 _depositId, Deposit storage _deposit) internal {
