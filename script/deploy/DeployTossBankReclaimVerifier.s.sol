@@ -20,7 +20,6 @@ Owner address is loaded from config.json
 */
 
 contract DeployTossBankReclaimVerifier is BaseScript {
-
     // Provider hash from BaseTest.sol
     string public constant PROVIDER_HASH = "0xffb501528259e6d684e1c2153fbbacab453fe9c97c336dc4f8f48d70a0e2a13d";
 

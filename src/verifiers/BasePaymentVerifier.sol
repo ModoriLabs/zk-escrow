@@ -24,7 +24,9 @@ contract BasePaymentVerifier is Ownable, IBasePaymentVerifier {
         INullifierRegistry _nullifierRegistry,
         uint256 _timestampBuffer,
         bytes32[] memory _currencies
-    ) Ownable(_owner) {
+    )
+        Ownable(_owner)
+    {
         escrow = _escrow;
         nullifierRegistry = _nullifierRegistry;
         timestampBuffer = _timestampBuffer;

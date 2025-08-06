@@ -18,7 +18,7 @@ contract BaseReclaimPaymentVerifier is IReclaimVerifier, BasePaymentVerifier {
 
     /* ============ State Variables ============ */
     mapping(string => bool) public isProviderHash;
-    string[] public providerHashes;                         // Set of provider hashes that these proofs should be for
+    string[] public providerHashes; // Set of provider hashes that these proofs should be for
 
     /* ============ Events ============ */
     event ProviderHashAdded(string providerHash);
@@ -32,13 +32,7 @@ contract BaseReclaimPaymentVerifier is IReclaimVerifier, BasePaymentVerifier {
         bytes32[] memory _currencies,
         string[] memory _providerHashes
     )
-        BasePaymentVerifier(
-            _owner,
-            _ramp,
-            _nulliferRegistry,
-            _timestampBuffer,
-            _currencies
-        )
+        BasePaymentVerifier(_owner, _ramp, _nulliferRegistry, _timestampBuffer, _currencies)
     {
         for (uint256 i = 0; i < _providerHashes.length; i++) {
             require(!isProviderHash[_providerHashes[i]], "Provider hash already added");
@@ -90,15 +84,19 @@ contract BaseReclaimPaymentVerifier is IReclaimVerifier, BasePaymentVerifier {
         ReclaimProof memory proof,
         address[] memory _witnesses,
         uint256 _requiredThreshold
-    ) public pure returns (bool) {
+    )
+        public
+        pure
+        returns (bool)
+    {
         require(_requiredThreshold > 0, "Required threshold must be greater than 0");
-        require(_requiredThreshold <= _witnesses.length, "Required threshold must be less than or equal to number of witnesses");
+        require(
+            _requiredThreshold <= _witnesses.length,
+            "Required threshold must be less than or equal to number of witnesses"
+        );
         require(proof.signedClaim.signatures.length > 0, "No signatures");
 
-        Claims.SignedClaim memory signed = Claims.SignedClaim(
-            proof.signedClaim.claim,
-            proof.signedClaim.signatures
-        );
+        Claims.SignedClaim memory signed = Claims.SignedClaim(proof.signedClaim.claim, proof.signedClaim.signatures);
 
         bytes32 hashed = Claims.hashClaimInfo(proof.claimInfo);
         require(proof.signedClaim.claim.identifier == hashed, "ClaimInfo hash doesn't match");
@@ -122,10 +120,7 @@ contract BaseReclaimPaymentVerifier is IReclaimVerifier, BasePaymentVerifier {
             }
         }
 
-        require(
-            validWitnessSignatures >= _requiredThreshold,
-            "Fewer witness signatures than required threshold"
-        );
+        require(validWitnessSignatures >= _requiredThreshold, "Fewer witness signatures than required threshold");
 
         return true;
     }

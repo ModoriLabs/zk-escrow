@@ -48,7 +48,7 @@ contract Vault {
         bytes32 enrollId = _createEnrollId(from_binance_id, recipient);
         require(enrollments[enrollId].amount == 0, "Already enrolled");
         enrollments[enrollId] =
-            Enrollment({from_binance_id: from_binance_id, recipient: recipient, amount: amount, claimed: false});
+            Enrollment({ from_binance_id: from_binance_id, recipient: recipient, amount: amount, claimed: false });
         enrolledIds.push(enrollId);
         recipientToEnrollId[recipient] = enrollId;
         emit Enrolled(from_binance_id, recipient, amount);

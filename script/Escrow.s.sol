@@ -28,7 +28,10 @@ contract EscrowScript is BaseScript {
         uint256 minIntent,
         uint256 maxIntent,
         string memory payeeDetails
-    ) public returns (uint256 depositId) {
+    )
+        public
+        returns (uint256 depositId)
+    {
         address depositor = broadcaster;
 
         console.log("Creating deposit:");
@@ -46,10 +49,7 @@ contract EscrowScript is BaseScript {
         usdt.approve(address(escrow), amount);
 
         // Prepare deposit parameters
-        IEscrow.Range memory intentRange = IEscrow.Range({
-            min: minIntent,
-            max: maxIntent
-        });
+        IEscrow.Range memory intentRange = IEscrow.Range({ min: minIntent, max: maxIntent });
 
         address[] memory verifiers = new address[](1);
         verifiers[0] = verifier;
@@ -58,26 +58,15 @@ contract EscrowScript is BaseScript {
         address[] memory witnessAddresses = new address[](1);
         // Test witness address from TossBankReclaimVerifierV2.t.sol
         witnessAddresses[0] = VERIFIER_ADDRESS_V2;
-        verifierData[0] = IEscrow.DepositVerifierData({
-            payeeDetails: payeeDetails,
-            data: abi.encode(witnessAddresses)
-        });
+        verifierData[0] =
+            IEscrow.DepositVerifierData({ payeeDetails: payeeDetails, data: abi.encode(witnessAddresses) });
 
         IEscrow.Currency[][] memory currencies = new IEscrow.Currency[][](1);
         currencies[0] = new IEscrow.Currency[](1);
-        currencies[0][0] = IEscrow.Currency({
-            code: keccak256("KRW"),
-            conversionRate: KRW_CONVERSION_RATE
-        });
+        currencies[0][0] = IEscrow.Currency({ code: keccak256("KRW"), conversionRate: KRW_CONVERSION_RATE });
 
-        depositId = escrow.createDeposit(
-            IERC20(address(usdt)),
-            amount,
-            intentRange,
-            verifiers,
-            verifierData,
-            currencies
-        );
+        depositId =
+            escrow.createDeposit(IERC20(address(usdt)), amount, intentRange, verifiers, verifierData, currencies);
 
         console.log("Deposit created with ID:", depositId);
 
@@ -89,7 +78,10 @@ contract EscrowScript is BaseScript {
         uint256 amount,
         address to,
         bytes32 currency
-    ) public returns (uint256 intentId) {
+    )
+        public
+        returns (uint256 intentId)
+    {
         address signer = broadcaster;
 
         console.log("Signaling intent:");
@@ -100,13 +92,7 @@ contract EscrowScript is BaseScript {
 
         vm.startBroadcast();
 
-        escrow.signalIntent(
-            depositId,
-            amount,
-            to,
-            verifier,
-            currency
-        );
+        escrow.signalIntent(depositId, amount, to, verifier, currency);
 
         intentId = escrow.accountIntent(signer);
         console.log("Intent created with ID:", intentId);
@@ -114,10 +100,7 @@ contract EscrowScript is BaseScript {
         vm.stopBroadcast();
     }
 
-    function fulfillIntent(
-        bytes memory paymentProof,
-        uint256 intentId
-    ) public {
+    function fulfillIntent(bytes memory paymentProof, uint256 intentId) public {
         address fulfiller = broadcaster;
 
         console.log("Fulfilling intent ID:", intentId);
@@ -242,12 +225,21 @@ contract EscrowScript is BaseScript {
         }
     }
 
+    function createBaseDeposit() public returns (uint256) {
+        return createDeposit(
+            1000e6, // 1,000 USDC
+            1e6, // 1000000/1000000 USDC * 1400 WON/USDC = 1400 WON
+            1000e6, // 1,000 USDC max per intent
+            unicode"100202642943(토스뱅크)"
+        );
+    }
+
     // Example usage functions
     function createDefaultDeposit() public returns (uint256) {
         return createDeposit(
-            10000e6,  // 10,000 USDT
-            1000,     // 1000/1000000 USDT * 1380 WON/USDT = 1.38 WON
-            2000e6,   // 2,000 USDT max per intent
+            10_000e6, // 10,000 USDC
+            1000, // 1000/1000000 USDC * 1380 WON/USDC = 1.38 WON
+            2000e6, // 2,000 USDC max per intent
             unicode"100202642943(토스뱅크)"
         );
     }
@@ -255,8 +247,8 @@ contract EscrowScript is BaseScript {
     function signalDefaultIntent(uint256 depositId) public returns (uint256) {
         return signalIntent(
             depositId,
-            500e6,  // 500 USDT
-            broadcaster,  // to self
+            500e6, // 500 USDC
+            broadcaster, // to self
             keccak256("KRW")
         );
     }

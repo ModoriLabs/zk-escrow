@@ -27,7 +27,6 @@ Note:
 */
 
 contract VerifyEscrow is BaseVerifyScript {
-
     function run() external {
         verifyEscrow();
     }
@@ -93,18 +92,9 @@ contract VerifyEscrow is BaseVerifyScript {
         uint256 intentExpirationPeriod = 1800; // 30 minutes default
         string memory chainName = _getChainName(chainId);
 
-        bytes memory constructorArgs = abi.encode(
-            owner,
-            intentExpirationPeriod,
-            chainName
-        );
+        bytes memory constructorArgs = abi.encode(owner, intentExpirationPeriod, chainName);
 
-        _executeVerification(
-            escrowAddress,
-            "src/Escrow.sol:Escrow",
-            constructorArgs,
-            "Escrow"
-        );
+        _executeVerification(escrowAddress, "src/Escrow.sol:Escrow", constructorArgs, "Escrow");
     }
 
     function _verifyMockUSDT(address mockUSDTAddress) internal {
@@ -113,12 +103,7 @@ contract VerifyEscrow is BaseVerifyScript {
 
         bytes memory constructorArgs = abi.encode(owner);
 
-        _executeVerification(
-            mockUSDTAddress,
-            "src/MockUSDT.sol:MockUSDT",
-            constructorArgs,
-            "MockUSDT"
-        );
+        _executeVerification(mockUSDTAddress, "src/MockUSDT.sol:MockUSDT", constructorArgs, "MockUSDT");
     }
 
     function _verifyNullifierRegistry(address nullifierRegistryAddress) internal {
@@ -136,7 +121,8 @@ contract VerifyEscrow is BaseVerifyScript {
     }
 
     function _verifyTossBankReclaimVerifierV2(address verifierAddress) internal {
-        // Constructor: TossBankReclaimVerifierV2(address _owner, address _escrow, INullifierRegistry _nullifierRegistry, uint256 _timestampBuffer, bytes32[] memory _currencies, string[] memory _providerHashes)
+        // Constructor: TossBankReclaimVerifierV2(address _owner, address _escrow, INullifierRegistry
+        // _nullifierRegistry, uint256 _timestampBuffer, bytes32[] memory _currencies, string[] memory _providerHashes)
         address owner = broadcaster;
         address escrowAddress = _getDeployedAddress("Escrow");
         address nullifierRegistryAddress = _getDeployedAddress("NullifierRegistry");
@@ -150,14 +136,8 @@ contract VerifyEscrow is BaseVerifyScript {
         string[] memory providerHashes = new string[](1);
         providerHashes[0] = "0xffb501528259e6d684e1c2153fbbacab453fe9c97c336dc4f8f48d70a0e2a13d";
 
-        bytes memory constructorArgs = abi.encode(
-            owner,
-            escrowAddress,
-            nullifierRegistryAddress,
-            timestampBuffer,
-            currencies,
-            providerHashes
-        );
+        bytes memory constructorArgs =
+            abi.encode(owner, escrowAddress, nullifierRegistryAddress, timestampBuffer, currencies, providerHashes);
 
         _executeVerification(
             verifierAddress,

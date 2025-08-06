@@ -8,7 +8,6 @@ import "script/Base.s.sol";
  * @notice Base contract providing common functionality for contract verification scripts
  */
 abstract contract BaseVerifyScript is BaseScript {
-
     /**
      * @notice Execute contract verification using forge verify-contract via vm.ffi
      * @param contractAddress Address of the deployed contract
@@ -21,7 +20,9 @@ abstract contract BaseVerifyScript is BaseScript {
         string memory contractPath,
         bytes memory constructorArgs,
         string memory contractName
-    ) internal {
+    )
+        internal
+    {
         console.log(string.concat("Verifying ", contractName, " at:"), contractAddress);
 
         // Get Etherscan API key from environment
@@ -78,14 +79,14 @@ abstract contract BaseVerifyScript is BaseScript {
      */
     function _getChainName(uint256 chainId) internal pure returns (string memory) {
         if (chainId == 1) return "mainnet";
-        if (chainId == 11155111) return "sepolia";
-        if (chainId == 17000) return "holesky";
-        if (chainId == 84532) return "basesep";
+        if (chainId == 11_155_111) return "sepolia";
+        if (chainId == 17_000) return "holesky";
+        if (chainId == 84_532) return "basesep";
         if (chainId == 8453) return "base";
-        if (chainId == 42161) return "arbitrum";
+        if (chainId == 42_161) return "arbitrum";
         if (chainId == 10) return "optimism";
         if (chainId == 137) return "polygon";
-        if (chainId == 31337) return "anvil";
+        if (chainId == 31_337) return "anvil";
         return "unknown";
     }
 }

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MockUSDT is ERC20, Ownable, ERC20Burnable {
     constructor(address _owner) ERC20("Mock USDT", "USDT") Ownable(_owner) {

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {MockUSDT} from "src/MockUSDT.sol";
-import {Vault} from "src/Vault.sol";
+import { MockUSDT } from "src/MockUSDT.sol";
+import { Vault } from "src/Vault.sol";
 import "./Base.s.sol";
 
 contract TransferUSDTToVault is BaseScript {

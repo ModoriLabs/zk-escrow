@@ -24,18 +24,11 @@ contract ZkMinter is Ownable, Pausable, IZkMinter {
     mapping(address => uint256) public accountRedeemRequest;
     mapping(uint256 => RedeemRequest) public redeemRequests;
 
-    constructor(
-        address _owner,
-        address _token
-    ) Ownable(_owner) {
+    constructor(address _owner, address _token) Ownable(_owner) {
         token = _token;
     }
 
-    function signalIntent(
-        address _to,
-        uint256 _amount,
-        address _verifier
-    ) external whenNotPaused {
+    function signalIntent(address _to, uint256 _amount, address _verifier) external whenNotPaused {
         require(_to != address(0), "Invalid recipient address");
         require(_amount > 0, InvalidAmount());
         require(_verifier != address(0), "Invalid verifier address");
@@ -71,10 +64,7 @@ contract ZkMinter is Ownable, Pausable, IZkMinter {
         emit IntentCancelled(_intentId);
     }
 
-    function fulfillIntent(
-        bytes calldata _paymentProof,
-        uint256 _intentId
-    ) external whenNotPaused {
+    function fulfillIntent(bytes calldata _paymentProof, uint256 _intentId) external whenNotPaused {
         Intent memory intent = intents[_intentId];
 
         address verifier = intent.paymentVerifier;
@@ -99,19 +89,10 @@ contract ZkMinter is Ownable, Pausable, IZkMinter {
 
         IMintableERC20(token).mint(intent.to, intent.amount);
 
-        emit IntentFulfilled(
-            intentHash,
-            verifier,
-            intent.owner,
-            intent.to,
-            intent.amount
-        );
+        emit IntentFulfilled(intentHash, verifier, intent.owner, intent.to, intent.amount);
     }
 
-    function signalRedeem(
-        string calldata _accountNumber,
-        uint256 _amount
-    ) external whenNotPaused {
+    function signalRedeem(string calldata _accountNumber, uint256 _amount) external whenNotPaused {
         require(_amount > 0, InvalidAmount());
         require(bytes(_accountNumber).length > 0, InvalidAccountNumber());
         require(accountRedeemRequest[msg.sender] == 0, RedeemAlreadyExists());
@@ -120,11 +101,7 @@ contract ZkMinter is Ownable, Pausable, IZkMinter {
         IERC20(token).transferFrom(msg.sender, address(this), _amount);
 
         uint256 redeemId = ++redeemCount;
-        redeemRequests[redeemId] = RedeemRequest({
-            owner: msg.sender,
-            amount: _amount,
-            timestamp: block.timestamp
-        });
+        redeemRequests[redeemId] = RedeemRequest({ owner: msg.sender, amount: _amount, timestamp: block.timestamp });
 
         accountRedeemRequest[msg.sender] = redeemId;
         emit RedeemRequestSignaled(redeemId, msg.sender, _amount, _accountNumber);
@@ -165,16 +142,12 @@ contract ZkMinter is Ownable, Pausable, IZkMinter {
 
     // *** Governance functions ***
 
-    function addVerifier(
-        address _verifier
-    ) external onlyOwner {
+    function addVerifier(address _verifier) external onlyOwner {
         require(_verifier != address(0), "Invalid verifier address");
         verifiers.push(_verifier);
     }
 
-    function removeVerifier(
-        address _verifier
-    ) external onlyOwner {
+    function removeVerifier(address _verifier) external onlyOwner {
         require(_verifier != address(0), "Invalid verifier address");
         require(verifiers.length > 0, "No verifiers to remove");
 
@@ -191,12 +164,12 @@ contract ZkMinter is Ownable, Pausable, IZkMinter {
         address _verifier,
         string calldata _payeeDetails,
         bytes calldata _data
-    ) external onlyOwner {
+    )
+        external
+        onlyOwner
+    {
         require(_verifier != address(0), "Invalid verifier address");
-        depositVerifierData[_verifier] = DepositVerifierData({
-            payeeDetails: _payeeDetails,
-            data: _data
-        });
+        depositVerifierData[_verifier] = DepositVerifierData({ payeeDetails: _payeeDetails, data: _data });
     }
 
     function pause() external onlyOwner {

@@ -71,7 +71,8 @@ contract InteractWithDeployedContracts is Script {
                 console.log("Intent ID for Alice:", intentId);
 
                 if (intentId > 0) {
-                    (address owner, address to, uint256 amount, uint256 timestamp, address intentVerifier) = getIntent(zkMinter, intentId);
+                    (address owner, address to, uint256 amount, uint256 timestamp, address intentVerifier) =
+                        getIntent(zkMinter, intentId);
                     console.log("Intent owner:", owner);
                     console.log("Intent to:", to);
                     console.log("Intent amount:", amount);
@@ -85,7 +86,9 @@ contract InteractWithDeployedContracts is Script {
 
         // 7. Check verifier data
         console.log("\n=== Verifier Data ===");
-        try zkMinter.depositVerifierData(TOSS_BANK_VERIFIER) returns (string memory bankAccount, bytes memory witnessData) {
+        try zkMinter.depositVerifierData(TOSS_BANK_VERIFIER) returns (
+            string memory bankAccount, bytes memory witnessData
+        ) {
             console.log("Bank Account:", bankAccount);
             console.log("Witness Data Length:", witnessData.length);
 
@@ -124,7 +127,14 @@ contract InteractWithDeployedContracts is Script {
     }
 
     // Helper function to get intent details
-    function getIntent(ZkMinter zkMinter, uint256 intentId) internal view returns (address, address, uint256, uint256, address) {
+    function getIntent(
+        ZkMinter zkMinter,
+        uint256 intentId
+    )
+        internal
+        view
+        returns (address, address, uint256, uint256, address)
+    {
         return zkMinter.intents(intentId);
     }
 }

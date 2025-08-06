@@ -20,23 +20,21 @@ contract UpdateDepositIntentAmountRangeTest is BaseEscrowTest {
         uint256 newMax = 5000e6; // 5000 USDT
 
         // Get initial range
-        (,,,IEscrow.Range memory initialRange,,,) = escrow.deposits(depositId);
+        (,,, IEscrow.Range memory initialRange,,,) = escrow.deposits(depositId);
         assertEq(initialRange.min, initialMin);
         assertEq(initialRange.max, initialMax);
 
         // Update range as depositor
         vm.expectEmit(true, false, false, true);
         emit IEscrow.DepositIntentAmountRangeUpdated(
-            depositId,
-            IEscrow.Range(initialMin, initialMax),
-            IEscrow.Range(newMin, newMax)
+            depositId, IEscrow.Range(initialMin, initialMax), IEscrow.Range(newMin, newMax)
         );
-        
+
         vm.prank(alice);
         escrow.updateDepositIntentAmountRange(depositId, newMin, newMax);
 
         // Verify the range was updated
-        (,,,IEscrow.Range memory updatedRange,,,) = escrow.deposits(depositId);
+        (,,, IEscrow.Range memory updatedRange,,,) = escrow.deposits(depositId);
         assertEq(updatedRange.min, newMin);
         assertEq(updatedRange.max, newMax);
     }
@@ -118,7 +116,7 @@ contract UpdateDepositIntentAmountRangeTest is BaseEscrowTest {
         vm.prank(alice);
         escrow.updateDepositIntentAmountRange(depositId, firstMin, firstMax);
 
-        (,,,IEscrow.Range memory range1,,,) = escrow.deposits(depositId);
+        (,,, IEscrow.Range memory range1,,,) = escrow.deposits(depositId);
         assertEq(range1.min, firstMin);
         assertEq(range1.max, firstMax);
 
@@ -126,7 +124,7 @@ contract UpdateDepositIntentAmountRangeTest is BaseEscrowTest {
         vm.prank(alice);
         escrow.updateDepositIntentAmountRange(depositId, secondMin, secondMax);
 
-        (,,,IEscrow.Range memory range2,,,) = escrow.deposits(depositId);
+        (,,, IEscrow.Range memory range2,,,) = escrow.deposits(depositId);
         assertEq(range2.min, secondMin);
         assertEq(range2.max, secondMax);
     }
@@ -138,7 +136,7 @@ contract UpdateDepositIntentAmountRangeTest is BaseEscrowTest {
         escrow.signalIntent(depositId, intentAmount, bob, address(tossBankReclaimVerifierV2), keccak256("KRW"));
 
         uint256 intentId = escrow.accountIntent(bob);
-        
+
         // Verify intent was created with the amount
         (,, uint256 originalDepositId, uint256 originalAmount,,,,) = escrow.intents(intentId);
         assertEq(originalDepositId, depositId);
@@ -178,7 +176,7 @@ contract UpdateDepositIntentAmountRangeTest is BaseEscrowTest {
         // Signal intent within new range - should succeed
         vm.prank(bob);
         escrow.signalIntent(depositId, 1000e6, bob, address(tossBankReclaimVerifierV2), keccak256("KRW"));
-        
+
         uint256 intentId = escrow.accountIntent(bob);
         assertGt(intentId, 0);
     }
@@ -191,7 +189,7 @@ contract UpdateDepositIntentAmountRangeTest is BaseEscrowTest {
         vm.prank(alice);
         escrow.updateDepositIntentAmountRange(depositId, newMin, newMax);
 
-        (,,,IEscrow.Range memory range,,,) = escrow.deposits(depositId);
+        (,,, IEscrow.Range memory range,,,) = escrow.deposits(depositId);
         assertEq(range.min, newMin);
         assertEq(range.max, newMax);
 
@@ -202,7 +200,7 @@ contract UpdateDepositIntentAmountRangeTest is BaseEscrowTest {
         vm.prank(alice);
         escrow.updateDepositIntentAmountRange(depositId, newMin, newMax);
 
-        (,,,IEscrow.Range memory range2,,,) = escrow.deposits(depositId);
+        (,,, IEscrow.Range memory range2,,,) = escrow.deposits(depositId);
         assertEq(range2.min, newMin);
         assertEq(range2.max, newMax);
     }

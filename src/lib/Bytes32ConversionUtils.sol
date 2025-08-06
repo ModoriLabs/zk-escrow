@@ -3,10 +3,9 @@
 pragma solidity ^0.8.18;
 
 library Bytes32ConversionUtils {
-
     /// @notice Convert a bytes32 value into its hex string representation WITH '0x' prefix.
-    /// @dev Resulting string is 66 characters long: 
-    ///      - 2 chars for "0x" 
+    /// @dev Resulting string is 66 characters long:
+    ///      - 2 chars for "0x"
     ///      - 64 chars for the hex digits.
     function toHexString(bytes32 data) internal pure returns (string memory) {
         bytes memory alphabet = "0123456789abcdef";
@@ -14,15 +13,15 @@ library Bytes32ConversionUtils {
         bytes memory str = new bytes(66);
 
         // Add '0x' prefix
-        str[0] = '0';
-        str[1] = 'x';
+        str[0] = "0";
+        str[1] = "x";
 
-        for (uint i = 0; i < 32; i++) {
+        for (uint256 i = 0; i < 32; i++) {
             // Each byte splits into two hex characters.
             // High nibble (4 bits)
-            str[2 + 2*i]   = alphabet[uint(uint8(data[i] >> 4))];
+            str[2 + 2 * i] = alphabet[uint256(uint8(data[i] >> 4))];
             // Low nibble (4 bits)
-            str[3 + 2*i] = alphabet[uint(uint8(data[i] & 0x0f))];
+            str[3 + 2 * i] = alphabet[uint256(uint8(data[i] & 0x0f))];
         }
         return string(str);
     }

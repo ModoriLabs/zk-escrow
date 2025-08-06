@@ -9,8 +9,7 @@ pragma solidity ^0.8.17;
  * Fork of Set Protocol's AddressArrayUtils library adapted for usage with bytes32 arrays.
  */
 library Bytes32ArrayUtils {
-
-    uint256 constant internal MAX_INT = 2**256 - 1;
+    uint256 internal constant MAX_INT = 2 ** 256 - 1;
 
     /**
      * Finds the index of the first occurrence of the given element.
@@ -29,22 +28,22 @@ library Bytes32ArrayUtils {
     }
 
     /**
-    * Returns true if the value is present in the list. Uses indexOf internally.
-    * @param A The input array to search
-    * @param a The value to find
-    * @return Returns isIn for the first occurrence starting from index 0
-    */
+     * Returns true if the value is present in the list. Uses indexOf internally.
+     * @param A The input array to search
+     * @param a The value to find
+     * @return Returns isIn for the first occurrence starting from index 0
+     */
     function contains(bytes32[] memory A, bytes32 a) internal pure returns (bool) {
         (, bool isIn) = indexOf(A, a);
         return isIn;
     }
 
     /**
-    * Returns true if there are 2 elements that are the same in an array
-    * @param A The input array to search
-    * @return Returns boolean for the first occurrence of a duplicate
-    */
-    function hasDuplicate(bytes32[] memory A) internal pure returns(bool) {
+     * Returns true if there are 2 elements that are the same in an array
+     * @param A The input array to search
+     * @return Returns boolean for the first occurrence of a duplicate
+     */
+    function hasDuplicate(bytes32[] memory A) internal pure returns (bool) {
         require(A.length > 0, "A is empty");
 
         for (uint256 i = 0; i < A.length - 1; i++) {
@@ -63,11 +62,7 @@ library Bytes32ArrayUtils {
      * @param a The bytes32 to remove
      * @return Returns the array with the object removed.
      */
-    function remove(bytes32[] memory A, bytes32 a)
-        internal
-        pure
-        returns (bytes32[] memory)
-    {
+    function remove(bytes32[] memory A, bytes32 a) internal pure returns (bytes32[] memory) {
         (uint256 index, bool isIn) = indexOf(A, a);
         if (!isIn) {
             revert("bytes32 not in array.");
@@ -81,30 +76,25 @@ library Bytes32ArrayUtils {
      * @param A The input array to search
      * @param a The bytes32 to remove
      */
-    function removeStorage(bytes32[] storage A, bytes32 a)
-        internal
-    {
+    function removeStorage(bytes32[] storage A, bytes32 a) internal {
         (uint256 index, bool isIn) = indexOf(A, a);
         if (!isIn) {
             revert("bytes32 not in array.");
         } else {
-            uint256 lastIndex = A.length - 1; // If the array would be empty, the previous line would throw, so no underflow here
-            if (index != lastIndex) { A[index] = A[lastIndex]; }
+            uint256 lastIndex = A.length - 1; // If the array would be empty, the previous line would throw, so no
+                // underflow here
+            if (index != lastIndex) A[index] = A[lastIndex];
             A.pop();
         }
     }
 
     /**
-    * Removes specified index from array
-    * @param A The input array to search
-    * @param index The index to remove
-    * @return Returns the new array and the removed entry
-    */
-    function pop(bytes32[] memory A, uint256 index)
-        internal
-        pure
-        returns (bytes32[] memory, bytes32)
-    {
+     * Removes specified index from array
+     * @param A The input array to search
+     * @param index The index to remove
+     * @return Returns the new array and the removed entry
+     */
+    function pop(bytes32[] memory A, uint256 index) internal pure returns (bytes32[] memory, bytes32) {
         uint256 length = A.length;
         require(index < A.length, "Index must be < A length");
         bytes32[] memory newBytes = new bytes32[](length - 1);

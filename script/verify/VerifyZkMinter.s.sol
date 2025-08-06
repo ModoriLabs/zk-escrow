@@ -7,16 +7,16 @@ import "../BaseVerifyScript.s.sol";
 Usage Examples:
 
 # Verify all contracts on Holesky
-forge script script/VerifyContracts.s.sol --rpc-url holesky --private-key $TESTNET_PRIVATE_KEY --sig "verifyAll()" --etherscan-api-key $ETHERSCAN_API_KEY
+forge script script/VerifyContracts.s.sol --rpc-url holesky --private-key $TESTNET_PRIVATE_KEY --sig "verifyAll()"
+--etherscan-api-key $ETHERSCAN_API_KEY
 
 # Verify specific contract
-forge script script/VerifyContracts.s.sol --rpc-url holesky --private-key $TESTNET_PRIVATE_KEY --sig "verifyKRW()" --etherscan-api-key $ETHERSCAN_API_KEY
+forge script script/VerifyContracts.s.sol --rpc-url holesky --private-key $TESTNET_PRIVATE_KEY --sig "verifyKRW()"
+--etherscan-api-key $ETHERSCAN_API_KEY
 
-Note: Contract addresses are automatically loaded from deployments/{chainId}-deploy.json
-*/
+Note: Contract addresses are automatically loaded from deployments/{chainId}-deploy.json*/
 
 contract VerifyZkMinter is BaseVerifyScript {
-
     struct DeployedContracts {
         address krw;
         address nullifierRegistry;
@@ -33,7 +33,9 @@ contract VerifyZkMinter is BaseVerifyScript {
         _verifyKRW(contracts.krw);
         _verifyNullifierRegistry(contracts.nullifierRegistry);
         _verifyZkMinter(contracts.zkMinter, contracts.krw);
-        _verifyTossBankReclaimVerifier(contracts.tossBankReclaimVerifier, contracts.zkMinter, contracts.nullifierRegistry);
+        _verifyTossBankReclaimVerifier(
+            contracts.tossBankReclaimVerifier, contracts.zkMinter, contracts.nullifierRegistry
+        );
 
         console.log("=== VERIFICATION COMPLETE ===");
     }
@@ -55,7 +57,9 @@ contract VerifyZkMinter is BaseVerifyScript {
 
     function verifyTossBankReclaimVerifier() public {
         DeployedContracts memory contracts = _loadDeployedContracts();
-        _verifyTossBankReclaimVerifier(contracts.tossBankReclaimVerifier, contracts.zkMinter, contracts.nullifierRegistry);
+        _verifyTossBankReclaimVerifier(
+            contracts.tossBankReclaimVerifier, contracts.zkMinter, contracts.nullifierRegistry
+        );
     }
 
     function _loadDeployedContracts() internal view returns (DeployedContracts memory contracts) {
@@ -84,7 +88,6 @@ contract VerifyZkMinter is BaseVerifyScript {
             require(contracts.nullifierRegistry != address(0), "NullifierRegistry address not found");
             require(contracts.zkMinter != address(0), "ZkMinter address not found");
             require(contracts.tossBankReclaimVerifier != address(0), "TossBankReclaimVerifier address not found");
-
         } catch {
             revert(string.concat("Failed to read deployment file: ", path));
         }
@@ -167,7 +170,13 @@ contract VerifyZkMinter is BaseVerifyScript {
         }
     }
 
-    function _verifyTossBankReclaimVerifier(address verifierAddress, address zkMinterAddress, address nullifierRegistryAddress) internal {
+    function _verifyTossBankReclaimVerifier(
+        address verifierAddress,
+        address zkMinterAddress,
+        address nullifierRegistryAddress
+    )
+        internal
+    {
         console.log("Verifying TossBankReclaimVerifier at:", verifierAddress);
 
         // Constructor args are complex for TossBankReclaimVerifier
@@ -179,12 +188,7 @@ contract VerifyZkMinter is BaseVerifyScript {
         providerHashes[0] = "0xffb501528259e6d684e1c2153fbbacab453fe9c97c336dc4f8f48d70a0e2a13d";
 
         bytes memory constructorArgs = abi.encode(
-            owner,
-            zkMinterAddress,
-            nullifierRegistryAddress,
-            timestampBuffer,
-            witnessAddresses,
-            providerHashes
+            owner, zkMinterAddress, nullifierRegistryAddress, timestampBuffer, witnessAddresses, providerHashes
         );
 
         string memory etherscanApiKey = vm.envString("ETHERSCAN_API_KEY");
@@ -201,7 +205,9 @@ contract VerifyZkMinter is BaseVerifyScript {
         cmd[8] = string.concat("--etherscan-api-key=", etherscanApiKey);
 
         console.log("Executing: forge verify-contract", vm.toString(verifierAddress), "TossBankReclaimVerifier");
-        console.log("Note: TossBankReclaimVerifier has complex constructor args - verification may fail if args don't match deployment");
+        console.log(
+            "Note: TossBankReclaimVerifier has complex constructor args - verification may fail if args don't match deployment"
+        );
 
         try vm.ffi(cmd) returns (bytes memory result) {
             console.log("TossBankReclaimVerifier verification result:", string(result));

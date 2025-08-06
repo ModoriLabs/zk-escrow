@@ -30,8 +30,15 @@ abstract contract BaseScript is Script {
     ///
     /// The use case for $ETH_FROM is to specify the broadcaster key and its address via the command line.
     constructor() {
-        if (block.chainid == 31337) {
-            PRIVATE_KEY = vm.envOr("ANVIL_DEPLOYER_PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80));
+        if (block.chainid == 31_337) {
+            PRIVATE_KEY = vm.envOr(
+                "ANVIL_DEPLOYER_PRIVATE_KEY",
+                uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)
+            );
+        } else if (block.chainid == 84_532) {
+            PRIVATE_KEY = vm.envOr("TESTNET_PRIVATE_KEY", uint256(1));
+        } else if (block.chainid == 8453) {
+            PRIVATE_KEY = vm.envOr("PROD_DEPLOYER_PRIVATE_KEY", uint256(1));
         } else {
             PRIVATE_KEY = vm.envOr("TESTNET_PRIVATE_KEY", uint256(1));
         }
@@ -44,7 +51,7 @@ abstract contract BaseScript is Script {
         // console.log("RPC URL: ", rpcUrl);
     }
 
-    function parseAddress(string memory contractName) internal view returns(address payable contractAddress) {
+    function parseAddress(string memory contractName) internal view returns (address payable contractAddress) {
         string memory path = string.concat(string.concat("./deployments/", networkName, "/"), contractName, ".json");
         string memory json = vm.readFile(path);
         bytes memory positionRouterAddressBytes = vm.parseJson(json, ".address");
@@ -55,13 +62,7 @@ abstract contract BaseScript is Script {
 
     function _writeDeployment(string memory contractName, address contractAddress) internal {
         string memory filePath = _getDeploymentPath(contractName);
-        string memory jsonContent = string(
-            abi.encodePacked(
-                '{"address": "',
-                contractAddress,
-                '"}'
-            )
-        );
+        string memory jsonContent = string(abi.encodePacked('{"address": "', contractAddress, '"}'));
         vm.writeJson(jsonContent, filePath);
     }
 
@@ -85,7 +86,9 @@ abstract contract BaseScript is Script {
         try vm.readFile(path) returns (string memory json) {
             string memory key = string.concat(".", contractName);
             try vm.parseJsonAddress(json, key) returns (address contractAddress) {
-                require(contractAddress != address(0), string.concat(contractName, " address not found in deployment file"));
+                require(
+                    contractAddress != address(0), string.concat(contractName, " address not found in deployment file")
+                );
                 console.log(string.concat(contractName, " address:"), contractAddress);
                 return contractAddress;
             } catch {
@@ -112,7 +115,10 @@ abstract contract BaseScript is Script {
             string memory key = string.concat(".", vm.toString(chainId), ".owner");
             address ownerAddress = vm.parseJsonAddress(json, key);
 
-            require(ownerAddress != address(0), string.concat("Owner address not found for chain ID: ", vm.toString(chainId)));
+            require(
+                ownerAddress != address(0),
+                string.concat("Owner address not found for chain ID: ", vm.toString(chainId))
+            );
             console.log("Owner address from config:", ownerAddress);
 
             return ownerAddress;
@@ -122,7 +128,7 @@ abstract contract BaseScript is Script {
         }
     }
 
-        /**
+    /**
      * @dev Helper function to update deployment file with new contract address
      * @param contractName The name of the contract to update
      * @param contractAddress The address of the deployed contract
@@ -160,8 +166,8 @@ abstract contract BaseScript is Script {
     }
 
     function _getChainNameForEscrow(uint256 chainId) internal pure returns (string memory) {
-        if (chainId == 31337) return "anvil";
-        if (chainId == 84532) return "basesep";
+        if (chainId == 31_337) return "anvil";
+        if (chainId == 84_532) return "basesep";
         if (chainId == 8453) return "base";
         // Add more chain mappings as needed
         revert("Unknown chain");

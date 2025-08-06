@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Escrow} from "src/Escrow.sol";
-import {TossBankReclaimVerifierV2} from "src/verifiers/TossBankReclaimVerifierV2.sol";
-import {NullifierRegistry} from "src/verifiers/nullifierRegistries/NullifierRegistry.sol";
-import {INullifierRegistry} from "src/verifiers/nullifierRegistries/INullifierRegistry.sol";
+import { Escrow } from "src/Escrow.sol";
+import { TossBankReclaimVerifierV2 } from "src/verifiers/TossBankReclaimVerifierV2.sol";
+import { NullifierRegistry } from "src/verifiers/nullifierRegistries/NullifierRegistry.sol";
+import { INullifierRegistry } from "src/verifiers/nullifierRegistries/INullifierRegistry.sol";
 import "script/Base.s.sol";
 
 contract DeployEscrow is BaseScript {

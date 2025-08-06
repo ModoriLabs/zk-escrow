@@ -28,8 +28,7 @@ pragma solidity ^0.8.17;
  * - 4/21/21: Added validatePairsWithArray methods
  */
 library AddressArrayUtils {
-
-    uint256 constant internal MAX_INT = 2**256 - 1;
+    uint256 internal constant MAX_INT = 2 ** 256 - 1;
 
     /**
      * Finds the index of the first occurrence of the given element.
@@ -48,22 +47,22 @@ library AddressArrayUtils {
     }
 
     /**
-    * Returns true if the value is present in the list. Uses indexOf internally.
-    * @param A The input array to search
-    * @param a The value to find
-    * @return Returns isIn for the first occurrence starting from index 0
-    */
+     * Returns true if the value is present in the list. Uses indexOf internally.
+     * @param A The input array to search
+     * @param a The value to find
+     * @return Returns isIn for the first occurrence starting from index 0
+     */
     function contains(address[] memory A, address a) internal pure returns (bool) {
         (, bool isIn) = indexOf(A, a);
         return isIn;
     }
 
     /**
-    * Returns true if there are 2 elements that are the same in an array
-    * @param A The input array to search
-    * @return Returns boolean for the first occurrence of a duplicate
-    */
-    function hasDuplicate(address[] memory A) internal pure returns(bool) {
+     * Returns true if there are 2 elements that are the same in an array
+     * @param A The input array to search
+     * @return Returns boolean for the first occurrence of a duplicate
+     */
+    function hasDuplicate(address[] memory A) internal pure returns (bool) {
         require(A.length > 0, "A is empty");
 
         for (uint256 i = 0; i < A.length - 1; i++) {
@@ -82,11 +81,7 @@ library AddressArrayUtils {
      * @param a The address to remove
      * @return Returns the array with the object removed.
      */
-    function remove(address[] memory A, address a)
-        internal
-        pure
-        returns (address[] memory)
-    {
+    function remove(address[] memory A, address a) internal pure returns (address[] memory) {
         (uint256 index, bool isIn) = indexOf(A, a);
         if (!isIn) {
             revert("Address not in array.");
@@ -100,30 +95,25 @@ library AddressArrayUtils {
      * @param A The input array to search
      * @param a The address to remove
      */
-    function removeStorage(address[] storage A, address a)
-        internal
-    {
+    function removeStorage(address[] storage A, address a) internal {
         (uint256 index, bool isIn) = indexOf(A, a);
         if (!isIn) {
             revert("Address not in array.");
         } else {
-            uint256 lastIndex = A.length - 1; // If the array would be empty, the previous line would throw, so no underflow here
-            if (index != lastIndex) { A[index] = A[lastIndex]; }
+            uint256 lastIndex = A.length - 1; // If the array would be empty, the previous line would throw, so no
+                // underflow here
+            if (index != lastIndex) A[index] = A[lastIndex];
             A.pop();
         }
     }
 
     /**
-    * Removes specified index from array
-    * @param A The input array to search
-    * @param index The index to remove
-    * @return Returns the new array and the removed entry
-    */
-    function pop(address[] memory A, uint256 index)
-        internal
-        pure
-        returns (address[] memory, address)
-    {
+     * Removes specified index from array
+     * @param A The input array to search
+     * @param index The index to remove
+     * @return Returns the new array and the removed entry
+     */
+    function pop(address[] memory A, uint256 index) internal pure returns (address[] memory, address) {
         uint256 length = A.length;
         require(index < A.length, "Index must be < A length");
         address[] memory newAddresses = new address[](length - 1);

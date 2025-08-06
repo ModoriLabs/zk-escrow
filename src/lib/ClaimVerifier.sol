@@ -2,13 +2,12 @@
 pragma solidity ^0.8.18;
 
 library ClaimVerifier {
-
     /* ============ Constants ============ */
 
     // bytes constant CONTEXT_ADDRESS_BYTES      = bytes("{\"contextAddress\":\"");
     // bytes constant CONTEXT_MESSAGE_BYTES      = bytes("\"contextMessage\":\"");
     bytes constant EXTRACTED_PARAMETERS_BYTES = bytes("{\"extractedParameters\":{\"");
-    bytes constant PROVIDER_HASH_PARAM_BYTES  = bytes("\"providerHash\":\"");
+    bytes constant PROVIDER_HASH_PARAM_BYTES = bytes("\"providerHash\":\"");
 
     /* ============ Internal Functions ============ */
 
@@ -19,10 +18,7 @@ library ClaimVerifier {
      * - Target is not found
      * Parts of the code are adapted from: https://basescan.org/address/0x7281630e4346dd4c0b7ae3b4689c1d0102741410#code
      */
-    function findSubstringEndIndex(
-        string memory data,
-        string memory target
-    ) internal pure returns (uint256) {
+    function findSubstringEndIndex(string memory data, string memory target) internal pure returns (uint256) {
         bytes memory dataBytes = bytes(data);
         bytes memory targetBytes = bytes(target);
 
@@ -31,9 +27,9 @@ library ClaimVerifier {
         }
 
         // Find start of target
-        for (uint i = 0; i <= dataBytes.length - targetBytes.length; i++) {
+        for (uint256 i = 0; i <= dataBytes.length - targetBytes.length; i++) {
             bool isMatch = true;
-            for (uint j = 0; j < targetBytes.length && isMatch; j++) {
+            for (uint256 j = 0; j < targetBytes.length && isMatch; j++) {
                 if (dataBytes[i + j] != targetBytes[j]) {
                     isMatch = false;
                     break;
@@ -54,10 +50,7 @@ library ClaimVerifier {
      * @param data      Context string from which target value needs to be extracted
      * @param prefix    Prefix of the target value that needs to be extracted
      */
-    function extractFieldFromContext(
-        string memory data,
-        string memory prefix
-    ) internal pure returns (string memory) {
+    function extractFieldFromContext(string memory data, string memory prefix) internal pure returns (string memory) {
         // Find end index of prefix; which is the start index of the value
         uint256 start = findSubstringEndIndex(data, prefix);
         bytes memory dataBytes = bytes(data);
@@ -67,17 +60,14 @@ library ClaimVerifier {
 
         // Find the end of the VALUE, assuming it ends with a quote not preceded by a backslash
         uint256 end = start;
-        while (
-            end < dataBytes.length &&
-            !(dataBytes[end] == '"' && dataBytes[end - 1] != "\\")
-        ) {
+        while (end < dataBytes.length && !(dataBytes[end] == '"' && dataBytes[end - 1] != "\\")) {
             end++;
         }
         if (end <= start) {
             return ""; // Malformed or missing message
         }
         bytes memory contextMessage = new bytes(end - start);
-        for (uint i = start; i < end; i++) {
+        for (uint256 i = start; i < end; i++) {
             contextMessage[i - start] = dataBytes[i];
         }
         return string(contextMessage);
@@ -93,28 +83,33 @@ library ClaimVerifier {
      * multiple times.
      *
      * @param data                  Context string from which target value needs to be extracted
-     * @param maxValues             Maximum number of values to be extracted from extractedParameters including intentHash and providerHash
+     * @param maxValues             Maximum number of values to be extracted from extractedParameters including
+     * intentHash and providerHash
      * @param extractIntentAndProviderHash Extracts and returns intentHash and providerHash if true
      */
-     // '{"extractedParameters":{"price":"2529.65"},"providerHash":"0xf44817617d1dfa5219f6aaa0d4901f9b9b7a6845bbf7b639d9bffeacc934ff9a"}',
+    // '{"extractedParameters":{"price":"2529.65"},"providerHash":"0xf44817617d1dfa5219f6aaa0d4901f9b9b7a6845bbf7b639d9bffeacc934ff9a"}',
     function extractAllFromContext(
         string memory data,
         uint8 maxValues,
         bool extractIntentAndProviderHash
-    ) internal pure returns (string[] memory) {
+    )
+        internal
+        pure
+        returns (string[] memory)
+    {
         require(maxValues > 0, "Max values must be greater than 0");
 
         bytes memory dataBytes = bytes(data);
 
         // Reuse variables to avoid "stack too deep"
-        uint index = 0;
-        uint valuesFound = 0;
-        uint startIndex;
-        uint endIndex;
+        uint256 index = 0;
+        uint256 valuesFound = 0;
+        uint256 startIndex;
+        uint256 endIndex;
         bool isValue;
 
-        uint[] memory valueIndices = new uint[](2 * maxValues);
-        for (uint i = 0; i < EXTRACTED_PARAMETERS_BYTES.length; i++) {
+        uint256[] memory valueIndices = new uint256[](2 * maxValues);
+        for (uint256 i = 0; i < EXTRACTED_PARAMETERS_BYTES.length; i++) {
             require(
                 dataBytes[index + i] == EXTRACTED_PARAMETERS_BYTES[i],
                 "Extraction failed. Malformed extractedParameters"
@@ -132,8 +127,7 @@ library ClaimVerifier {
             if (!isValue) {
                 // \":\" (3 chars)
                 require(
-                    dataBytes[index + 1] == ":" && dataBytes[index + 2] == '"',
-                    "Extraction failed. Malformed data 1"
+                    dataBytes[index + 1] == ":" && dataBytes[index + 2] == '"', "Extraction failed. Malformed data 1"
                 );
                 index += 3; // move it after \"
                 isValue = true;
@@ -143,11 +137,8 @@ library ClaimVerifier {
                 // \",\" (3 chars) or \"}, (3 chars)
                 // \"}} is not supported, there should always be a providerHash
                 bool commaThenQuote = (dataBytes[index + 1] == "," && dataBytes[index + 2] == '"');
-                bool braceThenComma = (dataBytes[index + 1] == '}' && dataBytes[index + 2] == ",");
-                require(
-                    commaThenQuote || braceThenComma,
-                    "Extraction failed. Malformed data 2"
-                );
+                bool braceThenComma = (dataBytes[index + 1] == "}" && dataBytes[index + 2] == ",");
+                require(commaThenQuote || braceThenComma, "Extraction failed. Malformed data 2");
                 valueIndices[2 * valuesFound + 1] = index; // end index
                 valuesFound++;
 
@@ -157,7 +148,8 @@ library ClaimVerifier {
                     require(valuesFound != maxValues, "Extraction failed. Exceeded max values");
                     index += 3;
                     isValue = false;
-                } else { // index + 1 = "}"
+                } else {
+                    // index + 1 = "}"
                     index += 3;
                     break; // end of extractedParameters
                 }
@@ -165,10 +157,9 @@ library ClaimVerifier {
         }
 
         if (extractIntentAndProviderHash) {
-            for (uint i = 0; i < PROVIDER_HASH_PARAM_BYTES.length; i++) {
+            for (uint256 i = 0; i < PROVIDER_HASH_PARAM_BYTES.length; i++) {
                 require(
-                    dataBytes[index + i] == PROVIDER_HASH_PARAM_BYTES[i],
-                    "Extraction failed. Malformed providerHash"
+                    dataBytes[index + i] == PROVIDER_HASH_PARAM_BYTES[i], "Extraction failed. Malformed providerHash"
                 );
             }
             index += PROVIDER_HASH_PARAM_BYTES.length;
@@ -184,11 +175,11 @@ library ClaimVerifier {
         }
 
         string[] memory values = new string[](valuesFound);
-        for (uint i = 0; i < valuesFound; i++) {
+        for (uint256 i = 0; i < valuesFound; i++) {
             startIndex = valueIndices[2 * i];
             endIndex = valueIndices[2 * i + 1];
             bytes memory contextValue = new bytes(endIndex - startIndex);
-            for (uint j = startIndex; j < endIndex; j++) {
+            for (uint256 j = startIndex; j < endIndex; j++) {
                 contextValue[j - startIndex] = dataBytes[j];
             }
             values[i] = string(contextValue);

@@ -25,8 +25,7 @@ pragma solidity ^0.8.18;
  * Utility functions to handle Uint256 Arrays
  */
 library Uint256ArrayUtils {
-
-    uint256 constant internal MAX_INT = 2**256 - 1;
+    uint256 internal constant MAX_INT = 2 ** 256 - 1;
 
     /**
      * Finds the index of the first occurrence of the given element.
@@ -67,15 +66,14 @@ library Uint256ArrayUtils {
      * @param A The input array to search
      * @param a The bytes32 to remove
      */
-    function removeStorage(uint256[] storage A, uint256 a)
-        internal
-    {
+    function removeStorage(uint256[] storage A, uint256 a) internal {
         (uint256 index, bool isIn) = indexOf(A, a);
         if (!isIn) {
             revert("uint256 not in array.");
         } else {
-            uint256 lastIndex = A.length - 1; // If the array would be empty, the previous line would throw, so no underflow here
-            if (index != lastIndex) { A[index] = A[lastIndex]; }
+            uint256 lastIndex = A.length - 1; // If the array would be empty, the previous line would throw, so no
+                // underflow here
+            if (index != lastIndex) A[index] = A[lastIndex];
             A.pop();
         }
     }

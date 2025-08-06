@@ -5,9 +5,9 @@ pragma solidity ^0.8.18;
 // Building on zk-email's StringUtils library we add the ability to handle decimals when
 // converting from string to Uint
 library StringConversionUtils {
-    
     /**
-     * @notice Function that parses numbers returned as strings including floating point numbers. Returned floating point
+     * @notice Function that parses numbers returned as strings including floating point numbers. Returned floating
+     * point
      * numbers are to have the desired amount of decimal specified. If the stringified version of the floating point
      * number has more decimal places than desired then the function will revert in order to be maximally safe. If
      * the returned number has multiple floating points then the function will revert.
@@ -65,11 +65,19 @@ library StringConversionUtils {
      * @param _startIndex    Index to start parsing from
      * @param _endIndex      Index to stop parsing at (index not included in result)
      */
-    function substring(string memory _str, uint _startIndex, uint _endIndex) internal pure returns (string memory ) {
+    function substring(
+        string memory _str,
+        uint256 _startIndex,
+        uint256 _endIndex
+    )
+        internal
+        pure
+        returns (string memory)
+    {
         bytes memory strBytes = bytes(_str);
-        bytes memory result = new bytes(_endIndex-_startIndex);
-        for(uint i = _startIndex; i < _endIndex; i++) {
-            result[i-_startIndex] = strBytes[i];
+        bytes memory result = new bytes(_endIndex - _startIndex);
+        for (uint256 i = _startIndex; i < _endIndex; i++) {
+            result[i - _startIndex] = strBytes[i];
         }
         return string(result);
     }

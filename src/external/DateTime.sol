@@ -32,7 +32,7 @@ library DateTime {
     uint256 constant SECONDS_PER_DAY = 24 * 60 * 60;
     uint256 constant SECONDS_PER_HOUR = 60 * 60;
     uint256 constant SECONDS_PER_MINUTE = 60;
-    int256 constant OFFSET19700101 = 2440588;
+    int256 constant OFFSET19700101 = 2_440_588;
 
     uint256 constant DOW_MON = 1;
     uint256 constant DOW_TUE = 2;
@@ -61,9 +61,9 @@ library DateTime {
         int256 _month = int256(month);
         int256 _day = int256(day);
 
-        int256 __days = _day - 32075 + (1461 * (_year + 4800 + (_month - 14) / 12)) / 4
-            + (367 * (_month - 2 - ((_month - 14) / 12) * 12)) / 12
-            - (3 * ((_year + 4900 + (_month - 14) / 12) / 100)) / 4 - OFFSET19700101;
+        int256 __days = _day - 32_075 + (1461 * (_year + 4800 + (_month - 14) / 12)) / 4
+            + (367 * (_month - 2 - ((_month - 14) / 12) * 12)) / 12 - (3 * ((_year + 4900 + (_month - 14) / 12) / 100)) / 4
+            - OFFSET19700101;
 
         _days = uint256(__days);
     }

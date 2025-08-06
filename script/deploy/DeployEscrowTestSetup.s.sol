@@ -28,7 +28,9 @@ contract DeployEscrowTestSetup is BaseScript {
     function run() external {
         // Use PRIVATE_KEY env var, or default to first Anvil account
         // 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
-        uint256 deployerPrivateKey = vm.envOr("ANVIL_DEPLOYER_PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80));
+        uint256 deployerPrivateKey = vm.envOr(
+            "ANVIL_DEPLOYER_PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)
+        );
         address deployer = vm.addr(deployerPrivateKey);
 
         console.log("Deployer address:", deployer);

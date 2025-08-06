@@ -16,7 +16,6 @@ Note: Contract addresses are automatically loaded from deployments/{chainId}-dep
 */
 
 contract TossBankReclaimVerifierScript is BaseScript {
-
     // Provider hash from BaseTest.sol
     string public constant PROVIDER_HASH = "0xffb501528259e6d684e1c2153fbbacab453fe9c97c336dc4f8f48d70a0e2a13d";
 
@@ -49,7 +48,7 @@ contract TossBankReclaimVerifierScript is BaseScript {
         // Get all provider hashes
         string[] memory allProviderHashes = tossBankVerifier.getProviderHashes();
         console.log("Total provider hashes:", allProviderHashes.length);
-        for (uint i = 0; i < allProviderHashes.length; i++) {
+        for (uint256 i = 0; i < allProviderHashes.length; i++) {
             console.log("Provider hash", i, ":", allProviderHashes[i]);
         }
     }

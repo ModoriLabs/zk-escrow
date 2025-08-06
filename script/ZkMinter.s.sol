@@ -6,7 +6,6 @@ import { ZkMinter } from "../src/ZkMinter.sol";
 import { TossBankReclaimVerifier } from "../src/verifiers/TossBankReclaimVerifier.sol";
 
 contract ZkMinterScript is BaseScript {
-
     function setVerifierData() public broadcast {
         (address zkMinterAddress, address tossBankVerifierAddress) = _getDeployedAddresses();
         ZkMinter zkMinter = ZkMinter(zkMinterAddress);
@@ -65,9 +64,8 @@ contract ZkMinterScript is BaseScript {
         bytes32 MINTER_ROLE = keccak256("MINTER_ROLE");
 
         // Call grantRole on KRW contract
-        (bool success,) = krwAddress.call(
-            abi.encodeWithSignature("grantRole(bytes32,address)", MINTER_ROLE, zkMinterAddress)
-        );
+        (bool success,) =
+            krwAddress.call(abi.encodeWithSignature("grantRole(bytes32,address)", MINTER_ROLE, zkMinterAddress));
 
         require(success, "Failed to grant MINTER_ROLE");
         console.log("Successfully granted MINTER_ROLE to ZkMinter");
@@ -78,13 +76,15 @@ contract ZkMinterScript is BaseScript {
 Usage Examples:
 
 # Set verifier data
-BANK_ACCOUNT="59733700000000(KB국민은행)" forge script script/ZkMinter.s.sol --rpc-url holesky --broadcast --private-key $TESTNET_PRIVATE_KEY --sig "setVerifierData()"
+BANK_ACCOUNT="59733700000000(KB국민은행)" forge script script/ZkMinter.s.sol --rpc-url holesky --broadcast
+--private-key $TESTNET_PRIVATE_KEY --sig "setVerifierData()"
 
 # Add verifier
-forge script script/ZkMinter.s.sol --rpc-url holesky --broadcast --private-key $TESTNET_PRIVATE_KEY --sig "addVerifier()"
+forge script script/ZkMinter.s.sol --rpc-url holesky --broadcast --private-key $TESTNET_PRIVATE_KEY --sig
+"addVerifier()"
 
 # Grant minter role to ZkMinter
-forge script script/ZkMinter.s.sol --rpc-url holesky --broadcast --private-key $TESTNET_PRIVATE_KEY --sig "grantMinterRole()"
+forge script script/ZkMinter.s.sol --rpc-url holesky --broadcast --private-key $TESTNET_PRIVATE_KEY --sig
+"grantMinterRole()"
 
-Note: Contract addresses are automatically loaded from deployments/{chainId}-deploy.json
-*/
+Note: Contract addresses are automatically loaded from deployments/{chainId}-deploy.json*/

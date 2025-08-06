@@ -8,7 +8,6 @@ import { INullifierRegistry } from "./INullifierRegistry.sol";
 pragma solidity ^0.8.18;
 
 contract NullifierRegistry is Ownable, INullifierRegistry {
-
     using AddressArrayUtils for address[];
 
     /* ============ Events ============ */
@@ -28,7 +27,7 @@ contract NullifierRegistry is Ownable, INullifierRegistry {
     address[] public writers;
 
     /* ============ Constructor ============ */
-    constructor(address _owner) Ownable(_owner) {}
+    constructor(address _owner) Ownable(_owner) { }
 
     /* ============ External Functions ============ */
 
@@ -77,7 +76,7 @@ contract NullifierRegistry is Ownable, INullifierRegistry {
 
     /* ============ External View Functions ============ */
 
-    function getWriters() external view returns(address[] memory) {
-       return writers;
+    function getWriters() external view returns (address[] memory) {
+        return writers;
     }
 }
