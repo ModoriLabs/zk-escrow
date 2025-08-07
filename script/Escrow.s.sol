@@ -226,6 +226,24 @@ contract EscrowScript is BaseScript {
         vm.stopBroadcast();
     }
 
+    function updateDepositIntentAmountRange(uint256 depositId, uint256 minAmount, uint256 maxAmount) public {
+        vm.startBroadcast();
+
+        // Get current deposit details to show before/after
+        (, , uint256 depositAmount, IEscrow.Range memory oldRange, , , ) = escrow.deposits(depositId);
+
+        console.log("Updating deposit intent amount range:");
+        console.log("- Deposit ID:", depositId);
+        console.log("- Old range: min", (oldRange.min / 1e6), "max", (oldRange.max / 1e6));
+        console.log("- New range: min", (minAmount / 1e6), "max", (maxAmount / 1e6));
+
+        escrow.updateDepositIntentAmountRange(depositId, minAmount, maxAmount);
+
+        console.log("Deposit intent amount range updated successfully!");
+
+        vm.stopBroadcast();
+    }
+
     // Convenience functions with default parameters
     function run() public {
         console.log("Use one of the specific functions:");
@@ -235,6 +253,8 @@ contract EscrowScript is BaseScript {
         console.log("- cancelIntent(intentId)");
         console.log("- increaseDeposit(depositId, amount)");
         console.log("- withdrawDeposit(depositId)");
+        console.log("- updateDepositConversionRate(depositId, conversionRate)");
+        console.log("- updateDepositIntentAmountRange(depositId, minAmount, maxAmount)");
         console.log("- checkDeployments() - Check if contracts are deployed");
     }
 
