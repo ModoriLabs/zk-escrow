@@ -191,13 +191,13 @@ contract EscrowScript is BaseScript {
 
         require(depositOwner == depositor, "Only depositor can withdraw");
 
-        console.log("- Current remaining deposits (USDC):", remainingDeposits / 1e6);
-        console.log("- Outstanding intent amount (USDC):", outstandingIntentAmount / 1e6);
+        console.log("- Current remaining deposits (USDC):", remainingDeposits);
+        console.log("- Outstanding intent amount (USDC):", outstandingIntentAmount);
         console.log("- Accepting intents:", acceptingIntents);
 
         // Get depositor's USDC balance before withdrawal
         uint256 balanceBefore = usdc.balanceOf(depositor);
-        console.log("- USDC balance before withdrawal:", balanceBefore / 1e6);
+        console.log("- USDC balance before withdrawal:", balanceBefore);
 
         vm.startBroadcast();
 
@@ -210,8 +210,8 @@ contract EscrowScript is BaseScript {
         uint256 balanceAfter = usdc.balanceOf(depositor);
         uint256 withdrawnAmount = balanceAfter - balanceBefore;
 
-        console.log("- USDC balance after withdrawal:", balanceAfter / 1e6);
-        console.log("- Amount withdrawn (USDC):", withdrawnAmount / 1e6);
+        console.log("- USDC balance after withdrawal:", balanceAfter);
+        console.log("- Amount withdrawn (USDC):", withdrawnAmount);
         console.log("Deposit withdrawn successfully!");
     }
 
@@ -310,7 +310,7 @@ contract EscrowScript is BaseScript {
     function createBaseDeposit() public returns (uint256) {
         return createDeposit(
             1000e6,  // 1,000 USDC
-            1e6,     // 1000000/1000000 USDC * 1400 WON/USDC = 1400 WON
+            0.1e6,     // 100000/1000000 USDC * 1400 WON/USDC = 140 WON
             1000e6,   // 1,000 USDC max per intent
             unicode"100202642943(토스뱅크)"
         );

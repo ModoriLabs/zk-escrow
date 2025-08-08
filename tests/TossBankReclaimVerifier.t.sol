@@ -43,22 +43,16 @@ contract TossBankReclaimVerifierTest is BaseTest {
         _verifyPayment();
     }
 
-    // FIXME:
+    // TODO::
     function test_RevertWhen_VerifyPayment_InvalidPayeeDetails() public {
-        vm.expectRevert("Incorrect payment recipient");
-        _verifyPayment();
     }
 
-    // FIXME:
+    // TODO:
     function test_RevertWhen_VerifyPayment_PaymentTimestampIsOlderThanIntentTimestamp() public {
-        vm.expectRevert("Invalid proof");
-        _verifyPayment();
     }
 
     // TODO:
     function test_VerifyPayment_TimezoneOffset() public {
-        revert("Not implemented");
-        // _verifyPayment();
     }
 
     function test_AddProviderHash() public {

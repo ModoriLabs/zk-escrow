@@ -1,7 +1,8 @@
 [profile.default]
   auto_detect_solc = false
   block_timestamp = 1_738_368_000 # Feb 1, 2025 at 00:00 GMT
-  evm_version = "shanghai"
+  evm_version = "cancun"
+  optimizer-runs = 200
   optimizer = true
   optimizer_runs = 10_000
   out = "out"

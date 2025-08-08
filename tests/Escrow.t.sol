@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
-import "./BaseEscrowTest.sol";
+import "./BaseEscrowUpgradeableTest.sol";
 
-contract EscrowTest is BaseEscrowTest {
+contract EscrowTest is BaseEscrowUpgradeableTest {
     function setUp() public override {
         super.setUp();
 

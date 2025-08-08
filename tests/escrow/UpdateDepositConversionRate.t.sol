@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
-import "../BaseEscrowTest.sol";
+import "../BaseEscrowUpgradeableTest.sol";
 
-contract UpdateDepositConversionRateTest is BaseEscrowTest {
+contract UpdateDepositConversionRateTest is BaseEscrowUpgradeableTest {
     uint256 public depositId;
     uint256 public depositAmount = 10_000e6; // 10,000 USDT
 

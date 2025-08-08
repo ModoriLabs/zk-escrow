@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import "./BaseEscrowTest.sol";
+import "./BaseEscrowUpgradeableTest.sol";
 import { TossBankReclaimVerifierV2 } from "src/verifiers/TossBankReclaimVerifierV2.sol";
 import { IPaymentVerifierV2 } from "src/verifiers/interfaces/IPaymentVerifierV2.sol";
 import { StringConversionUtils } from "src/lib/StringConversionUtils.sol";
 
-contract TossBankReclaimVerifierV2Test is BaseEscrowTest {
+contract TossBankReclaimVerifierV2Test is BaseEscrowUpgradeableTest {
     function setUp() public override {
         super.setUp();
         _loadProofV2Anvil(); // Use the anvil fixture instead

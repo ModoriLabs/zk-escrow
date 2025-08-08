@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
-import "../BaseEscrowTest.sol";
+import "../BaseEscrowUpgradeableTest.sol";
 
-contract MaxIntentsPerDepositTest is BaseEscrowTest {
+contract MaxIntentsPerDepositTest is BaseEscrowUpgradeableTest {
     uint256 public depositId;
     uint256 public depositAmount = 100_000e6; // 100,000 USDT - large amount for many intents
     uint256 public intentAmount = 100e6; // 100 USDT per intent (minimum)

@@ -114,8 +114,8 @@ forge script script/TossBankReclaimVerifier.s.sol --rpc-url holesky --broadcast 
 
 | Contracts                    | Address                                                                                                                  |
 |------------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| Escrow | [0x02286886C36877D564b2b5532f7de40Dc81f2400](https://sepolia.basescan.org/address/0x02286886C36877D564b2b5532f7de40Dc81f2400) |
-| MockUSDT | [0x72f91969485c7efa53990fb0763ffa57ba73f3be](https://sepolia.basescan.org/address/0x72f91969485c7efa53990fb0763ffa57ba73f3be) |
+| Escrow | [0xaE167DB70D0c5eA5a266eaA779d339f60268c42a](https://sepolia.basescan.org/address/0xaE167DB70D0c5eA5a266eaA779d339f60268c42a) |
+| USDC | [0x72f91969485c7efa53990fb0763ffa57ba73f3be](https://sepolia.basescan.org/address/0x72f91969485c7efa53990fb0763ffa57ba73f3be) |
 | NullifierRegistry | [0xfE9a7603641e5Ac1cc155C62bAA7242dABf93B5a](https://sepolia.basescan.org/address/0xfE9a7603641e5Ac1cc155C62bAA7242dABf93B5a) |
 | TossBankReclaimVerifierV2 | [0x08A773D828Ae1195FE7355e8885bD47456815da1](https://sepolia.basescan.org/address/0x08A773D828Ae1195FE7355e8885bD47456815da1) |
 
