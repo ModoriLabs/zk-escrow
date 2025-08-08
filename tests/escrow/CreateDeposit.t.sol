@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
-import "../BaseEscrowTest.sol";
+import "../BaseEscrowUpgradeableTest.sol";
 
-contract CreateDepositTest is BaseEscrowTest {
+contract CreateDepositTest is BaseEscrowUpgradeableTest {
     function test_createDeposit_Success() public {
         uint256 depositAmount = 10_000e6; // 10,000 USDT
         IEscrow.Range memory intentRange = IEscrow.Range({
