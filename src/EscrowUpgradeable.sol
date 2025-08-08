@@ -18,31 +18,46 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
     using SafeERC20 for IERC20;
     using Uint256ArrayUtils for uint256[];
 
-    string public chainName;
-    uint256 public intentCount;
+    // keccak256(abi.encode(uint256(keccak256("modori.storage.escrow")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant ESCROW_STORAGE_POSITION = 0x2240ec17ed99e18fb5366c392e47eb71a27b90b5d0e7350fd633d34acc81e900;
 
-    // Mapping of address to intentHash (Only one intent per address at a given time)
-    mapping(address => uint256[]) public accountDeposits;
-    mapping(address => uint256) public accountIntent;
+    struct EscrowStorage {
+        string chainName;
+        uint256 intentCount;
 
-    mapping(uint256 => Deposit) public deposits;
-    mapping(uint256 => Intent) public intents;
-    mapping(uint256 => address[]) public depositVerifiers;
-    mapping(uint256 depositId => mapping(address => DepositVerifierData)) public depositVerifierData;
+        // Mapping of address to intentHash (Only one intent per address at a given time)
+        mapping(address => uint256[]) accountDeposits;
+        mapping(address => uint256) accountIntent;
 
-    // Mapping of depositId to verifier address to mapping of fiat currency to conversion rate. Each payment service can support
-    // multiple currencies. Depositor can specify list of currencies and conversion rates for each payment service.
-    // Example: Deposit 1 => Venmo => USD: 1e18
-    //                    => Revolut => USD: 1e18, EUR: 1.2e18, SGD: 1.5e18
-    mapping(uint256 depositId => mapping(address verifier => mapping(bytes32 fiatCurrency => uint256 conversionRate))) public depositCurrencyConversionRate;
-    mapping(uint256 depositId => mapping(address verifier => bytes32[] fiatCurrencies)) public depositCurrencies; // Handy mapping to get all currencies for a deposit and verifier
+        mapping(uint256 => Deposit) deposits;
+        mapping(uint256 => Intent) intents;
+        mapping(uint256 => address[]) depositVerifiers;
+        mapping(uint256 depositId => mapping(address => DepositVerifierData)) depositVerifierData;
 
-    // Governance controlled
-    mapping(address => bool) public whitelistedPaymentVerifiers;      // Mapping of payment verifier addresses to boolean indicating if they are whitelisted
+        // Mapping of depositId to verifier address to mapping of fiat currency to conversion rate. Each payment service can support
+        // multiple currencies. Depositor can specify list of currencies and conversion rates for each payment service.
+        // Example: Deposit 1 => Venmo => USD: 1e18
+        //                    => Revolut => USD: 1e18, EUR: 1.2e18, SGD: 1.5e18
+        mapping(uint256 depositId => mapping(address verifier => mapping(bytes32 fiatCurrency => uint256 conversionRate))) depositCurrencyConversionRate;
+        mapping(uint256 depositId => mapping(address verifier => bytes32[] fiatCurrencies)) depositCurrencies; // Handy mapping to get all currencies for a deposit and verifier
 
-    uint256 public intentExpirationPeriod;
-    uint256 public depositCounter;
-    uint256 public maxIntentsPerDeposit;
+        // Governance controlled
+        mapping(address => bool) whitelistedPaymentVerifiers;      // Mapping of payment verifier addresses to boolean indicating if they are whitelisted
+
+        uint256 intentExpirationPeriod;
+        uint256 depositCounter;
+        uint256 maxIntentsPerDeposit;
+    }
+
+    // slither-disable-next-line uninitialized-storage
+    function _getEscrowStorage() internal pure returns (EscrowStorage storage self) {
+        bytes32 slot = ESCROW_STORAGE_POSITION;
+
+        // slither-disable-next-line assembly
+        assembly {
+            self.slot := slot
+        }
+    }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -58,9 +73,103 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
         __Pausable_init();
         __UUPSUpgradeable_init();
 
-        intentExpirationPeriod = _intentExpirationPeriod;
-        chainName = _chainName;
-        maxIntentsPerDeposit = 100;
+        EscrowStorage storage s = _getEscrowStorage();
+        s.intentExpirationPeriod = _intentExpirationPeriod;
+        s.chainName = _chainName;
+        s.maxIntentsPerDeposit = 100;
+    }
+
+    // Public getter functions for storage variables
+    function chainName() public view returns (string memory) {
+        return _getEscrowStorage().chainName;
+    }
+
+    function intentCount() public view returns (uint256) {
+        return _getEscrowStorage().intentCount;
+    }
+
+    function accountDeposits(address account, uint256 index) public view returns (uint256) {
+        return _getEscrowStorage().accountDeposits[account][index];
+    }
+
+    function accountIntent(address account) public view returns (uint256) {
+        return _getEscrowStorage().accountIntent[account];
+    }
+
+    function deposits(uint256 depositId) public view returns (
+        address depositor,
+        IERC20 token,
+        uint256 amount,
+        Range memory intentAmountRange,
+        bool acceptingIntents,
+        uint256 remainingDeposits,
+        uint256 outstandingIntentAmount
+    ) {
+        Deposit storage deposit = _getEscrowStorage().deposits[depositId];
+        return (
+            deposit.depositor,
+            deposit.token,
+            deposit.amount,
+            deposit.intentAmountRange,
+            deposit.acceptingIntents,
+            deposit.remainingDeposits,
+            deposit.outstandingIntentAmount
+        );
+    }
+
+    function intents(uint256 intentId) public view returns (
+        address owner,
+        address to,
+        uint256 depositId,
+        uint256 amount,
+        uint256 timestamp,
+        address paymentVerifier,
+        bytes32 fiatCurrency,
+        uint256 conversionRate
+    ) {
+        Intent storage intent = _getEscrowStorage().intents[intentId];
+        return (
+            intent.owner,
+            intent.to,
+            intent.depositId,
+            intent.amount,
+            intent.timestamp,
+            intent.paymentVerifier,
+            intent.fiatCurrency,
+            intent.conversionRate
+        );
+    }
+
+    function depositVerifiers(uint256 depositId, uint256 index) public view returns (address) {
+        return _getEscrowStorage().depositVerifiers[depositId][index];
+    }
+
+    function depositVerifierData(uint256 depositId, address verifier) public view returns (DepositVerifierData memory) {
+        return _getEscrowStorage().depositVerifierData[depositId][verifier];
+    }
+
+    function depositCurrencyConversionRate(uint256 depositId, address verifier, bytes32 fiatCurrency) public view returns (uint256) {
+        return _getEscrowStorage().depositCurrencyConversionRate[depositId][verifier][fiatCurrency];
+    }
+
+    function depositCurrencies(uint256 depositId, address verifier, uint256 index) public view returns (bytes32) {
+        return _getEscrowStorage().depositCurrencies[depositId][verifier][index];
+    }
+
+    function whitelistedPaymentVerifiers(address verifier) public view returns (bool) {
+        return _getEscrowStorage().whitelistedPaymentVerifiers[verifier];
+    }
+
+    function intentExpirationPeriod() public view returns (uint256) {
+        return _getEscrowStorage().intentExpirationPeriod;
+    }
+
+    function depositCounter() public view returns (uint256) {
+        return _getEscrowStorage().depositCounter;
+    }
+
+    function maxIntentsPerDeposit() public view returns (uint256) {
+        return _getEscrowStorage().maxIntentsPerDeposit;
     }
 
     function signalIntent(
@@ -70,13 +179,14 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
         address _verifier,
         bytes32 _fiatCurrency
     ) external whenNotPaused {
-        Deposit storage deposit = deposits[_depositId];
+        EscrowStorage storage s = _getEscrowStorage();
+        Deposit storage deposit = s.deposits[_depositId];
 
         _validateIntent(_depositId, deposit, _amount, _to, _verifier, _fiatCurrency);
 
-        uint256 intentId = ++intentCount;
+        uint256 intentId = ++s.intentCount;
 
-        if (deposit.remainingDeposits < _amount || deposit.intentIds.length >= maxIntentsPerDeposit) {
+        if (deposit.remainingDeposits < _amount || deposit.intentIds.length >= s.maxIntentsPerDeposit) {
             (uint256[] memory prunableIntents, uint256 reclaimableAmount) = _getPrunableIntents(_depositId);
 
             require(deposit.remainingDeposits + reclaimableAmount >= _amount, "Not enough liquidity");
@@ -86,11 +196,11 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
             deposit.remainingDeposits += reclaimableAmount;
             deposit.outstandingIntentAmount -= reclaimableAmount;
 
-            require(deposit.intentIds.length < maxIntentsPerDeposit, "Maximum intents per deposit reached");
+            require(deposit.intentIds.length < s.maxIntentsPerDeposit, "Maximum intents per deposit reached");
         }
 
-        uint256 conversionRate = depositCurrencyConversionRate[_depositId][_verifier][_fiatCurrency];
-        intents[intentId] = Intent({
+        uint256 conversionRate = s.depositCurrencyConversionRate[_depositId][_verifier][_fiatCurrency];
+        s.intents[intentId] = Intent({
             owner: msg.sender,
             to: _to,
             depositId: _depositId,
@@ -101,7 +211,7 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
             timestamp: block.timestamp
         });
 
-        accountIntent[msg.sender] = intentId;
+        s.accountIntent[msg.sender] = intentId;
 
         deposit.remainingDeposits -= _amount;
         deposit.outstandingIntentAmount += _amount;
@@ -116,8 +226,9 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
      * @param _intentId    ID of intent being cancelled
      */
     function cancelIntent(uint256 _intentId) external {
-        Intent memory intent = intents[_intentId];
-        Deposit storage deposit = deposits[intent.depositId];
+        EscrowStorage storage s = _getEscrowStorage();
+        Intent memory intent = s.intents[_intentId];
+        Deposit storage deposit = s.deposits[intent.depositId];
         require(intent.owner == msg.sender, "Sender must be the intent owner");
 
         _pruneIntent(deposit, _intentId);
@@ -132,13 +243,14 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
         bytes calldata _paymentProof,
         uint256 _intentId
     ) external whenNotPaused {
-        Intent memory intent = intents[_intentId];
-        Deposit storage deposit = deposits[intent.depositId];
+        EscrowStorage storage s = _getEscrowStorage();
+        Intent memory intent = s.intents[_intentId];
+        Deposit storage deposit = s.deposits[intent.depositId];
 
         address verifier = intent.paymentVerifier;
         require(verifier != address(0), IntentNotFound());
 
-        DepositVerifierData memory verifierData = depositVerifierData[intent.depositId][verifier];
+        DepositVerifierData memory verifierData = s.depositVerifierData[intent.depositId][verifier];
         (bool success, bytes32 intentHash) = IPaymentVerifierV2(verifier).verifyPayment(
             IPaymentVerifierV2.VerifyPaymentData({
                 paymentProof: _paymentProof,
@@ -153,7 +265,7 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
         );
         require(success, "Payment verification failed");
 
-        bytes32 expectedIntentHash = keccak256(abi.encode(string.concat(chainName, "-", StringUtils.uint2str(_intentId))));
+        bytes32 expectedIntentHash = keccak256(abi.encode(string.concat(s.chainName, "-", StringUtils.uint2str(_intentId))));
         require(expectedIntentHash == intentHash, "Intent hash mismatch");
 
         _pruneIntent(deposit, _intentId);
@@ -182,10 +294,11 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
     ) external whenNotPaused returns(uint256 depositId) {
         _validateCreateDeposit(_amount, _intentAmountRange, _verifiers, _verifierData, _currencies);
 
-        depositId = ++depositCounter;
-        accountDeposits[msg.sender].push(depositId);
+        EscrowStorage storage s = _getEscrowStorage();
+        depositId = ++s.depositCounter;
+        s.accountDeposits[msg.sender].push(depositId);
 
-        deposits[depositId] = Deposit({
+        s.deposits[depositId] = Deposit({
             depositor: msg.sender,
             token: _token,
             amount: _amount,
@@ -201,11 +314,11 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
         for (uint256 i = 0; i < _verifiers.length; i++) {
             address verifier = _verifiers[i];
             require(
-                bytes(depositVerifierData[depositId][verifier].payeeDetails).length == 0,
+                bytes(s.depositVerifierData[depositId][verifier].payeeDetails).length == 0,
                 "Verifier data already exists"
             );
-            depositVerifierData[depositId][verifier] = _verifierData[i];
-            depositVerifiers[depositId].push(verifier);
+            s.depositVerifierData[depositId][verifier] = _verifierData[i];
+            s.depositVerifiers[depositId].push(verifier);
 
             bytes32 payeeDetailsHash = keccak256(abi.encodePacked(_verifierData[i].payeeDetails));
             emit DepositVerifierAdded(depositId, verifier, payeeDetailsHash);
@@ -213,11 +326,11 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
             for (uint256 j = 0; j < _currencies[i].length; j++) {
                 Currency memory currency = _currencies[i][j];
                 require(
-                    depositCurrencyConversionRate[depositId][verifier][currency.code] == 0,
+                    s.depositCurrencyConversionRate[depositId][verifier][currency.code] == 0,
                     "Currency conversion rate already exists"
                 );
-                depositCurrencyConversionRate[depositId][verifier][currency.code] = currency.conversionRate;
-                depositCurrencies[depositId][verifier].push(currency.code);
+                s.depositCurrencyConversionRate[depositId][verifier][currency.code] = currency.conversionRate;
+                s.depositCurrencies[depositId][verifier].push(currency.code);
 
                 emit DepositCurrencyAdded(depositId, verifier, currency.code, currency.conversionRate);
             }
@@ -227,8 +340,9 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
     }
 
     function releaseFundsToPayer(uint256 _intentId) external {
-        Intent memory intent = intents[_intentId];
-        Deposit storage deposit = deposits[intent.depositId];
+        EscrowStorage storage s = _getEscrowStorage();
+        Intent memory intent = s.intents[_intentId];
+        Deposit storage deposit = s.deposits[intent.depositId];
 
         require(intent.owner != address(0), "Intent does not exist");
         require(deposit.depositor == msg.sender, OnlyDepositor());
@@ -260,14 +374,15 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
         bytes32 _fiatCurrency,
         uint256 _newConversionRate
     ) external whenNotPaused {
-        Deposit storage deposit = deposits[_depositId];
-        uint256 oldConversionRate = depositCurrencyConversionRate[_depositId][_verifier][_fiatCurrency];
+        EscrowStorage storage s = _getEscrowStorage();
+        Deposit storage deposit = s.deposits[_depositId];
+        uint256 oldConversionRate = s.depositCurrencyConversionRate[_depositId][_verifier][_fiatCurrency];
 
         require(deposit.depositor == msg.sender, OnlyDepositor());
         require(oldConversionRate != 0, "Currency or verifier not supported");
         require(_newConversionRate > 0, "Conversion rate must be greater than 0");
 
-        depositCurrencyConversionRate[_depositId][_verifier][_fiatCurrency] = _newConversionRate;
+        s.depositCurrencyConversionRate[_depositId][_verifier][_fiatCurrency] = _newConversionRate;
 
         emit DepositConversionRateUpdated(_depositId, _verifier, _fiatCurrency, _newConversionRate);
     }
@@ -281,7 +396,8 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
      * @param _max The new maximum intent amount allowed
      */
     function updateDepositIntentAmountRange(uint256 _depositId, uint256 _min, uint256 _max) external whenNotPaused {
-        Deposit storage deposit = deposits[_depositId];
+        EscrowStorage storage s = _getEscrowStorage();
+        Deposit storage deposit = s.deposits[_depositId];
 
         // This also ensures that the deposit exists
         require(deposit.depositor == msg.sender, OnlyDepositor());
@@ -301,7 +417,8 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
      * @param _depositId   DepositId the depositor is attempting to withdraw.
      */
     function withdrawDeposit(uint256 _depositId) external {
-        Deposit storage deposit = deposits[_depositId];
+        EscrowStorage storage s = _getEscrowStorage();
+        Deposit storage deposit = s.deposits[_depositId];
 
         require(deposit.depositor == msg.sender, OnlyDepositor());
 
@@ -334,7 +451,8 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
      * @param _amount The additional amount to add to the deposit
      */
     function increaseDeposit(uint256 _depositId, uint256 _amount) external whenNotPaused {
-        Deposit storage deposit = deposits[_depositId];
+        EscrowStorage storage s = _getEscrowStorage();
+        Deposit storage deposit = s.deposits[_depositId];
 
         require(deposit.depositor != address(0), DepositNotFound());
         require(_amount > 0, InvalidAmount());
@@ -356,10 +474,11 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
      * @param _verifier   The payment verifier address to add
      */
     function addWhitelistedPaymentVerifier(address _verifier) external onlyOwner {
+        EscrowStorage storage s = _getEscrowStorage();
         require(_verifier != address(0), "Payment verifier cannot be zero address");
-        require(!whitelistedPaymentVerifiers[_verifier], "Payment verifier already whitelisted");
+        require(!s.whitelistedPaymentVerifiers[_verifier], "Payment verifier already whitelisted");
 
-        whitelistedPaymentVerifiers[_verifier] = true;
+        s.whitelistedPaymentVerifiers[_verifier] = true;
 
         emit PaymentVerifierAdded(_verifier);
     }
@@ -370,9 +489,10 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
      * @param _verifier   The payment verifier address to remove
      */
     function removeWhitelistedPaymentVerifier(address _verifier) external onlyOwner {
-        require(whitelistedPaymentVerifiers[_verifier], "Payment verifier not whitelisted");
+        EscrowStorage storage s = _getEscrowStorage();
+        require(s.whitelistedPaymentVerifiers[_verifier], "Payment verifier not whitelisted");
 
-        whitelistedPaymentVerifiers[_verifier] = false;
+        s.whitelistedPaymentVerifiers[_verifier] = false;
         emit PaymentVerifierRemoved(_verifier);
     }
 
@@ -382,9 +502,10 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
      * @param _maxIntentsPerDeposit The new maximum number of intents allowed per deposit
      */
     function setMaxIntentsPerDeposit(uint256 _maxIntentsPerDeposit) external onlyOwner {
+        EscrowStorage storage s = _getEscrowStorage();
         require(_maxIntentsPerDeposit > 0, "Max intents must be greater than 0");
-        uint256 oldMax = maxIntentsPerDeposit;
-        maxIntentsPerDeposit = _maxIntentsPerDeposit;
+        uint256 oldMax = s.maxIntentsPerDeposit;
+        s.maxIntentsPerDeposit = _maxIntentsPerDeposit;
         emit MaxIntentsPerDepositUpdated(oldMax, _maxIntentsPerDeposit);
     }
 
@@ -395,9 +516,10 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
      * @param _intentExpirationPeriod   New intent expiration period
      */
     function setIntentExpirationPeriod(uint256 _intentExpirationPeriod) external onlyOwner {
+        EscrowStorage storage s = _getEscrowStorage();
         require(_intentExpirationPeriod != 0, "Max intent expiration period cannot be zero");
 
-        intentExpirationPeriod = _intentExpirationPeriod;
+        s.intentExpirationPeriod = _intentExpirationPeriod;
         emit IntentExpirationPeriodSet(_intentExpirationPeriod);
     }
 
@@ -412,7 +534,7 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
 
     // Getter functions for easier testing
     function getDepositIntentIds(uint256 _depositId) external view returns (uint256[] memory) {
-        return deposits[_depositId].intentIds;
+        return _getEscrowStorage().deposits[_depositId].intentIds;
     }
 
     /* ============ Internal Functions ============ */
@@ -423,6 +545,7 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
         DepositVerifierData[] calldata _verifierData,
         Currency[][] calldata _currencies
     ) internal view {
+        EscrowStorage storage s = _getEscrowStorage();
         require(
             _intentAmountRange.min != 0 &&
             _intentAmountRange.min <= _intentAmountRange.max &&
@@ -437,7 +560,7 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
             address verifier = _verifiers[i];
 
             require(verifier != address(0), "Verifier cannot be zero address");
-            require(whitelistedPaymentVerifiers[verifier], "Payment verifier not whitelisted");
+            require(s.whitelistedPaymentVerifiers[verifier], "Payment verifier not whitelisted");
 
             // _verifierData.intentGatingService can be zero address, _verifierData.data can be empty
             require(bytes(_verifierData[i].payeeDetails).length != 0, "Payee details cannot be empty");
@@ -460,16 +583,17 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
         address _verifier,
         bytes32 _fiatCurrency
     ) internal view {
-        require(accountIntent[msg.sender] == 0, IntentAlreadyExists());
+        EscrowStorage storage s = _getEscrowStorage();
+        require(s.accountIntent[msg.sender] == 0, IntentAlreadyExists());
         require(_deposit.depositor != address(0), DepositNotFound());
         require(_deposit.acceptingIntents, DepositNotAcceptingIntents());
         require(_amount >= _deposit.intentAmountRange.min, InvalidAmount());
         require(_amount <= _deposit.intentAmountRange.max, InvalidAmount());
         require(_to != address(0), InvalidRecipient());
 
-        DepositVerifierData memory verifierData = depositVerifierData[_depositId][_verifier];
+        DepositVerifierData memory verifierData = s.depositVerifierData[_depositId][_verifier];
         require(bytes(verifierData.payeeDetails).length != 0, "Payment verifier not supported");
-        require(depositCurrencyConversionRate[_depositId][_verifier][_fiatCurrency] != 0, "Currency not supported");
+        require(s.depositCurrencyConversionRate[_depositId][_verifier][_fiatCurrency] != 0, "Currency not supported");
     }
 
     /**
@@ -483,12 +607,13 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
         view
         returns(uint256[] memory prunableIntents, uint256 reclaimedAmount)
     {
-        uint256[] memory intentIds = deposits[_depositId].intentIds;
+        EscrowStorage storage s = _getEscrowStorage();
+        uint256[] memory intentIds = s.deposits[_depositId].intentIds;
         prunableIntents = new uint256[](intentIds.length);
 
         for (uint256 i = 0; i < intentIds.length; ++i) {
-            Intent memory intent = intents[intentIds[i]];
-            if (intent.timestamp + intentExpirationPeriod < block.timestamp) {
+            Intent memory intent = s.intents[intentIds[i]];
+            if (intent.timestamp + s.intentExpirationPeriod < block.timestamp) {
                 prunableIntents[i] = intentIds[i];
                 reclaimedAmount += intent.amount;
             }
@@ -510,10 +635,11 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
      * 3. deleting the intentHash from the deposit's intentHashes array.
      */
     function _pruneIntent(Deposit storage _deposit, uint256 _intentId) internal {
-        Intent memory intent = intents[_intentId];
+        EscrowStorage storage s = _getEscrowStorage();
+        Intent memory intent = s.intents[_intentId];
 
-        delete accountIntent[intent.owner];
-        delete intents[_intentId];
+        delete s.accountIntent[intent.owner];
+        delete s.intents[_intentId];
         _deposit.intentIds.removeStorage(_intentId);
     }
 
@@ -523,12 +649,13 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
      * deposit.
      */
     function _closeDepositIfNecessary(uint256 _depositId, Deposit storage _deposit) internal {
+        EscrowStorage storage s = _getEscrowStorage();
         uint256 openDepositAmount = _deposit.outstandingIntentAmount + _deposit.remainingDeposits;
         if (openDepositAmount == 0) {
-            accountDeposits[_deposit.depositor].removeStorage(_depositId);
+            s.accountDeposits[_deposit.depositor].removeStorage(_depositId);
             _deleteDepositVerifierAndCurrencyData(_depositId);
             emit DepositClosed(_depositId, _deposit.depositor);
-            delete deposits[_depositId];
+            delete s.deposits[_depositId];
         }
     }
 
@@ -536,13 +663,14 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
      * @notice Iterates through all verifiers for a deposit and deletes the corresponding verifier data and currencies.
      */
     function _deleteDepositVerifierAndCurrencyData(uint256 _depositId) internal {
-        address[] memory verifiers = depositVerifiers[_depositId];
+        EscrowStorage storage s = _getEscrowStorage();
+        address[] memory verifiers = s.depositVerifiers[_depositId];
         for (uint256 i = 0; i < verifiers.length; i++) {
             address verifier = verifiers[i];
-            delete depositVerifierData[_depositId][verifier];
-            bytes32[] memory currencies = depositCurrencies[_depositId][verifier];
+            delete s.depositVerifierData[_depositId][verifier];
+            bytes32[] memory currencies = s.depositCurrencies[_depositId][verifier];
             for (uint256 j = 0; j < currencies.length; j++) {
-                delete depositCurrencyConversionRate[_depositId][verifier][currencies[j]];
+                delete s.depositCurrencyConversionRate[_depositId][verifier][currencies[j]];
             }
         }
     }
