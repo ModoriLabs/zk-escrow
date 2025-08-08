@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {EscrowUpgradeable} from "src/EscrowUpgradeable.sol";
-import {TossBankReclaimVerifierV2} from "src/verifiers/TossBankReclaimVerifierV2.sol";
-import {NullifierRegistry} from "src/verifiers/nullifierRegistries/NullifierRegistry.sol";
-import {INullifierRegistry} from "src/verifiers/nullifierRegistries/INullifierRegistry.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { EscrowUpgradeable } from "src/EscrowUpgradeable.sol";
+import { TossBankReclaimVerifierV2 } from "src/verifiers/TossBankReclaimVerifierV2.sol";
+import { NullifierRegistry } from "src/verifiers/nullifierRegistries/NullifierRegistry.sol";
+import { INullifierRegistry } from "src/verifiers/nullifierRegistries/INullifierRegistry.sol";
+import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "script/Base.s.sol";
 
 contract DeployEscrowUpgradeable is BaseScript {
@@ -45,20 +45,14 @@ contract DeployEscrowUpgradeable is BaseScript {
             escrowImplementation = new EscrowUpgradeable();
             console.log("Escrow implementation deployed at:", address(escrowImplementation));
             _updateDeploymentFile("EscrowImplementation", address(escrowImplementation));
-            
+
             // Deploy proxy and initialize
             bytes memory initData = abi.encodeWithSelector(
-                EscrowUpgradeable.initialize.selector,
-                owner,
-                INTENT_EXPIRATION_PERIOD,
-                chainName
+                EscrowUpgradeable.initialize.selector, owner, INTENT_EXPIRATION_PERIOD, chainName
             );
-            
-            ERC1967Proxy proxy = new ERC1967Proxy(
-                address(escrowImplementation),
-                initData
-            );
-            
+
+            ERC1967Proxy proxy = new ERC1967Proxy(address(escrowImplementation), initData);
+
             escrow = EscrowUpgradeable(address(proxy));
             console.log("Escrow proxy deployed at:", address(escrow));
             _updateDeploymentFile("EscrowProxy", address(escrow));
@@ -105,7 +99,14 @@ contract DeployEscrowUpgradeable is BaseScript {
         // Log final addresses
         console.log("\n=== DEPLOYMENT SUMMARY ===");
         console.log("Escrow Proxy:", address(escrow));
-        console.log("Escrow Implementation:", address(escrowImplementation != EscrowUpgradeable(address(0)) ? escrowImplementation : EscrowUpgradeable(address(0))));
+        console.log(
+            "Escrow Implementation:",
+            address(
+                escrowImplementation != EscrowUpgradeable(address(0))
+                    ? escrowImplementation
+                    : EscrowUpgradeable(address(0))
+            )
+        );
         console.log("TossBankReclaimVerifierV2:", address(tossBankReclaimVerifierV2));
         console.log("NullifierRegistry:", address(nullifierRegistry));
         console.log("========================\n");
