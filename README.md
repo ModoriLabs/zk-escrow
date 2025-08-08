@@ -105,9 +105,11 @@ forge script script/TossBankReclaimVerifier.s.sol --rpc-url holesky --broadcast 
 
 | Contracts                    | Address                                                                                                                  |
 |------------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| Escrow | [0xCd531c6f7821D173e56ae9383529D8Ac6fdd13f8](https://basescan.org/address/0xCd531c6f7821D173e56ae9383529D8Ac6fdd13f8) |
-| NullifierRegistry | [0x18ac6522530f88Cf7d61Dd29609F13397869d330](https://basescan.org/address/0x18ac6522530f88Cf7d61Dd29609F13397869d330) |
-| TossBankReclaimVerifierV2 | [0x8c9bd74c6796eAf8cB48De320FFbe70021021395](https://basescan.org/address/0x8c9bd74c6796eAf8cB48De320FFbe70021021395) |
+| Escrow | [0x5a790BC3038d6e46B8246127EC05540b424577E4](https://basescan.org/address/0x5a790BC3038d6e46B8246127EC05540b424577E4) |
+| EscrowImplementation | [0x006dCc19f3f2aBa86Ab6595f91fea75B5cb7741B](https://basescan.org/address/0x006dCc19f3f2aBa86Ab6595f91fea75B5cb7741B) |
+| EscrowProxy | [0x5a790BC3038d6e46B8246127EC05540b424577E4](https://basescan.org/address/0x5a790BC3038d6e46B8246127EC05540b424577E4) |
+| NullifierRegistry | [0x517Ce8079ab28652BB1e5742B3B82afb41B8d5CE](https://basescan.org/address/0x517Ce8079ab28652BB1e5742B3B82afb41B8d5CE) |
+| TossBankReclaimVerifierV2 | [0xc3D3cDc54a4Ef7d36220604Fd73fa521B6F5Fb6c](https://basescan.org/address/0xc3D3cDc54a4Ef7d36220604Fd73fa521B6F5Fb6c) |
 | USDC | [0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913](https://basescan.org/address/0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) |
 
 ### base_sepolia (test)
