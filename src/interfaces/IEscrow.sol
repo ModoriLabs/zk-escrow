@@ -52,6 +52,7 @@ interface IEscrow {
     }
 
     event IntentSignaled(
+        address owner,
         address to,
         address verifier,
         uint256 amount,
@@ -77,7 +78,8 @@ interface IEscrow {
     );
 
     event IntentCancelled(
-        uint256 intentId
+        uint256 intentId,
+        address owner
     );
 
     event RedeemRequestSignaled(
