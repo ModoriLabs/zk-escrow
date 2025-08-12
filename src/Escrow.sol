@@ -95,7 +95,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
         deposit.outstandingIntentAmount += _amount;
         deposit.intentIds.push(intentId);
 
-        emit IntentSignaled(_to, _verifier, _amount, intentId, conversionRate);
+        emit IntentSignaled(msg.sender, _to, _verifier, _amount, intentId, conversionRate);
     }
 
     /**
@@ -113,7 +113,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
         deposit.remainingDeposits += intent.amount;
         deposit.outstandingIntentAmount -= intent.amount;
 
-        emit IntentCancelled(_intentId);
+        emit IntentCancelled(_intentId, intent.owner);
     }
 
     function fulfillIntent(

@@ -217,7 +217,7 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
         deposit.outstandingIntentAmount += _amount;
         deposit.intentIds.push(intentId);
 
-        emit IntentSignaled(_to, _verifier, _amount, intentId, conversionRate);
+        emit IntentSignaled(msg.sender, _to, _verifier, _amount, intentId, conversionRate);
     }
 
     /**
@@ -236,7 +236,7 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
         deposit.remainingDeposits += intent.amount;
         deposit.outstandingIntentAmount -= intent.amount;
 
-        emit IntentCancelled(_intentId);
+        emit IntentCancelled(_intentId, intent.owner);
     }
 
     function fulfillIntent(
