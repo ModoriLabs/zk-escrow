@@ -229,7 +229,7 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
         EscrowStorage storage s = _getEscrowStorage();
         Intent memory intent = s.intents[_intentId];
         Deposit storage deposit = s.deposits[intent.depositId];
-        require(intent.owner == msg.sender, "Sender must be the intent owner");
+        require(intent.owner == msg.sender, OnlyIntentOwner());
 
         _pruneIntent(deposit, _intentId);
 
@@ -345,7 +345,7 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
         Intent memory intent = s.intents[_intentId];
         Deposit storage deposit = s.deposits[intent.depositId];
 
-        require(intent.owner != address(0), "Intent does not exist");
+        require(intent.owner != address(0), IntentNotFound());
         require(deposit.depositor == msg.sender, OnlyDepositor());
 
         _pruneIntent(deposit, _intentId);
@@ -445,7 +445,7 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
     }
 
     /**
-     * @notice Allows the depositor to add more funds to an existing deposit.
+     * @notice Allows anyone to add more funds to an existing deposit.
      * The depositor must approve the escrow contract to transfer the additional amount.
      *
      * @param _depositId The ID of the deposit to increase

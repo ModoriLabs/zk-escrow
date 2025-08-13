@@ -43,12 +43,10 @@ forge script script/deploy/UpgradeableEscrow.s.sol --rpc-url base_sepolia --broa
 
 ### Verify contracts
 
-#### Base Sepolia
+#### Base
 
 ```sh
-forge script script/verify/VerifyEscrow.s.sol \
-  --rpc-url base_sepolia --private-key $TESTNET_PRIVATE_KEY \
-  --sig "verifyAll()"
+forge script script/verify/VerifyEscrow.s.sol --rpc-url base_sepolia --sig "verifyAll()"
 ```
 
 #### Holesky
@@ -108,11 +106,12 @@ forge script script/TossBankReclaimVerifier.s.sol --rpc-url holesky --broadcast 
 ### base (prod)
 
 - owner: 0xf7c76ee9A092562F8C83283f602AeAcd167e46Fb
+- depositor1: 0xD76F3CBC08bf9D07D54ad924b959E7ADd1E26fDE
 
 | Contracts                    | Address                                                                                                                  |
 |------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Escrow | [0x5a790BC3038d6e46B8246127EC05540b424577E4](https://basescan.org/address/0x5a790BC3038d6e46B8246127EC05540b424577E4) |
-| EscrowImplementation | [0xbF1F9CAe021B7037D8F2Df147Da746938EE08De2](https://basescan.org/address/0xbF1F9CAe021B7037D8F2Df147Da746938EE08De2) |
+| EscrowImplementation | [0x36608349faa273D471c39A18F1D632705D96Dfc3](https://basescan.org/address/0x36608349faa273D471c39A18F1D632705D96Dfc3) |
 | EscrowProxy | [0x5a790BC3038d6e46B8246127EC05540b424577E4](https://basescan.org/address/0x5a790BC3038d6e46B8246127EC05540b424577E4) |
 | NullifierRegistry | [0x517Ce8079ab28652BB1e5742B3B82afb41B8d5CE](https://basescan.org/address/0x517Ce8079ab28652BB1e5742B3B82afb41B8d5CE) |
 | TossBankReclaimVerifierV2 | [0xc3D3cDc54a4Ef7d36220604Fd73fa521B6F5Fb6c](https://basescan.org/address/0xc3D3cDc54a4Ef7d36220604Fd73fa521B6F5Fb6c) |
@@ -123,7 +122,7 @@ forge script script/TossBankReclaimVerifier.s.sol --rpc-url holesky --broadcast 
 | Contracts                    | Address                                                                                                                  |
 |------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Escrow | [0x90f1bc9C597902B7A60836B63F084d9aC5a657cd](https://sepolia.basescan.org/address/0x90f1bc9C597902B7A60836B63F084d9aC5a657cd) |
-| EscrowImplementation | [0x38B41e8313CA51846D6B3f2A1d2316dF287c0CD3](https://sepolia.basescan.org/address/0x38B41e8313CA51846D6B3f2A1d2316dF287c0CD3) |
+| EscrowImplementation | [0xcB80C4D5db2cE157d3EfF1d3ba0FAAe7C25B287F](https://sepolia.basescan.org/address/0xcB80C4D5db2cE157d3EfF1d3ba0FAAe7C25B287F) |
 | EscrowProxy | [0x90f1bc9C597902B7A60836B63F084d9aC5a657cd](https://sepolia.basescan.org/address/0x90f1bc9C597902B7A60836B63F084d9aC5a657cd) |
 | NullifierRegistry | [0xfE9a7603641e5Ac1cc155C62bAA7242dABf93B5a](https://sepolia.basescan.org/address/0xfE9a7603641e5Ac1cc155C62bAA7242dABf93B5a) |
 | TossBankReclaimVerifierV2 | [0x08A773D828Ae1195FE7355e8885bD47456815da1](https://sepolia.basescan.org/address/0x08A773D828Ae1195FE7355e8885bD47456815da1) |

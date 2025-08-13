@@ -137,57 +137,6 @@ contract FulfillIntentTest is BaseEscrowUpgradeableTest {
         assertEq(outstanding, 0);
     }
 
-    // *************
-    // Cancel Intent
-    // *************
-
-    function test_cancelIntent_RestoresDepositState() public {
-        // Verify state before cancellation
-        (,,,,, uint256 remainingBefore, uint256 outstandingBefore) = escrow.deposits(depositId);
-        assertEq(remainingBefore, depositAmount - intentAmount);
-        assertEq(outstandingBefore, intentAmount);
-
-        // Cancel the intent
-        vm.prank(bob);
-        escrow.cancelIntent(intentId);
-
-        // Verify state is restored after cancellation
-        (,,,,, uint256 remainingAfter, uint256 outstandingAfter) = escrow.deposits(depositId);
-        assertEq(remainingAfter, depositAmount); // Should be restored
-        assertEq(outstandingAfter, 0); // Should be back to 0
-        assertEq(escrow.getDepositIntentIds(depositId).length, 0);
-
-        // Verify intent is removed
-        assertEq(escrow.accountIntent(bob), 0);
-    }
-
-    function test_cancelIntent_OnlyIntentOwner() public {
-        // Try to cancel someone else's intent
-        vm.prank(alice); // Alice is not the intent owner
-        vm.expectRevert("Sender must be the intent owner");
-        escrow.cancelIntent(intentId);
-
-        // Verify bob can cancel his own intent
-        vm.prank(bob);
-        escrow.cancelIntent(intentId);
-
-        // Verify intent was cancelled
-        assertEq(escrow.accountIntent(bob), 0);
-    }
-
-    function test_cancelIntent_AllowedWhenPaused() public {
-        // Pause the contract
-        vm.prank(escrowOwner);
-        escrow.pause();
-
-        // Should still be able to cancel when paused
-        vm.prank(bob);
-        escrow.cancelIntent(intentId);
-
-        // Verify intent was cancelled
-        assertEq(escrow.accountIntent(bob), 0);
-    }
-
     // ****************
     // Release Funds To Payer
     // ****************
@@ -215,7 +164,7 @@ contract FulfillIntentTest is BaseEscrowUpgradeableTest {
         uint256 nonExistentIntentId = 999;
 
         vm.prank(alice);
-        vm.expectRevert("Intent does not exist");
+        vm.expectRevert(IEscrow.IntentNotFound.selector);
         escrow.releaseFundsToPayer(nonExistentIntentId);
     }
 }

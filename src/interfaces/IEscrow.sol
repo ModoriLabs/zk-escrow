@@ -165,6 +165,7 @@ interface IEscrow {
     error RedeemRequestNotFound();
     error RedeemAlreadyExists();
     error OnlyDepositor();
+    error OnlyIntentOwner();
     error InvalidIntentAmountRange();
     error DepositNotFound();
     error DepositNotAcceptingIntents();
