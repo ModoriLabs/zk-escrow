@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import "forge-std/src/Script.sol";
-import { Escrow } from "src/Escrow.sol";
+import { EscrowUpgradeable } from "src/EscrowUpgradeable.sol";
 import { IEscrow } from "src/interfaces/IEscrow.sol";
 // import { MockUSDT } from "src/MockUSDT.sol"; // Not needed for Base deployment
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -10,7 +10,7 @@ import { TossBankReclaimVerifierV2 } from "src/verifiers/TossBankReclaimVerifier
 import { BaseScript } from "./Base.s.sol";
 
 contract EscrowScript is BaseScript {
-    Escrow public escrow;
+    EscrowUpgradeable public escrow;
     IERC20 public usdc;
     address public verifier;
     uint256 public KRW_CONVERSION_RATE = 1400e18;
@@ -18,7 +18,7 @@ contract EscrowScript is BaseScript {
 
     function setUp() public {
         // Load deployed contract addresses from environment or use defaults
-        escrow = Escrow(_getDeployedAddress("Escrow"));
+        escrow = EscrowUpgradeable(_getDeployedAddress("Escrow"));
         usdc = IERC20(_getDeployedAddress("USDC"));
         verifier = _getDeployedAddress("TossBankReclaimVerifierV2");
     }
@@ -208,6 +208,48 @@ contract EscrowScript is BaseScript {
         console.log("Deposit withdrawn successfully!");
     }
 
+    function changeDepositor(uint256 depositId, address newDepositor) public {
+        address currentDepositor = broadcaster;
+
+        console.log("Changing depositor:");
+        console.log("- Deposit ID:", depositId);
+        console.log("- Current depositor:", currentDepositor);
+        console.log("- New depositor:", newDepositor);
+
+        // Get current deposit details to verify ownership
+        (
+            address depositOwner,
+            IERC20 token,
+            uint256 totalAmount,
+            IEscrow.Range memory range,
+            bool acceptingIntents,
+            uint256 remainingDeposits,
+            uint256 outstandingIntentAmount
+        ) = escrow.deposits(depositId);
+
+        require(depositOwner == currentDepositor, "Only current depositor can change ownership");
+        require(newDepositor != address(0), "New depositor cannot be zero address");
+        require(newDepositor != depositOwner, "New depositor must be different from current depositor");
+
+        console.log("Deposit details before change:");
+        console.log("- Total amount (USDC):", totalAmount / 1e6);
+        console.log("- Remaining deposits (USDC):", remainingDeposits / 1e6);
+        console.log("- Outstanding intent amount (USDC):", outstandingIntentAmount / 1e6);
+        console.log("- Accepting intents:", acceptingIntents);
+
+        vm.startBroadcast();
+
+        // Change the depositor
+        escrow.changeDepositor(depositId, newDepositor);
+
+        vm.stopBroadcast();
+
+        // Verify the change was successful
+        (address newOwner,,,,,,) = escrow.deposits(depositId);
+        console.log("Depositor changed successfully!");
+        console.log("- Verified new depositor:", newOwner);
+    }
+
     function updateDepositConversionRate(uint256 depositId, uint256 conversionRate) public {
         vm.startBroadcast();
         bytes32 currency = keccak256("KRW");
@@ -246,6 +288,7 @@ contract EscrowScript is BaseScript {
         console.log("- cancelIntent(intentId)");
         console.log("- increaseDeposit(depositId, amount)");
         console.log("- withdrawDeposit(depositId)");
+        console.log("- changeDepositor(depositId, newDepositor)");
         console.log("- updateDepositConversionRate(depositId, conversionRate)");
         console.log("- updateDepositIntentAmountRange(depositId, minAmount, maxAmount)");
         console.log("- checkDeployments() - Check if contracts are deployed");

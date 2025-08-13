@@ -101,13 +101,13 @@ contract ReleaseFundsToPayerTest is BaseEscrowUpgradeableTest {
         uint256 nonExistentIntentId = 999;
 
         vm.prank(alice);
-        vm.expectRevert("Intent does not exist");
+        vm.expectRevert(IEscrow.IntentNotFound.selector);
         escrow.releaseFundsToPayer(nonExistentIntentId);
     }
 
     function test_releaseFundsToPayer_RevertIntentIdZero() public {
         vm.prank(alice);
-        vm.expectRevert("Intent does not exist");
+        vm.expectRevert(IEscrow.IntentNotFound.selector);
         escrow.releaseFundsToPayer(0);
     }
 
@@ -190,7 +190,7 @@ contract ReleaseFundsToPayerTest is BaseEscrowUpgradeableTest {
 
         // Try to release funds for cancelled intent
         vm.prank(alice);
-        vm.expectRevert("Intent does not exist");
+        vm.expectRevert(IEscrow.IntentNotFound.selector);
         escrow.releaseFundsToPayer(intentId);
     }
 
