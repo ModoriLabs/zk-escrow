@@ -284,6 +284,7 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
         );
     }
 
+    /// @dev Update msg.sender's accountDeposits and deposit's depositor
     function createDeposit(
         IERC20 _token,
         uint256 _amount,
@@ -464,6 +465,35 @@ contract EscrowUpgradeable is Initializable, OwnableUpgradeable, PausableUpgrade
         deposit.remainingDeposits += _amount;
 
         emit DepositIncreased(_depositId, msg.sender, _amount, deposit.amount);
+    }
+
+    /**
+     * @notice Allows the current depositor to transfer ownership of the deposit to a new address.
+     * Only the current depositor can call this function.
+     *
+     * @param _depositId The ID of the deposit to transfer
+     * @param _newDepositor The address of the new depositor
+     */
+    function changeDepositor(uint256 _depositId, address _newDepositor) external whenNotPaused {
+        EscrowStorage storage s = _getEscrowStorage();
+        Deposit storage deposit = s.deposits[_depositId];
+
+        require(deposit.depositor == msg.sender, OnlyDepositor());
+        require(_newDepositor != address(0), InvalidAddress());
+        require(_newDepositor != deposit.depositor, InvalidAddress());
+
+        address oldDepositor = deposit.depositor;
+
+        // Update the depositor
+        deposit.depositor = _newDepositor;
+
+        // Update accountDeposits mapping - remove from old depositor
+        s.accountDeposits[oldDepositor].removeStorage(_depositId);
+
+        // Add to new depositor's account deposits
+        s.accountDeposits[_newDepositor].push(_depositId);
+
+        emit DepositDepositorChanged(_depositId, oldDepositor, _newDepositor);
     }
 
     // *** Governance functions ***

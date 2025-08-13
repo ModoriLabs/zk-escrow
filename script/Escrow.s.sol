@@ -152,6 +152,16 @@ contract EscrowScript is BaseScript {
         console.log("Deposit increased successfully!");
 
         vm.stopBroadcast();
+
+        // Check deposit details
+        (,, uint256 totalAmount, IEscrow.Range memory range, bool acceptingIntents, uint256 remainingDeposits, uint256 outstandingIntentAmount) = escrow.deposits(depositId);
+        console.log("Deposit details:");
+        console.log("- Total amount (USDC):", totalAmount / 1e6);
+        console.log("- Intent range min (USDC):", range.min / 1e6);
+        console.log("- Intent range max (USDC):", range.max / 1e6);
+        console.log("- Accepting intents:", acceptingIntents);
+        console.log("- Remaining (USDC):", remainingDeposits / 1e6);
+        console.log("- Outstanding (USDC):", outstandingIntentAmount / 1e6);
     }
 
     function withdrawDeposit(uint256 depositId) public {

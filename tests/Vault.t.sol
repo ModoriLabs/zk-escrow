@@ -21,7 +21,10 @@ contract VaultTest is BaseTest {
         console2.log("Notary address: %s", notary);
 
         vault = new Vault(address(usdt), notary);
-        vm.prank(owner);
+        
+        // Get the actual owner of USDT and use it to mint
+        address usdtOwner = usdt.owner();
+        vm.prank(usdtOwner);
         usdt.mint(address(vault), 100 * 1e6);
     }
 
