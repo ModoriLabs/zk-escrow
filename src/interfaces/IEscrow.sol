@@ -138,6 +138,12 @@ interface IEscrow {
         uint256 amount
     );
 
+    event DepositDepositorChanged(
+        uint256 indexed depositId,
+        address oldDepositor,
+        address newDepositor
+    );
+
     event DepositClosed(uint256 depositId, address depositor);
 
     event DepositIntentAmountRangeUpdated(
@@ -162,4 +168,5 @@ interface IEscrow {
     error InvalidIntentAmountRange();
     error DepositNotFound();
     error DepositNotAcceptingIntents();
+    error InvalidAddress();
 }

@@ -17,7 +17,7 @@ contract EscrowTest is BaseEscrowUpgradeableTest {
     }
 
     // ============ Only Owner Function Tests ============
-
+    // ============ Whitelisted Payment Verifier Tests ============
     function test_addWhitelistedPaymentVerifier_Success() public {
         address newVerifier = makeAddr("newVerifier");
 
@@ -92,6 +92,8 @@ contract EscrowTest is BaseEscrowUpgradeableTest {
         escrow.removeWhitelistedPaymentVerifier(notWhitelisted);
     }
 
+    // ============ Intent Expiration Period Tests ============
+
     function test_setIntentExpirationPeriod_Success() public {
         uint256 newPeriod = 7 days;
 
@@ -115,6 +117,7 @@ contract EscrowTest is BaseEscrowUpgradeableTest {
         escrow.setIntentExpirationPeriod(0);
     }
 
+    // ============ Pause Tests ============
     function test_pause_Success() public {
         assertFalse(escrow.paused());
 

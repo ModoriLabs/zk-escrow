@@ -83,7 +83,7 @@ contract DeployEscrowUpgradeable is BaseScript {
         }
 
         // Give write permission to verifier
-        if (!nullifierRegistry.hasWritePermission(address(tossBankReclaimVerifierV2))) {
+        if (!nullifierRegistry.isWriter(address(tossBankReclaimVerifierV2))) {
             nullifierRegistry.addWritePermission(address(tossBankReclaimVerifierV2));
             console.log("Added write permission to TossBankReclaimVerifier");
         }
