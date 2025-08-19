@@ -13,7 +13,17 @@
   "devDependencies": {
     "forge-std": "github:foundry-rs/forge-std#v1.9.7",
     "prettier": "^3.5",
-    "solhint": "^5.1"
+    "solhint": "^5.1",
+    "hardhat": "^2.22.0",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@nomicfoundation/hardhat-verify": "^2.0.0",
+    "@nomicfoundation/hardhat-foundry": "^1.1.2",
+    "hardhat-deploy": "1.0.4",
+    "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@^0.4.2",
+    "dotenv": "^16.4.5",
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.0"
   },
   "keywords": [
     "blockchain",
@@ -26,7 +36,7 @@
   ],
   "private": true,
   "scripts": {
-    "clean": "rm -rf cache out",
+    "clean": "rm -rf cache out cache_hardhat artifacts",
     "build": "forge build",
     "lint": "bun run lint:sol && bun run prettier:check",
     "lint:sol": "forge fmt --check && bun solhint \"{script,src,tests}/**/*.sol\"",
@@ -34,6 +44,6 @@
     "prettier:write": "prettier --write \"**/*.{json,md,yml}\" --ignore-path \".prettierignore\"",
     "test": "forge test",
     "test:coverage": "forge coverage",
-    "test:coverage:report": "forge coverage --report lcov && genhtml lcov.info --branch-coverage --output-dir coverage"
+    "print-deployments": "hardhat run scripts/print-deployments.ts"
   }
 }

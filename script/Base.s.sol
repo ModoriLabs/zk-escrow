@@ -32,9 +32,9 @@ abstract contract BaseScript is Script {
     constructor() {
         if (block.chainid == 31337) {
             PRIVATE_KEY = vm.envOr("ANVIL_DEPLOYER_PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80));
-        } else if (block.chainid == 84532) {
+        } else if (block.chainid == 84532 || block.chainid == 1001) { // basesep, kairos
             PRIVATE_KEY = vm.envOr("TESTNET_PRIVATE_KEY", uint256(1));
-        } else if (block.chainid == 8453) {
+        } else if (block.chainid == 8453 || block.chainid == 8217) { // base, kaia
             PRIVATE_KEY = vm.envOr("PROD_DEPLOYER_PRIVATE_KEY", uint256(1));
         } else {
             revert("Unknown chain");
@@ -167,6 +167,8 @@ abstract contract BaseScript is Script {
         if (chainId == 31337) return "anvil";
         if (chainId == 84532) return "basesep";
         if (chainId == 8453) return "base";
+        if (chainId == 1001) return "kairos";
+        if (chainId == 8217) return "kaia";
         // Add more chain mappings as needed
         revert("Unknown chain");
     }
