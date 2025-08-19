@@ -1,0 +1,44 @@
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { DeployFunction } from "hardhat-deploy/types";
+import { ethers } from "hardhat";
+
+const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
+  const { deployments, getNamedAccounts, network } = hre;
+  const { deploy, getOrNull } = deployments;
+  const { deployer } = await getNamedAccounts();
+
+  console.log("Deploying MockUSDT on", network.name);
+  console.log("Deployer:", deployer);
+
+  // Check if MockUSDT already exists
+  const existingMockUSDT = await getOrNull("MockUSDT");
+
+  if (existingMockUSDT) {
+    console.log("MockUSDT already deployed at:", existingMockUSDT.address);
+    return;
+  }
+
+  // Deploy MockUSDT
+  const mockUSDT = await deploy("MockUSDT", {
+    from: deployer,
+    args: [deployer], // MockUSDT constructor might not need arguments, check your contract
+    log: true,
+  });
+
+  console.log("\n=== MOCK USDT DEPLOYMENT SUMMARY ===");
+  console.log("MockUSDT:", mockUSDT.address);
+  console.log("=====================================\n");
+};
+
+export default func;
+func.tags = ["MockUSDT", "test"];
+func.dependencies = [];
+
+// Only run this on test networks
+func.skip = async (hre: HardhatRuntimeEnvironment) => {
+  const chainId = parseInt(await hre.getChainId());
+
+  // Skip on mainnet chains (1 = Ethereum mainnet, 8453 = Base mainnet, 8217 = Kaia mainnet)
+  const mainnetChains = [1, 8453, 8217];
+  return mainnetChains.includes(chainId);
+};

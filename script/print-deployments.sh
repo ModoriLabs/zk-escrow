@@ -25,6 +25,10 @@ elif [ "$CHAIN_ID" == "8453" ]; then
   EXPLORER="https://basescan.org/address/"
 elif [ "$CHAIN_ID" == "31337" ]; then
   EXPLORER=""  # localhost has no explorer
+elif [ "$CHAIN_ID" == "1001" ]; then
+  EXPLORER="https://kairos.kaiascan.io/address/"
+elif [ "$CHAIN_ID" == "8217" ]; then
+  EXPLORER="https://kaiascan.io/address/"
 else
   echo "Chain ID $CHAIN_ID not recognized. Using empty explorer URL."
   EXPLORER=""

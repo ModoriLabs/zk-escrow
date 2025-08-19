@@ -103,6 +103,15 @@ forge script script/TossBankReclaimVerifier.s.sol --rpc-url holesky --broadcast 
 
 ## Contract Addresses
 
+### kairos (test)
+
+| Contracts | Address |
+|-----------|---------|
+| EscrowUpgradeable | [0xB2bACB93a5046Fa2A9b5709CB06d41dAb0De6D37](https://kairos.kaiascan.io/address/0xB2bACB93a5046Fa2A9b5709CB06d41dAb0De6D37) |
+| MockUSDT | [0xef1E927798fc7d016835d2b8B65367b99919F11E](https://kairos.kaiascan.io/address/0xef1E927798fc7d016835d2b8B65367b99919F11E) |
+| NullifierRegistry | [0x72f91969485c7eFa53990FB0763fFA57Ba73F3Be](https://kairos.kaiascan.io/address/0x72f91969485c7eFa53990FB0763fFA57Ba73F3Be) |
+| TossBankReclaimVerifierV2 | [0x945926B0945F6028D2A4190760341FCD51250f42](https://kairos.kaiascan.io/address/0x945926B0945F6028D2A4190760341FCD51250f42) |
+
 ### base (prod)
 
 - owner: 0xf7c76ee9A092562F8C83283f602AeAcd167e46Fb
