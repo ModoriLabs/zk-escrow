@@ -7,31 +7,32 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deploy, getOrNull } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  console.log("Deploying MockUSDT on", network.name);
+  console.log("Deploying USDT on", network.name);
   console.log("Deployer:", deployer);
 
-  // Check if MockUSDT already exists
-  const existingMockUSDT = await getOrNull("MockUSDT");
+  // Check if USDT already exists
+  const existingUSDT = await getOrNull("USDT");
 
-  if (existingMockUSDT) {
-    console.log("MockUSDT already deployed at:", existingMockUSDT.address);
+  if (existingUSDT) {
+    console.log("USDT already deployed at:", existingUSDT.address);
     return;
   }
 
-  // Deploy MockUSDT
-  const mockUSDT = await deploy("MockUSDT", {
+  // Deploy USDT (MockUSDT contract)
+  const usdt = await deploy("USDT", {
+    contract: "MockUSDT", // Use MockUSDT contract but deploy as "USDT"
     from: deployer,
-    args: [deployer], // MockUSDT constructor might not need arguments, check your contract
+    args: [deployer],
     log: true,
   });
 
-  console.log("\n=== MOCK USDT DEPLOYMENT SUMMARY ===");
-  console.log("MockUSDT:", mockUSDT.address);
-  console.log("=====================================\n");
+  console.log("\n=== USDT DEPLOYMENT SUMMARY ===");
+  console.log("USDT:", usdt.address);
+  console.log("===================================\n");
 };
 
 export default func;
-func.tags = ["MockUSDT", "test"];
+func.tags = ["USDT", "test"];
 func.dependencies = [];
 
 // Only run this on test networks

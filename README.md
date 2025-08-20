@@ -21,6 +21,14 @@ forge script script/Escrow.s.sol --sig "createDefaultDeposit()" --rpc-url anvil 
 
 ### Deploy Contracts
 
+#### Kaia
+
+```sh
+bun hardhat deploy --network kaia --tags NullifierRegistry
+```
+
+#### Base
+
 ```sh
 forge script script/deploy/DeployKRW.s.sol --rpc-url holesky --private-key $TESTNET_PRIVATE_KEY --broadcast
 
@@ -102,6 +110,17 @@ forge script script/TossBankReclaimVerifier.s.sol --rpc-url holesky --broadcast 
 ```
 
 ## Contract Addresses
+
+### kaia (prod)
+
+| Contracts | Address |
+|-----------|---------|
+| EscrowUpgradeable | [0x8c9bd74c6796eAf8cB48De320FFbe70021021395](https://kaiascan.io/address/0x8c9bd74c6796eAf8cB48De320FFbe70021021395) |
+| EscrowUpgradeable_Implementation | [0xCd531c6f7821D173e56ae9383529D8Ac6fdd13f8](https://kaiascan.io/address/0xCd531c6f7821D173e56ae9383529D8Ac6fdd13f8) |
+| EscrowUpgradeable_Proxy | [0x8c9bd74c6796eAf8cB48De320FFbe70021021395](https://kaiascan.io/address/0x8c9bd74c6796eAf8cB48De320FFbe70021021395) |
+| NullifierRegistry | [0x18ac6522530f88Cf7d61Dd29609F13397869d330](https://kaiascan.io/address/0x18ac6522530f88Cf7d61Dd29609F13397869d330) |
+| TossBankReclaimVerifierV2 | [0x861aA44bDe09bB3878203276487e0aB47239fEA1](https://kaiascan.io/address/0x861aA44bDe09bB3878203276487e0aB47239fEA1) |
+| USDT | [0xd077a400968890eacc75cdc901f0356c943e4fdb](https://kaiascan.io/address/0xd077a400968890eacc75cdc901f0356c943e4fdb) |
 
 ### kairos (test)
 
