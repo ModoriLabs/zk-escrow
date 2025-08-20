@@ -40,3 +40,5 @@
   mainnet = "https://eth-mainnet.g.alchemy.com/v2/${API_KEY_ALCHEMY}"
   holesky = "https://eth-holesky.g.alchemy.com/v2/${API_KEY_ALCHEMY}"
   op_sepolia = "https://opt-sepolia.g.alchemy.com/v2/${API_KEY_ALCHEMY}"
+  kairos = "https://public-en-kairos.node.kaia.io"
+  kaia = "https://public-en.node.kaia.io"
