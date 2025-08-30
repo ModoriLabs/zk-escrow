@@ -23,8 +23,11 @@ forge script script/Escrow.s.sol --sig "createDefaultDeposit()" --rpc-url anvil 
 
 #### Kaia
 
+Kaia is supported by hardhat, not foundry.
+
 ```sh
 bun hardhat deploy --network kaia --tags NullifierRegistry
+bun run print-deployments --network kaia
 ```
 
 #### Base
