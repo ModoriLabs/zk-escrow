@@ -96,6 +96,21 @@ withdrawDeposit
 forge script script/Escrow.s.sol:EscrowScript --sig "withdrawDeposit(uint256)" 1 --rpc-url base
 ```
 
+#### Escrow (hardhat)
+
+You can add `--dryRun` to simulate the transaction without executing.
+
+```sh
+# Increase deposit
+npx hardhat escrow:increase-deposit --deposit-id 1 --amount 10 --network kaia
+
+# Update conversion rate
+npx hardhat escrow:update-conversion-rate --deposit-id 1 --rate 1000000000000000000000 --currency USD --network kaia
+
+# Update intent range
+npx hardhat escrow:update-intent-range --deposit-id 1 --min 0.1 --max 1 --network kaia
+```
+
 ### ZkMinter contracts
 
 #### ZkMinter

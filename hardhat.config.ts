@@ -4,6 +4,7 @@ import "@nomicfoundation/hardhat-foundry";
 import "@nomicfoundation/hardhat-verify";
 import "hardhat-deploy";
 import "dotenv/config";
+import "./scripts/escrow-tasks";
 
 const TESTNET_PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY || "0x0000000000000000000000000000000000000000000000000000000000000001";
 const PROD_DEPLOYER_PRIVATE_KEY = process.env.PROD_DEPLOYER_PRIVATE_KEY || "0x0000000000000000000000000000000000000000000000000000000000000001";
