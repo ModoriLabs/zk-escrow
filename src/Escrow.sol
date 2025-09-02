@@ -69,6 +69,10 @@ contract Escrow is ERC2771Context, Ownable, Pausable, IEscrow {
         return ERC2771Context._msgData();
     }
 
+    function _contextSuffixLength() internal view virtual override(Context, ERC2771Context) returns (uint256) {
+        return ERC2771Context._contextSuffixLength();
+    }
+
     function signalIntent(
         uint256 _depositId,
         uint256 _amount,
