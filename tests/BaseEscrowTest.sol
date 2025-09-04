@@ -32,7 +32,7 @@ abstract contract BaseEscrowTest is BaseTest {
         vm.stopPrank();
 
         // Deploy Escrow contract with MockUSDT
-        escrow = new Escrow(owner, INTENT_EXPIRATION_PERIOD, CHAIN_NAME);
+        escrow = new Escrow(address(0), owner, INTENT_EXPIRATION_PERIOD, CHAIN_NAME); // address(0) = no trusted forwarder
 
         // Create TossBankReclaimVerifierV2 for escrow (V2 interface)
         string[] memory providerHashes = new string[](1);

@@ -39,7 +39,7 @@ contract DeployEscrow is BaseScript {
             escrow = Escrow(prevEscrow);
             console.log("Escrow already deployed at:", prevEscrow);
         } else {
-            escrow = new Escrow(owner, INTENT_EXPIRATION_PERIOD, chainName);
+            escrow = new Escrow(address(0), owner, INTENT_EXPIRATION_PERIOD, chainName); // address(0) = no trusted forwarder
             console.log("Escrow deployed at:", address(escrow));
             _updateDeploymentFile("Escrow", address(escrow));
         }
