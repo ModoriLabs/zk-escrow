@@ -76,6 +76,9 @@ updateDepositConversionRate
 
 ```sh
 forge script script/Escrow.s.sol --rpc-url base_sepolia --private-key $TESTNET_PRIVATE_KEY --broadcast --sig "updateDepositConversionRate(uint256,uint256)" 1 1400000000000000000000
+
+# hardhat, kaia
+npx hardhat escrow:update-conversion-rate --deposit-id 1 --rate 1470000000000000000000 --currency KRW --network kaia
 ```
 
 increaseDeposit
