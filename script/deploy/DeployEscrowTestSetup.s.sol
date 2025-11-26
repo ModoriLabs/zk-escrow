@@ -47,7 +47,7 @@ contract DeployEscrowTestSetup is BaseScript {
         _updateDeploymentFile("NullifierRegistry", address(nullifierRegistry));
 
         // 3. Deploy Escrow
-        escrow = new Escrow(deployer, INTENT_EXPIRATION_PERIOD, CHAIN_NAME);
+        escrow = new Escrow(address(0), deployer, INTENT_EXPIRATION_PERIOD, CHAIN_NAME); // address(0) = no trusted forwarder
         console.log("Escrow deployed at:", address(escrow));
         _updateDeploymentFile("Escrow", address(escrow));
 

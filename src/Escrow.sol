@@ -4,6 +4,8 @@ pragma solidity 0.8.30;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
+import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 import { IPaymentVerifierV2 } from "./verifiers/interfaces/IPaymentVerifierV2.sol";
 import { IEscrow } from "./interfaces/IEscrow.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -12,7 +14,7 @@ import { IMintableERC20 } from "./interfaces/IMintableERC20.sol";
 import { StringUtils } from "./external/ReclaimStringUtils.sol";
 import { Uint256ArrayUtils } from "./external/Uint256ArrayUtils.sol";
 
-contract Escrow is Ownable, Pausable, IEscrow {
+contract Escrow is ERC2771Context, Ownable, Pausable, IEscrow {
     using SafeERC20 for IERC20;
     using Uint256ArrayUtils for uint256[];
 
@@ -43,12 +45,32 @@ contract Escrow is Ownable, Pausable, IEscrow {
     uint256 public maxIntentsPerDeposit = 100;
 
     constructor(
+        address _trustedForwarder,
         address _owner,
         uint256 _intentExpirationPeriod,
         string memory _chainName
-    ) Ownable(_owner) {
+    ) ERC2771Context(_trustedForwarder) Ownable(_owner) {
         intentExpirationPeriod = _intentExpirationPeriod;
         chainName = _chainName;
+    }
+
+    /**
+     * @dev Override _msgSender to support meta-transactions
+     */
+    function _msgSender() internal view virtual override(Context, ERC2771Context) returns (address) {
+        if (isTrustedForwarder(msg.sender)) {
+            return ERC2771Context._msgSender();
+        } else {
+            return msg.sender;
+        }
+    }
+
+    function _msgData() internal view virtual override(Context, ERC2771Context) returns (bytes calldata) {
+        return ERC2771Context._msgData();
+    }
+
+    function _contextSuffixLength() internal view virtual override(Context, ERC2771Context) returns (uint256) {
+        return ERC2771Context._contextSuffixLength();
     }
 
     function signalIntent(
@@ -79,7 +101,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
 
         uint256 conversionRate = depositCurrencyConversionRate[_depositId][_verifier][_fiatCurrency];
         intents[intentId] = Intent({
-            owner: msg.sender,
+            owner: _msgSender(),
             to: _to,
             depositId: _depositId,
             amount: _amount,
@@ -89,13 +111,13 @@ contract Escrow is Ownable, Pausable, IEscrow {
             timestamp: block.timestamp
         });
 
-        accountIntent[msg.sender] = intentId;
+        accountIntent[_msgSender()] = intentId;
 
         deposit.remainingDeposits -= _amount;
         deposit.outstandingIntentAmount += _amount;
         deposit.intentIds.push(intentId);
 
-        emit IntentSignaled(msg.sender, _to, _verifier, _amount, intentId, conversionRate);
+        emit IntentSignaled(_msgSender(), _to, _verifier, _amount, intentId, conversionRate);
     }
 
     /**
@@ -106,7 +128,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
     function cancelIntent(uint256 _intentId) external {
         Intent memory intent = intents[_intentId];
         Deposit storage deposit = deposits[intent.depositId];
-        require(intent.owner == msg.sender, "Sender must be the intent owner");
+        require(intent.owner == _msgSender(), "Sender must be the intent owner");
 
         _pruneIntent(deposit, _intentId);
 
@@ -171,10 +193,10 @@ contract Escrow is Ownable, Pausable, IEscrow {
         _validateCreateDeposit(_amount, _intentAmountRange, _verifiers, _verifierData, _currencies);
 
         depositId = ++depositCounter;
-        accountDeposits[msg.sender].push(depositId);
+        accountDeposits[_msgSender()].push(depositId);
 
         deposits[depositId] = Deposit({
-            depositor: msg.sender,
+            depositor: _msgSender(),
             token: _token,
             amount: _amount,
             intentAmountRange: _intentAmountRange,
@@ -184,7 +206,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
             outstandingIntentAmount: 0
         });
 
-        emit DepositCreated(depositId, msg.sender, _token, _amount, _intentAmountRange);
+        emit DepositCreated(depositId, _msgSender(), _token, _amount, _intentAmountRange);
 
         for (uint256 i = 0; i < _verifiers.length; i++) {
             address verifier = _verifiers[i];
@@ -211,7 +233,9 @@ contract Escrow is Ownable, Pausable, IEscrow {
             }
         }
 
-        _token.safeTransferFrom(msg.sender, address(this), _amount);
+        address depositor = _msgSender();
+        address tokenSource = (msg.sender != depositor) ? msg.sender : depositor;
+        _token.safeTransferFrom(tokenSource, address(this), _amount);
     }
 
     function releaseFundsToPayer(uint256 _intentId) external {
@@ -219,7 +243,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
         Deposit storage deposit = deposits[intent.depositId];
 
         require(intent.owner != address(0), "Intent does not exist");
-        require(deposit.depositor == msg.sender, OnlyDepositor());
+        require(deposit.depositor == _msgSender(), OnlyDepositor());
 
         _pruneIntent(deposit, _intentId);
 
@@ -251,7 +275,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
         Deposit storage deposit = deposits[_depositId];
         uint256 oldConversionRate = depositCurrencyConversionRate[_depositId][_verifier][_fiatCurrency];
 
-        require(deposit.depositor == msg.sender, OnlyDepositor());
+        require(deposit.depositor == _msgSender(), OnlyDepositor());
         require(oldConversionRate != 0, "Currency or verifier not supported");
         require(_newConversionRate > 0, "Conversion rate must be greater than 0");
 
@@ -272,7 +296,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
         Deposit storage deposit = deposits[_depositId];
 
         // This also ensures that the deposit exists
-        require(deposit.depositor == msg.sender, OnlyDepositor());
+        require(deposit.depositor == _msgSender(), OnlyDepositor());
         require(_min > 0 && _min <= _max && _max <= deposit.amount, InvalidIntentAmountRange());
 
         Range memory oldRange = deposit.intentAmountRange;
@@ -291,7 +315,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
     function withdrawDeposit(uint256 _depositId) external {
         Deposit storage deposit = deposits[_depositId];
 
-        require(deposit.depositor == msg.sender, OnlyDepositor());
+        require(deposit.depositor == _msgSender(), OnlyDepositor());
 
         (
             uint256[] memory prunableIntents,
@@ -311,7 +335,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
         IERC20 token = deposit.token; // store before deleting
         _closeDepositIfNecessary(_depositId, deposit);
 
-        token.safeTransfer(msg.sender, returnAmount);
+        token.safeTransfer(_msgSender(), returnAmount);
     }
 
     /**
@@ -327,13 +351,15 @@ contract Escrow is Ownable, Pausable, IEscrow {
         require(deposit.depositor != address(0), DepositNotFound());
         require(_amount > 0, InvalidAmount());
 
-        IERC20(deposit.token).safeTransferFrom(msg.sender, address(this), _amount);
+        address depositor = _msgSender();
+        address tokenSource = (msg.sender != depositor) ? msg.sender : depositor;
+        IERC20(deposit.token).safeTransferFrom(tokenSource, address(this), _amount);
 
         // Update deposit state
         deposit.amount += _amount;
         deposit.remainingDeposits += _amount;
 
-        emit DepositIncreased(_depositId, msg.sender, _amount, deposit.amount);
+        emit DepositIncreased(_depositId, _msgSender(), _amount, deposit.amount);
     }
 
     // *** Governance functions ***
@@ -448,7 +474,7 @@ contract Escrow is Ownable, Pausable, IEscrow {
         address _verifier,
         bytes32 _fiatCurrency
     ) internal view {
-        require(accountIntent[msg.sender] == 0, IntentAlreadyExists());
+        require(accountIntent[_msgSender()] == 0, IntentAlreadyExists());
         require(_deposit.depositor != address(0), DepositNotFound());
         require(_deposit.acceptingIntents, DepositNotAcceptingIntents());
         require(_amount >= _deposit.intentAmountRange.min, InvalidAmount());
